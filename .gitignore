@@ -1,0 +1,300 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+spectrabench_env/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Model files and caches
+data/models/
+data/datasets/
+data/ml_models/*.pkl
+data/ml_models/*.joblib
+*.safetensors
+*.bin
+*.onnx
+model_cache/
+huggingface_cache/
+
+# HuggingFace cache directories
+.cache/
+transformers_cache/
+datasets_cache/
+
+# Logs
+logs/
+*.log
+debug.log
+error.log
+output.log
+
+# Database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/performanceDB/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Experiment results
+experiments_results/
+results/
+outputs/
+figures/
+plots/
+
+# Configuration backups
+*.backup_*
+config_backup_*
+
+# WandB
+wandb/
+
+# MLflow
+mlruns/
+
+# TensorBoard
+runs/
+events.out.tfevents.*
+
+# Checkpoints
+checkpoints/
+*.ckpt
+*.pth
+*.pt
+
+# Generated files
+generated/
+auto_generated/
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Profiling
+*.prof
+*.profile
+
+# Memory dumps
+*.dmp
+core.*
+
+# Large files
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Office temporary files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Local configuration overrides
+local_config.yaml
+local_settings.py
+dev_config.yaml
+
+# API keys and secrets
+secrets.env
+.secrets
+api_keys.txt
+
+# Project specific
+offload/
+*.lock
+
+# Matplotlib
+.matplotlib/
+
+# CUDA cache
+.nv/
+
+# PyTorch
+.torch/
+
+# Development
+dev/
+development/
+test_outputs/
+sandbox/
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Sphinx
+_build/
+_static/
+_templates/
+
+# Node.js (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor specific
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/tasks.json
+
+# Exclude these but keep structure
+!.gitkeep
+!data/.gitkeep
+!logs/.gitkeep
+!experiments_results/.gitkeep
+# Ignore test and result files
+results/
+experiments_results/
+debug.log
+test_*.py
+*copy.py
