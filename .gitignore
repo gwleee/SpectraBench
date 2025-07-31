@@ -312,3 +312,6 @@ wandb/
 # Additional test files
 test_enhanced_adaptive_scheduler.py
 test_threshold_optimization.py
+*/debug.log
+debug.log
+*/debug.log
