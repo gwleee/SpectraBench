@@ -298,3 +298,17 @@ experiments_results/
 debug.log
 test_*.py
 *copy.py
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Data and experiment tracking
+data/
+wandb/
+*/wandb/
+
+# Additional test files
+test_enhanced_adaptive_scheduler.py
+test_threshold_optimization.py
