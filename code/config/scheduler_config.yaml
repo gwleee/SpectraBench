@@ -1,0 +1,215 @@
+# SpectraBench Scheduler Configuration
+# This file contains all configurable parameters for the adaptive scheduling system
+
+# Stage transition thresholds
+stage_transitions:
+  # Minimum data required to transition from heuristic to hybrid mode 
+  min_learning_data: 19
+  
+  # Data required to transition from hybrid to adaptive mode -> depends on phase2 experiment
+  stable_learning_data: 72
+  
+  # Confidence threshold for hybrid mode weighting
+  hybrid_confidence_threshold: 0.7
+  
+  # Allow dynamic threshold adjustment based on domain
+  dynamic_thresholds: true
+  
+  # Domain-specific thresholds (optional)
+  domain_thresholds:
+    small_models:  # ≤3B parameters
+      min_learning_data: 30
+      stable_learning_data: 150
+    
+    medium_models:  # 4-8B parameters
+      min_learning_data: 50
+      stable_learning_data: 200
+    
+    large_models:  # >8B parameters
+      min_learning_data: 75
+      stable_learning_data: 300
+
+# Model training configuration
+ml_models:
+  # Random Forest parameters
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 2
+    min_samples_leaf: 1
+    max_features: "sqrt"
+    random_state: 42
+    n_jobs: -1
+  
+  # Training parameters
+  training:
+    validation_split: 0.2
+    cross_validation_folds: 5
+    early_stopping_patience: 10
+    
+  # Retraining triggers
+  retraining:
+    interval_hours: 24
+    min_new_samples: 100
+    performance_degradation_threshold: 0.05
+
+# Feature engineering configuration
+feature_engineering:
+  # Model feature extraction
+  model_features:
+    extract_size: true
+    extract_architecture: true
+    extract_complexity: true
+    
+  # Task feature extraction
+  task_features:
+    extract_type: true
+    extract_complexity: true
+    extract_domain: true
+    
+  # System feature extraction
+  system_features:
+    extract_resource_usage: true
+    extract_temporal: true
+    extract_historical: true
+  
+  # Feature selection
+  feature_selection:
+    method: "recursive_elimination"
+    max_features: 50
+    selection_threshold: 0.01
+
+# Resource management configuration
+resource_management:
+  # Memory management
+  memory:
+    safety_margin: 0.15  # 15% safety margin
+    oom_prediction_threshold: 0.8
+    adaptive_batch_sizing: true
+    
+  # GPU management
+  gpu:
+    utilization_target: 0.8
+    temperature_limit: 85
+    memory_fragmentation_threshold: 0.1
+    
+  # Multi-GPU settings
+  multi_gpu:
+    load_balancing: true
+    affinity_optimization: true
+    communication_overhead_limit: 0.05
+
+# Scheduling algorithm configuration
+scheduling:
+  # Priority calculation weights
+  priority_weights:
+    time_efficiency: 0.4
+    memory_efficiency: 0.3
+    success_probability: 0.2
+    resource_utilization: 0.1
+    
+  # Optimization strategy
+  optimization:
+    algorithm: "multi_objective"
+    pareto_optimization: true
+    constraint_satisfaction: true
+    
+  # Rollback configuration
+  rollback:
+    enabled: true
+    performance_threshold: 0.9  # Rollback if performance drops below 90%
+    monitoring_window: 10  # Monitor last 10 predictions
+    cooldown_period: 300  # 5 minutes cooldown after rollback
+
+# Monitoring and logging configuration
+monitoring:
+  # Performance tracking
+  performance:
+    metrics_collection_interval: 1.0  # seconds
+    history_retention_days: 30
+    detailed_logging: true
+    
+  # Resource monitoring
+  resource:
+    monitoring_interval: 1.0  # seconds
+    history_size: 300  # 5 minutes at 1-second intervals
+    alert_thresholds:
+      memory_usage: 0.9
+      gpu_temperature: 80
+      cpu_usage: 0.95
+      
+  # Alerting
+  alerts:
+    enabled: true
+    oom_prediction_lead_time: 30  # seconds
+    performance_degradation_threshold: 0.1
+
+# Experiment configuration
+experiments:
+  # Threshold optimization
+  threshold_optimization:
+    stage1_range: [25, 50, 75, 100]
+    stage2_range: [100, 150, 200, 250, 300]
+    runs_per_threshold: 3
+    
+  # Performance validation
+  validation:
+    statistical_significance: 0.05
+    confidence_interval: 0.95
+    minimum_samples: 30
+    
+  # A/B testing
+  ab_testing:
+    enabled: false
+    split_ratio: 0.5
+    duration_hours: 24
+
+# System configuration
+system:
+  # Database settings
+  database:
+    path: "data/performanceDB/performance_history.db"
+    backup_interval_hours: 24
+    cleanup_old_records_days: 90
+    
+  # Model persistence
+  model_persistence:
+    save_path: "data/ml_models"
+    auto_save: true
+    versioning: true
+    
+  # Logging
+  logging:
+    level: "INFO"
+    file: "logs/scheduler.log"
+    rotation: "daily"
+    retention_days: 7
+
+# Environment-specific overrides
+environments:
+  development:
+    stage_transitions:
+      min_learning_data: 10
+      stable_learning_data: 50
+    monitoring:
+      detailed_logging: true
+    experiments:
+      threshold_optimization:
+        runs_per_threshold: 1
+        
+  testing:
+    stage_transitions:
+      min_learning_data: 5
+      stable_learning_data: 20
+    system:
+      database:
+        path: "test_data/test_performance.db"
+        
+  production:
+    monitoring:
+      detailed_logging: false
+    system:
+      database:
+        backup_interval_hours: 12
+      logging:
+        level: "WARNING"

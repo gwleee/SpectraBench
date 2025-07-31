@@ -1,0 +1,96 @@
+{
+  "last_training_time": "2025-07-18T04:00:04.884166",
+  "training_data_size": 836,
+  "model_performance": {
+    "time_predictor": {
+      "mae": 179.43477129288152,
+      "relative_error": 0.8636424127855666,
+      "oob_score": 0.5512002984146716
+    },
+    "memory_predictor": {
+      "mae": 1.5290358211626667,
+      "relative_error": 0.7616798526296986,
+      "oob_score": 0.5385078404292307
+    },
+    "success_classifier": {
+      "accuracy": 0.9702380952380952,
+      "oob_score": 0.9865269461077845
+    },
+    "batch_size_predictor": {
+      "mae": 0.03641309913631342,
+      "oob_score": -0.3420603773353985
+    },
+    "fewshot_predictor": {
+      "mae": 0.015352925843997247,
+      "oob_score": -0.10425455145185492
+    }
+  },
+  "feature_names": [
+    "model_size_numeric",
+    "model_size_category",
+    "model_type",
+    "task_name",
+    "task_type",
+    "task_complexity",
+    "gpu_memory_available",
+    "gpu_utilization",
+    "gpu_temperature",
+    "cpu_percent",
+    "ram_available",
+    "historical_avg_time",
+    "historical_avg_memory",
+    "historical_success_rate",
+    "historical_oom_rate",
+    "historical_sample_count",
+    "model_avg_time",
+    "model_avg_memory",
+    "model_run_count",
+    "hour",
+    "day_of_week",
+    "num_gpus"
+  ],
+  "label_encoders": {
+    "model_size_category": {
+      "classes_": [
+        "large",
+        "medium",
+        "small",
+        "xlarge"
+      ]
+    },
+    "model_type": {
+      "classes_": [
+        "exaone",
+        "gemma",
+        "llama",
+        "mistral",
+        "other",
+        "qwen"
+      ]
+    },
+    "task_name": {
+      "classes_": [
+        "arc_challenge",
+        "arc_easy",
+        "csatqa",
+        "haerae",
+        "hellaswag",
+        "kmmlu",
+        "kmmlu_hard",
+        "kobest",
+        "komt_bench",
+        "kormedmcqa",
+        "mmlu"
+      ]
+    },
+    "task_type": {
+      "classes_": [
+        "knowledge",
+        "korean",
+        "language",
+        "other",
+        "reasoning"
+      ]
+    }
+  }
+}

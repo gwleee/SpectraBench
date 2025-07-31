@@ -1,0 +1,886 @@
+2025-07-29 04:11:20,816 - INFO - WandB run initialized: Llama-3.1-8B_20250729_041118 (ID: fea3999e)
+Fetching 17 files: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████| 17/17 [00:00<00:00, 113721.16it/s]
+2025-07-29 04:11:21,127 - INFO - Llama-3.1-8B_harness_1: Processing task 1/10: kmmlu
+2025-07-29 04:11:21,127 - INFO - Llama-3.1-8B_harness_1: Task 'kmmlu' will use num_fewshot=5
+2025-07-29 04:11:21,258 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'kmmlu' with num_fewshot=5
+2025-07-29 04:11:21,260 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:03<00:00,  1.28it/s]
+2025-07-29 04:12:39,851 - WARNING - Overwriting default num_fewshot of kmmlu_civil_engineering from None to 5
+2025-07-29 04:12:39,851 - WARNING - Overwriting default num_fewshot of kmmlu_materials_engineering from None to 5
+2025-07-29 04:12:39,851 - WARNING - Overwriting default num_fewshot of kmmlu_chemical_engineering from None to 5
+2025-07-29 04:12:39,851 - WARNING - Overwriting default num_fewshot of kmmlu_ecology from None to 5
+2025-07-29 04:12:39,851 - WARNING - Overwriting default num_fewshot of kmmlu_math from None to 5
+2025-07-29 04:12:39,852 - WARNING - Overwriting default num_fewshot of kmmlu_electrical_engineering from None to 5
+2025-07-29 04:12:39,852 - WARNING - Overwriting default num_fewshot of kmmlu_biology from None to 5
+2025-07-29 04:12:39,852 - WARNING - Overwriting default num_fewshot of kmmlu_mechanical_engineering from None to 5
+2025-07-29 04:12:39,852 - WARNING - Overwriting default num_fewshot of kmmlu_information_technology from None to 5
+2025-07-29 04:12:39,852 - WARNING - Overwriting default num_fewshot of kmmlu_chemistry from None to 5
+2025-07-29 04:12:39,852 - WARNING - Overwriting default num_fewshot of kmmlu_computer_science from None to 5
+2025-07-29 04:12:39,852 - WARNING - Overwriting default num_fewshot of kmmlu_agricultural_sciences from None to 5
+2025-07-29 04:12:39,853 - WARNING - Overwriting default num_fewshot of kmmlu_patent from None to 5
+2025-07-29 04:12:39,853 - WARNING - Overwriting default num_fewshot of kmmlu_interior_architecture_and_design from None to 5
+2025-07-29 04:12:39,853 - WARNING - Overwriting default num_fewshot of kmmlu_real_estate from None to 5
+2025-07-29 04:12:39,853 - WARNING - Overwriting default num_fewshot of kmmlu_food_processing from None to 5
+2025-07-29 04:12:39,853 - WARNING - Overwriting default num_fewshot of kmmlu_public_safety from None to 5
+2025-07-29 04:12:39,853 - WARNING - Overwriting default num_fewshot of kmmlu_refrigerating_machinery from None to 5
+2025-07-29 04:12:39,853 - WARNING - Overwriting default num_fewshot of kmmlu_health from None to 5
+2025-07-29 04:12:39,853 - WARNING - Overwriting default num_fewshot of kmmlu_marketing from None to 5
+2025-07-29 04:12:39,854 - WARNING - Overwriting default num_fewshot of kmmlu_fashion from None to 5
+2025-07-29 04:12:39,854 - WARNING - Overwriting default num_fewshot of kmmlu_construction from None to 5
+2025-07-29 04:12:39,854 - WARNING - Overwriting default num_fewshot of kmmlu_environmental_science from None to 5
+2025-07-29 04:12:39,854 - WARNING - Overwriting default num_fewshot of kmmlu_electronics_engineering from None to 5
+2025-07-29 04:12:39,854 - WARNING - Overwriting default num_fewshot of kmmlu_industrial_engineer from None to 5
+2025-07-29 04:12:39,854 - WARNING - Overwriting default num_fewshot of kmmlu_geomatics from None to 5
+2025-07-29 04:12:39,854 - WARNING - Overwriting default num_fewshot of kmmlu_railway_and_automotive_engineering from None to 5
+2025-07-29 04:12:39,855 - WARNING - Overwriting default num_fewshot of kmmlu_maritime_engineering from None to 5
+2025-07-29 04:12:39,855 - WARNING - Overwriting default num_fewshot of kmmlu_nondestructive_testing from None to 5
+2025-07-29 04:12:39,855 - WARNING - Overwriting default num_fewshot of kmmlu_energy_management from None to 5
+2025-07-29 04:12:39,855 - WARNING - Overwriting default num_fewshot of kmmlu_telecommunications_and_wireless_technology from None to 5
+2025-07-29 04:12:39,855 - WARNING - Overwriting default num_fewshot of kmmlu_gas_technology_and_engineering from None to 5
+2025-07-29 04:12:39,855 - WARNING - Overwriting default num_fewshot of kmmlu_machine_design_and_manufacturing from None to 5
+2025-07-29 04:12:39,855 - WARNING - Overwriting default num_fewshot of kmmlu_aviation_engineering_and_maintenance from None to 5
+2025-07-29 04:12:39,855 - WARNING - Overwriting default num_fewshot of kmmlu_korean_history from None to 5
+2025-07-29 04:12:39,856 - WARNING - Overwriting default num_fewshot of kmmlu_taxation from None to 5
+2025-07-29 04:12:39,856 - WARNING - Overwriting default num_fewshot of kmmlu_management from None to 5
+2025-07-29 04:12:39,856 - WARNING - Overwriting default num_fewshot of kmmlu_accounting from None to 5
+2025-07-29 04:12:39,856 - WARNING - Overwriting default num_fewshot of kmmlu_criminal_law from None to 5
+2025-07-29 04:12:39,856 - WARNING - Overwriting default num_fewshot of kmmlu_law from None to 5
+2025-07-29 04:12:39,856 - WARNING - Overwriting default num_fewshot of kmmlu_psychology from None to 5
+2025-07-29 04:12:39,856 - WARNING - Overwriting default num_fewshot of kmmlu_political_science_and_sociology from None to 5
+2025-07-29 04:12:39,856 - WARNING - Overwriting default num_fewshot of kmmlu_economics from None to 5
+2025-07-29 04:12:39,857 - WARNING - Overwriting default num_fewshot of kmmlu_social_welfare from None to 5
+2025-07-29 04:12:39,857 - WARNING - Overwriting default num_fewshot of kmmlu_education from None to 5
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.21it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.26it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.62it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.90it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 300/300 [00:01<00:00, 170.29it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.91it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.46it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 161.89it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.01it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 600/600 [00:03<00:00, 170.09it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.94it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.83it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.21it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.67it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 200/200 [00:01<00:00, 168.40it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.01it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.57it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 171.65it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.72it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 171.73it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 160.14it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.22it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.21it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.99it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.59it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.95it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.44it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 600/600 [00:03<00:00, 171.01it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.85it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.76it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.55it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 160.19it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.74it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.89it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.50it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 200/200 [00:01<00:00, 169.63it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.05it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.05it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 200/200 [00:01<00:00, 169.30it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.13it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 170.50it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 300/300 [00:01<00:00, 168.91it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 130/130 [00:00<00:00, 168.73it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.69it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.15it/s]
+Running loglikelihood requests: 100%|███████████████████████████████████████████████████████████████████████████████████████| 140120/140120 [36:37<00:00, 63.77it/s]
+2025-07-29 04:58:06,868 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'kmmlu' with 50 subtasks
+2025-07-29 04:58:07,099 - INFO -
+============================================================
+2025-07-29 04:58:07,100 - INFO - Task 'kmmlu' Results:
+2025-07-29 04:58:07,100 - INFO - ============================================================
+2025-07-29 04:58:07,100 - INFO -   kmmlu:
+2025-07-29 04:58:07,100 - INFO -     - accuracy: 0.4057
+2025-07-29 04:58:07,100 - INFO -   kmmlu_applied_science:
+2025-07-29 04:58:07,100 - INFO -     - accuracy: 0.3810
+2025-07-29 04:58:07,100 - INFO -   kmmlu_aviation_engineering_and_maintenance:
+2025-07-29 04:58:07,101 - INFO -     - accuracy: 0.3570
+2025-07-29 04:58:07,101 - INFO -   kmmlu_electronics_engineering:
+2025-07-29 04:58:07,102 - INFO -     - accuracy: 0.4710
+2025-07-29 04:58:07,102 - INFO -   kmmlu_energy_management:
+2025-07-29 04:58:07,102 - INFO -     - accuracy: 0.3110
+2025-07-29 04:58:07,102 - INFO -   kmmlu_environmental_science:
+2025-07-29 04:58:07,102 - INFO -     - accuracy: 0.2930
+2025-07-29 04:58:07,102 - INFO -   kmmlu_gas_technology_and_engineering:
+2025-07-29 04:58:07,102 - INFO -     - accuracy: 0.2980
+2025-07-29 04:58:07,103 - INFO -   kmmlu_geomatics:
+2025-07-29 04:58:07,103 - INFO -     - accuracy: 0.3730
+2025-07-29 04:58:07,103 - INFO -   kmmlu_industrial_engineer:
+2025-07-29 04:58:07,103 - INFO -     - accuracy: 0.4020
+2025-07-29 04:58:07,103 - INFO -   kmmlu_machine_design_and_manufacturing:
+2025-07-29 04:58:07,103 - INFO -     - accuracy: 0.4080
+2025-07-29 04:58:07,103 - INFO -   kmmlu_maritime_engineering:
+2025-07-29 04:58:07,103 - INFO -     - accuracy: 0.4167
+2025-07-29 04:58:07,103 - INFO -   kmmlu_nondestructive_testing:
+2025-07-29 04:58:07,104 - INFO -     - accuracy: 0.3940
+2025-07-29 04:58:07,104 - INFO -   kmmlu_railway_and_automotive_engineering:
+2025-07-29 04:58:07,104 - INFO -     - accuracy: 0.3420
+2025-07-29 04:58:07,104 - INFO -   kmmlu_telecommunications_and_wireless_technology:
+2025-07-29 04:58:07,104 - INFO -     - accuracy: 0.5210
+2025-07-29 04:58:07,104 - INFO -   kmmlu_humss:
+2025-07-29 04:58:07,104 - INFO -     - accuracy: 0.4117
+2025-07-29 04:58:07,104 - INFO -   kmmlu_accounting:
+2025-07-29 04:58:07,104 - INFO -     - accuracy: 0.3500
+2025-07-29 04:58:07,105 - INFO -   kmmlu_criminal_law:
+2025-07-29 04:58:07,105 - INFO -     - accuracy: 0.2750
+2025-07-29 04:58:07,105 - INFO -   kmmlu_economics:
+2025-07-29 04:58:07,105 - INFO -     - accuracy: 0.4462
+2025-07-29 04:58:07,105 - INFO -   kmmlu_education:
+2025-07-29 04:58:07,105 - INFO -     - accuracy: 0.5300
+2025-07-29 04:58:07,105 - INFO -   kmmlu_korean_history:
+2025-07-29 04:58:07,105 - INFO -     - accuracy: 0.3100
+2025-07-29 04:58:07,105 - INFO -   kmmlu_law:
+2025-07-29 04:58:07,106 - INFO -     - accuracy: 0.3770
+2025-07-29 04:58:07,106 - INFO -   kmmlu_management:
+2025-07-29 04:58:07,106 - INFO -     - accuracy: 0.4790
+2025-07-29 04:58:07,106 - INFO -   kmmlu_political_science_and_sociology:
+2025-07-29 04:58:07,106 - INFO -     - accuracy: 0.4367
+2025-07-29 04:58:07,106 - INFO -   kmmlu_psychology:
+2025-07-29 04:58:07,106 - INFO -     - accuracy: 0.3610
+2025-07-29 04:58:07,106 - INFO -   kmmlu_social_welfare:
+2025-07-29 04:58:07,106 - INFO -     - accuracy: 0.4680
+2025-07-29 04:58:07,107 - INFO -   kmmlu_taxation:
+2025-07-29 04:58:07,107 - INFO -     - accuracy: 0.3200
+2025-07-29 04:58:07,107 - INFO -   kmmlu_other:
+2025-07-29 04:58:07,107 - INFO -     - accuracy: 0.4060
+2025-07-29 04:58:07,107 - INFO -   kmmlu_agricultural_sciences:
+2025-07-29 04:58:07,107 - INFO -     - accuracy: 0.3160
+2025-07-29 04:58:07,107 - INFO -   kmmlu_construction:
+2025-07-29 04:58:07,107 - INFO -     - accuracy: 0.3390
+2025-07-29 04:58:07,107 - INFO -   kmmlu_fashion:
+2025-07-29 04:58:07,108 - INFO -     - accuracy: 0.4240
+2025-07-29 04:58:07,108 - INFO -   kmmlu_food_processing:
+2025-07-29 04:58:07,108 - INFO -     - accuracy: 0.3490
+2025-07-29 04:58:07,108 - INFO -   kmmlu_health:
+2025-07-29 04:58:07,108 - INFO -     - accuracy: 0.5200
+2025-07-29 04:58:07,108 - INFO -   kmmlu_interior_architecture_and_design:
+2025-07-29 04:58:07,108 - INFO -     - accuracy: 0.4630
+2025-07-29 04:58:07,108 - INFO -   kmmlu_marketing:
+2025-07-29 04:58:07,108 - INFO -     - accuracy: 0.7020
+2025-07-29 04:58:07,109 - INFO -   kmmlu_patent:
+2025-07-29 04:58:07,109 - INFO -     - accuracy: 0.4200
+2025-07-29 04:58:07,109 - INFO -   kmmlu_public_safety:
+2025-07-29 04:58:07,109 - INFO -     - accuracy: 0.3240
+2025-07-29 04:58:07,109 - INFO -   kmmlu_real_estate:
+2025-07-29 04:58:07,109 - INFO -     - accuracy: 0.3900
+2025-07-29 04:58:07,109 - INFO -   kmmlu_refrigerating_machinery:
+2025-07-29 04:58:07,109 - INFO -     - accuracy: 0.3210
+2025-07-29 04:58:07,109 - INFO -   kmmlu_stem:
+2025-07-29 04:58:07,110 - INFO -     - accuracy: 0.4312
+2025-07-29 04:58:07,110 - INFO -   kmmlu_biology:
+2025-07-29 04:58:07,110 - INFO -     - accuracy: 0.3470
+2025-07-29 04:58:07,110 - INFO -   kmmlu_chemical_engineering:
+2025-07-29 04:58:07,110 - INFO -     - accuracy: 0.3980
+2025-07-29 04:58:07,110 - INFO -   kmmlu_chemistry:
+2025-07-29 04:58:07,110 - INFO -     - accuracy: 0.4267
+2025-07-29 04:58:07,110 - INFO -   kmmlu_civil_engineering:
+2025-07-29 04:58:07,110 - INFO -     - accuracy: 0.4000
+2025-07-29 04:58:07,111 - INFO -   kmmlu_computer_science:
+2025-07-29 04:58:07,111 - INFO -     - accuracy: 0.6690
+2025-07-29 04:58:07,111 - INFO -   kmmlu_ecology:
+2025-07-29 04:58:07,111 - INFO -     - accuracy: 0.4020
+2025-07-29 04:58:07,111 - INFO -   kmmlu_electrical_engineering:
+2025-07-29 04:58:07,111 - INFO -     - accuracy: 0.3210
+2025-07-29 04:58:07,111 - INFO -   kmmlu_information_technology:
+2025-07-29 04:58:07,111 - INFO -     - accuracy: 0.6390
+2025-07-29 04:58:07,111 - INFO -   kmmlu_materials_engineering:
+2025-07-29 04:58:07,112 - INFO -     - accuracy: 0.4070
+2025-07-29 04:58:07,112 - INFO -   kmmlu_math:
+2025-07-29 04:58:07,112 - INFO -     - accuracy: 0.2700
+2025-07-29 04:58:07,112 - INFO -   kmmlu_mechanical_engineering:
+2025-07-29 04:58:07,112 - INFO -     - accuracy: 0.3490
+2025-07-29 04:58:07,112 - INFO - ============================================================
+
+2025-07-29 04:58:07,151 - INFO - Llama-3.1-8B_harness_1: Processing task 2/10: kmmlu_hard
+2025-07-29 04:58:07,152 - INFO - Llama-3.1-8B_harness_1: Task 'kmmlu_hard' will use num_fewshot=5
+2025-07-29 04:58:07,279 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'kmmlu_hard' with num_fewshot=5
+2025-07-29 04:58:07,280 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.41it/s]
+2025-07-29 04:59:27,100 - WARNING - Overwriting default num_fewshot of kmmlu_hard_electrical_engineering from None to 5
+2025-07-29 04:59:27,101 - WARNING - Overwriting default num_fewshot of kmmlu_hard_mechanical_engineering from None to 5
+2025-07-29 04:59:27,101 - WARNING - Overwriting default num_fewshot of kmmlu_hard_information_technology from None to 5
+2025-07-29 04:59:27,101 - WARNING - Overwriting default num_fewshot of kmmlu_hard_civil_engineering from None to 5
+2025-07-29 04:59:27,101 - WARNING - Overwriting default num_fewshot of kmmlu_hard_biology from None to 5
+2025-07-29 04:59:27,101 - WARNING - Overwriting default num_fewshot of kmmlu_hard_chemical_engineering from None to 5
+2025-07-29 04:59:27,101 - WARNING - Overwriting default num_fewshot of kmmlu_hard_chemistry from None to 5
+2025-07-29 04:59:27,101 - WARNING - Overwriting default num_fewshot of kmmlu_hard_computer_science from None to 5
+2025-07-29 04:59:27,101 - WARNING - Overwriting default num_fewshot of kmmlu_hard_materials_engineering from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_math from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_ecology from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_agricultural_sciences from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_health from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_construction from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_refrigerating_machinery from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_patent from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_fashion from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_real_estate from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_interior_architecture_and_design from None to 5
+2025-07-29 04:59:27,102 - WARNING - Overwriting default num_fewshot of kmmlu_hard_public_safety from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_marketing from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_food_processing from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_railway_and_automotive_engineering from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_energy_management from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_geomatics from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_aviation_engineering_and_maintenance from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_maritime_engineering from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_telecommunications_and_wireless_technology from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_gas_technology_and_engineering from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_electronics_engineering from None to 5
+2025-07-29 04:59:27,103 - WARNING - Overwriting default num_fewshot of kmmlu_hard_machine_design_and_manufacturing from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_nondestructive_testing from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_environmental_science from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_industrial_engineer from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_law from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_management from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_psychology from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_education from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_taxation from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_accounting from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_social_welfare from None to 5
+2025-07-29 04:59:27,104 - WARNING - Overwriting default num_fewshot of kmmlu_hard_political_science_and_sociology from None to 5
+2025-07-29 04:59:27,105 - WARNING - Overwriting default num_fewshot of kmmlu_hard_criminal_law from None to 5
+2025-07-29 04:59:27,105 - WARNING - Overwriting default num_fewshot of kmmlu_hard_economics from None to 5
+2025-07-29 04:59:27,105 - WARNING - Overwriting default num_fewshot of kmmlu_hard_korean_history from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.65it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.54it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.81it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.00it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.38it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.42it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.62it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.12it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.63it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.53it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.81it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.53it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 23/23 [00:00<00:00, 170.61it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.61it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.58it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 51/51 [00:00<00:00, 170.46it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.61it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 89/89 [00:00<00:00, 170.22it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.38it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.66it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.58it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.20it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 147.14it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.16it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.21it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.89it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.73it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.56it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.25it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.49it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.07it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.16it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.73it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.89it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.30it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.53it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.03it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 23/23 [00:00<00:00, 168.85it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 96/96 [00:00<00:00, 168.77it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 46/46 [00:00<00:00, 169.14it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.96it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 90/90 [00:00<00:00, 169.95it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.18it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 169.54it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 44/44 [00:00<00:00, 169.29it/s]
+Running loglikelihood requests: 100%|█████████████████████████████████████████████████████████████████████████████████████████| 16416/16416 [04:37<00:00, 59.20it/s]
+2025-07-29 05:05:24,341 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'kmmlu_hard' with 50 subtasks
+2025-07-29 05:05:24,484 - INFO -
+============================================================
+2025-07-29 05:05:24,485 - INFO - Task 'kmmlu_hard' Results:
+2025-07-29 05:05:24,485 - INFO - ============================================================
+2025-07-29 05:05:24,485 - INFO -   kmmlu_hard:
+2025-07-29 05:05:24,485 - INFO -     - accuracy: 0.2083
+2025-07-29 05:05:24,485 - INFO -   kmmlu_hard_applied_science:
+2025-07-29 05:05:24,485 - INFO -     - accuracy: 0.2150
+2025-07-29 05:05:24,485 - INFO -   kmmlu_hard_aviation_engineering_and_maintenance:
+2025-07-29 05:05:24,485 - INFO -     - accuracy: 0.1700
+2025-07-29 05:05:24,486 - INFO -   kmmlu_hard_electronics_engineering:
+2025-07-29 05:05:24,486 - INFO -     - accuracy: 0.2400
+2025-07-29 05:05:24,486 - INFO -   kmmlu_hard_energy_management:
+2025-07-29 05:05:24,486 - INFO -     - accuracy: 0.3100
+2025-07-29 05:05:24,486 - INFO -   kmmlu_hard_environmental_science:
+2025-07-29 05:05:24,486 - INFO -     - accuracy: 0.1500
+2025-07-29 05:05:24,486 - INFO -   kmmlu_hard_gas_technology_and_engineering:
+2025-07-29 05:05:24,486 - INFO -     - accuracy: 0.1400
+2025-07-29 05:05:24,487 - INFO -   kmmlu_hard_geomatics:
+2025-07-29 05:05:24,487 - INFO -     - accuracy: 0.2200
+2025-07-29 05:05:24,487 - INFO -   kmmlu_hard_industrial_engineer:
+2025-07-29 05:05:24,487 - INFO -     - accuracy: 0.1800
+2025-07-29 05:05:24,487 - INFO -   kmmlu_hard_machine_design_and_manufacturing:
+2025-07-29 05:05:24,487 - INFO -     - accuracy: 0.2300
+2025-07-29 05:05:24,487 - INFO -   kmmlu_hard_maritime_engineering:
+2025-07-29 05:05:24,487 - INFO -     - accuracy: 0.2000
+2025-07-29 05:05:24,487 - INFO -   kmmlu_hard_nondestructive_testing:
+2025-07-29 05:05:24,487 - INFO -     - accuracy: 0.2700
+2025-07-29 05:05:24,488 - INFO -   kmmlu_hard_railway_and_automotive_engineering:
+2025-07-29 05:05:24,488 - INFO -     - accuracy: 0.2200
+2025-07-29 05:05:24,488 - INFO -   kmmlu_hard_telecommunications_and_wireless_technology:
+2025-07-29 05:05:24,488 - INFO -     - accuracy: 0.2500
+2025-07-29 05:05:24,488 - INFO -   kmmlu_hard_humss:
+2025-07-29 05:05:24,488 - INFO -     - accuracy: 0.2081
+2025-07-29 05:05:24,518 - INFO -   kmmlu_hard_accounting:
+2025-07-29 05:05:24,519 - INFO -     - accuracy: 0.1957
+2025-07-29 05:05:24,519 - INFO -   kmmlu_hard_criminal_law:
+2025-07-29 05:05:24,519 - INFO -     - accuracy: 0.2300
+2025-07-29 05:05:24,519 - INFO -   kmmlu_hard_economics:
+2025-07-29 05:05:24,519 - INFO -     - accuracy: 0.2143
+2025-07-29 05:05:24,519 - INFO -   kmmlu_hard_education:
+2025-07-29 05:05:24,519 - INFO -     - accuracy: 0.0870
+2025-07-29 05:05:24,519 - INFO -   kmmlu_hard_korean_history:
+2025-07-29 05:05:24,519 - INFO -     - accuracy: 0.1591
+2025-07-29 05:05:24,520 - INFO -   kmmlu_hard_law:
+2025-07-29 05:05:24,520 - INFO -     - accuracy: 0.2200
+2025-07-29 05:05:24,520 - INFO -   kmmlu_hard_management:
+2025-07-29 05:05:24,520 - INFO -     - accuracy: 0.2600
+2025-07-29 05:05:24,520 - INFO -   kmmlu_hard_political_science_and_sociology:
+2025-07-29 05:05:24,520 - INFO -     - accuracy: 0.1889
+2025-07-29 05:05:24,520 - INFO -   kmmlu_hard_psychology:
+2025-07-29 05:05:24,520 - INFO -     - accuracy: 0.1500
+2025-07-29 05:05:24,521 - INFO -   kmmlu_hard_social_welfare:
+2025-07-29 05:05:24,521 - INFO -     - accuracy: 0.2300
+2025-07-29 05:05:24,521 - INFO -   kmmlu_hard_taxation:
+2025-07-29 05:05:24,521 - INFO -     - accuracy: 0.2292
+2025-07-29 05:05:24,521 - INFO -   kmmlu_hard_other:
+2025-07-29 05:05:24,521 - INFO -     - accuracy: 0.2035
+2025-07-29 05:05:24,521 - INFO -   kmmlu_hard_agricultural_sciences:
+2025-07-29 05:05:24,521 - INFO -     - accuracy: 0.2000
+2025-07-29 05:05:24,521 - INFO -   kmmlu_hard_construction:
+2025-07-29 05:05:24,522 - INFO -     - accuracy: 0.1900
+2025-07-29 05:05:24,522 - INFO -   kmmlu_hard_fashion:
+2025-07-29 05:05:24,522 - INFO -     - accuracy: 0.2700
+2025-07-29 05:05:24,522 - INFO -   kmmlu_hard_food_processing:
+2025-07-29 05:05:24,522 - INFO -     - accuracy: 0.1400
+2025-07-29 05:05:24,522 - INFO -   kmmlu_hard_health:
+2025-07-29 05:05:24,522 - INFO -     - accuracy: 0.0435
+2025-07-29 05:05:24,522 - INFO -   kmmlu_hard_interior_architecture_and_design:
+2025-07-29 05:05:24,522 - INFO -     - accuracy: 0.2500
+2025-07-29 05:05:24,523 - INFO -   kmmlu_hard_marketing:
+2025-07-29 05:05:24,523 - INFO -     - accuracy: 0.2000
+2025-07-29 05:05:24,523 - INFO -   kmmlu_hard_patent:
+2025-07-29 05:05:24,523 - INFO -     - accuracy: 0.2157
+2025-07-29 05:05:24,523 - INFO -   kmmlu_hard_public_safety:
+2025-07-29 05:05:24,523 - INFO -     - accuracy: 0.1600
+2025-07-29 05:05:24,523 - INFO -   kmmlu_hard_real_estate:
+2025-07-29 05:05:24,523 - INFO -     - accuracy: 0.2584
+2025-07-29 05:05:24,523 - INFO -   kmmlu_hard_refrigerating_machinery:
+2025-07-29 05:05:24,524 - INFO -     - accuracy: 0.2000
+2025-07-29 05:05:24,524 - INFO -   kmmlu_hard_stem:
+2025-07-29 05:05:24,524 - INFO -     - accuracy: 0.2055
+2025-07-29 05:05:24,524 - INFO -   kmmlu_hard_biology:
+2025-07-29 05:05:24,524 - INFO -     - accuracy: 0.1900
+2025-07-29 05:05:24,524 - INFO -   kmmlu_hard_chemical_engineering:
+2025-07-29 05:05:24,524 - INFO -     - accuracy: 0.1700
+2025-07-29 05:05:24,524 - INFO -   kmmlu_hard_chemistry:
+2025-07-29 05:05:24,524 - INFO -     - accuracy: 0.2900
+2025-07-29 05:05:24,525 - INFO -   kmmlu_hard_civil_engineering:
+2025-07-29 05:05:24,525 - INFO -     - accuracy: 0.2200
+2025-07-29 05:05:24,525 - INFO -   kmmlu_hard_computer_science:
+2025-07-29 05:05:24,525 - INFO -     - accuracy: 0.2300
+2025-07-29 05:05:24,525 - INFO -   kmmlu_hard_ecology:
+2025-07-29 05:05:24,525 - INFO -     - accuracy: 0.1600
+2025-07-29 05:05:24,525 - INFO -   kmmlu_hard_electrical_engineering:
+2025-07-29 05:05:24,525 - INFO -     - accuracy: 0.1700
+2025-07-29 05:05:24,525 - INFO -   kmmlu_hard_information_technology:
+2025-07-29 05:05:24,526 - INFO -     - accuracy: 0.2000
+2025-07-29 05:05:24,526 - INFO -   kmmlu_hard_materials_engineering:
+2025-07-29 05:05:24,526 - INFO -     - accuracy: 0.1800
+2025-07-29 05:05:24,526 - INFO -   kmmlu_hard_math:
+2025-07-29 05:05:24,526 - INFO -     - accuracy: 0.2200
+2025-07-29 05:05:24,526 - INFO -   kmmlu_hard_mechanical_engineering:
+2025-07-29 05:05:24,526 - INFO -     - accuracy: 0.2300
+2025-07-29 05:05:24,526 - INFO - ============================================================
+
+2025-07-29 05:05:24,567 - INFO - Llama-3.1-8B_harness_1: Processing task 3/10: haerae
+2025-07-29 05:05:24,569 - INFO - Llama-3.1-8B_harness_1: Task 'haerae' will use num_fewshot=5
+2025-07-29 05:05:24,695 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'haerae' with num_fewshot=5
+2025-07-29 05:05:24,696 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.42it/s]
+2025-07-29 05:05:46,432 - WARNING - Overwriting default num_fewshot of haerae_general_knowledge from None to 5
+2025-07-29 05:05:46,433 - WARNING - Overwriting default num_fewshot of haerae_history from None to 5
+2025-07-29 05:05:46,433 - WARNING - Overwriting default num_fewshot of haerae_loan_word from None to 5
+2025-07-29 05:05:46,433 - WARNING - Overwriting default num_fewshot of haerae_rare_word from None to 5
+2025-07-29 05:05:46,433 - WARNING - Overwriting default num_fewshot of haerae_standard_nomenclature from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 176/176 [00:00<00:00, 381.51it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 188/188 [00:00<00:00, 385.03it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 169/169 [00:00<00:00, 386.69it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 405/405 [00:01<00:00, 223.17it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 153/153 [00:00<00:00, 385.40it/s]
+Running loglikelihood requests: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 5455/5455 [05:41<00:00, 15.98it/s]
+2025-07-29 05:11:48,907 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'haerae' with 6 subtasks
+2025-07-29 05:11:49,053 - INFO -
+============================================================
+2025-07-29 05:11:49,053 - INFO - Task 'haerae' Results:
+2025-07-29 05:11:49,053 - INFO - ============================================================
+2025-07-29 05:11:49,053 - INFO -   haerae:
+2025-07-29 05:11:49,053 - INFO -     - accuracy: 0.6104
+2025-07-29 05:11:49,054 - INFO -     - accuracy_norm: 0.6104
+2025-07-29 05:11:49,054 - INFO -   haerae_general_knowledge:
+2025-07-29 05:11:49,054 - INFO -     - accuracy: 0.3807
+2025-07-29 05:11:49,054 - INFO -     - accuracy_norm: 0.3807
+2025-07-29 05:11:49,054 - INFO -   haerae_history:
+2025-07-29 05:11:49,054 - INFO -     - accuracy: 0.5426
+2025-07-29 05:11:49,054 - INFO -     - accuracy_norm: 0.5426
+2025-07-29 05:11:49,054 - INFO -   haerae_loan_word:
+2025-07-29 05:11:49,055 - INFO -     - accuracy: 0.6627
+2025-07-29 05:11:49,055 - INFO -     - accuracy_norm: 0.6627
+2025-07-29 05:11:49,055 - INFO -   haerae_rare_word:
+2025-07-29 05:11:49,055 - INFO -     - accuracy: 0.6741
+2025-07-29 05:11:49,055 - INFO -     - accuracy_norm: 0.6741
+2025-07-29 05:11:49,055 - INFO -   haerae_standard_nomenclature:
+2025-07-29 05:11:49,055 - INFO -     - accuracy: 0.7320
+2025-07-29 05:11:49,055 - INFO -     - accuracy_norm: 0.7320
+2025-07-29 05:11:49,055 - INFO - ============================================================
+
+2025-07-29 05:11:49,093 - INFO - Llama-3.1-8B_harness_1: Processing task 4/10: kobest
+2025-07-29 05:11:49,095 - INFO - Llama-3.1-8B_harness_1: Task 'kobest' will use num_fewshot=5
+2025-07-29 05:11:49,223 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'kobest' with num_fewshot=5
+2025-07-29 05:11:49,223 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.34it/s]
+2025-07-29 05:12:13,616 - WARNING - Overwriting default num_fewshot of kobest_boolq from None to 5
+2025-07-29 05:12:13,616 - WARNING - Overwriting default num_fewshot of kobest_copa from None to 5
+2025-07-29 05:12:13,617 - WARNING - Overwriting default num_fewshot of kobest_hellaswag from None to 5
+2025-07-29 05:12:13,617 - WARNING - Overwriting default num_fewshot of kobest_sentineg from None to 5
+2025-07-29 05:12:13,617 - WARNING - Overwriting default num_fewshot of kobest_wic from None to 5
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1404/1404 [00:04<00:00, 287.74it/s]
+  0%|                                                                                                                                      | 0/1000 [00:00<?, ?it/s]/home/gwlee/Benchmark/AIDE_Benchmark/code/lm-evaluation-harness/lm_eval/api/task.py:1157: Warning: Both target_delimiter and target start with a space. This may cause issues.
+  labeled_examples += self.sampler.get_context(
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00<00:00, 38504.23it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:01<00:00, 364.54it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 397/397 [00:00<00:00, 776.73it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1260/1260 [00:01<00:00, 768.08it/s]
+Running loglikelihood requests: 100%|█████████████████████████████████████████████████████████████████████████████████████████| 10122/10122 [09:47<00:00, 17.22it/s]
+2025-07-29 05:22:40,488 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'kobest' with 6 subtasks
+2025-07-29 05:22:40,636 - INFO -
+============================================================
+2025-07-29 05:22:40,636 - INFO - Task 'kobest' Results:
+2025-07-29 05:22:40,636 - INFO - ============================================================
+2025-07-29 05:22:40,636 - INFO -   kobest:
+2025-07-29 05:22:40,636 - INFO -     - accuracy: 0.7003
+2025-07-29 05:22:40,636 - INFO -     - accuracy_norm: 0.5900
+2025-07-29 05:22:40,637 - INFO -     - f1: 0.6901
+2025-07-29 05:22:40,637 - INFO -   kobest_boolq:
+2025-07-29 05:22:40,637 - INFO -     - accuracy: 0.8241
+2025-07-29 05:22:40,637 - INFO -     - f1: 0.8241
+2025-07-29 05:22:40,637 - INFO -   kobest_copa:
+2025-07-29 05:22:40,637 - INFO -     - accuracy: 0.7120
+2025-07-29 05:22:40,637 - INFO -     - f1: 0.7112
+2025-07-29 05:22:40,637 - INFO -   kobest_hellaswag:
+2025-07-29 05:22:40,638 - INFO -     - accuracy: 0.4520
+2025-07-29 05:22:40,638 - INFO -     - accuracy_norm: 0.5900
+2025-07-29 05:22:40,638 - INFO -     - f1: 0.4488
+2025-07-29 05:22:40,638 - INFO -   kobest_sentineg:
+2025-07-29 05:22:40,638 - INFO -     - accuracy: 0.9496
+2025-07-29 05:22:40,638 - INFO -     - f1: 0.9496
+2025-07-29 05:22:40,638 - INFO -   kobest_wic:
+2025-07-29 05:22:40,638 - INFO -     - accuracy: 0.5730
+2025-07-29 05:22:40,638 - INFO -     - f1: 0.5382
+2025-07-29 05:22:40,639 - INFO - ============================================================
+
+2025-07-29 05:22:40,677 - INFO - Llama-3.1-8B_harness_1: Processing task 5/10: csatqa
+2025-07-29 05:22:40,679 - INFO - Llama-3.1-8B_harness_1: Task 'csatqa' detected as zero-shot task
+2025-07-29 05:22:40,806 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'csatqa' with num_fewshot=0
+2025-07-29 05:22:40,806 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.41it/s]
+2025-07-29 05:22:57,761 - WARNING - Overwriting default num_fewshot of csatqa_gr from None to 0
+2025-07-29 05:22:57,762 - WARNING - Overwriting default num_fewshot of csatqa_li from None to 0
+2025-07-29 05:22:57,762 - WARNING - Overwriting default num_fewshot of csatqa_rch from None to 0
+2025-07-29 05:22:57,762 - WARNING - Overwriting default num_fewshot of csatqa_rcs from None to 0
+2025-07-29 05:22:57,762 - WARNING - Overwriting default num_fewshot of csatqa_rcss from None to 0
+2025-07-29 05:22:57,763 - WARNING - Overwriting default num_fewshot of csatqa_wr from None to 0
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 25/25 [00:00<00:00, 1797.48it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 37/37 [00:00<00:00, 1708.79it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 35/35 [00:00<00:00, 1843.58it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 37/37 [00:00<00:00, 1850.71it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 1861.57it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 11/11 [00:00<00:00, 1784.81it/s]
+Running loglikelihood requests: 100%|█████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:59<00:00,  7.80it/s]
+2025-07-29 05:25:07,246 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'csatqa' with 7 subtasks
+2025-07-29 05:25:07,397 - INFO -
+============================================================
+2025-07-29 05:25:07,397 - INFO - Task 'csatqa' Results:
+2025-07-29 05:25:07,397 - INFO - ============================================================
+2025-07-29 05:25:07,397 - INFO -   csatqa:
+2025-07-29 05:25:07,397 - INFO -     - accuracy: 0.2834
+2025-07-29 05:25:07,397 - INFO -     - accuracy_norm: 0.2834
+2025-07-29 05:25:07,397 - INFO -   csatqa_gr:
+2025-07-29 05:25:07,398 - INFO -     - accuracy: 0.0800
+2025-07-29 05:25:07,398 - INFO -     - accuracy_norm: 0.0800
+2025-07-29 05:25:07,398 - INFO -   csatqa_li:
+2025-07-29 05:25:07,398 - INFO -     - accuracy: 0.3243
+2025-07-29 05:25:07,398 - INFO -     - accuracy_norm: 0.3243
+2025-07-29 05:25:07,398 - INFO -   csatqa_rch:
+2025-07-29 05:25:07,398 - INFO -     - accuracy: 0.3429
+2025-07-29 05:25:07,398 - INFO -     - accuracy_norm: 0.3429
+2025-07-29 05:25:07,399 - INFO -   csatqa_rcs:
+2025-07-29 05:25:07,399 - INFO -     - accuracy: 0.2973
+2025-07-29 05:25:07,399 - INFO -     - accuracy_norm: 0.2973
+2025-07-29 05:25:07,399 - INFO -   csatqa_rcss:
+2025-07-29 05:25:07,399 - INFO -     - accuracy: 0.3095
+2025-07-29 05:25:07,399 - INFO -     - accuracy_norm: 0.3095
+2025-07-29 05:25:07,399 - INFO -   csatqa_wr:
+2025-07-29 05:25:07,399 - INFO -     - accuracy: 0.2727
+2025-07-29 05:25:07,399 - INFO -     - accuracy_norm: 0.2727
+2025-07-29 05:25:07,400 - INFO - ============================================================
+
+2025-07-29 05:25:07,441 - INFO - Llama-3.1-8B_harness_1: Processing task 6/10: kormedmcqa
+2025-07-29 05:25:07,442 - INFO - Llama-3.1-8B_harness_1: Task 'kormedmcqa' will use num_fewshot=5
+2025-07-29 05:25:07,568 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'kormedmcqa' with num_fewshot=5
+2025-07-29 05:25:07,568 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.40it/s]
+2025-07-29 05:25:32,310 - WARNING - Overwriting default num_fewshot of kormedmcqa_doctor from None to 5
+2025-07-29 05:25:32,310 - WARNING - Overwriting default num_fewshot of kormedmcqa_nurse from None to 5
+2025-07-29 05:25:32,310 - WARNING - Overwriting default num_fewshot of kormedmcqa_pharm from None to 5
+2025-07-29 05:25:32,310 - WARNING - Overwriting default num_fewshot of kormedmcqa_dentist from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 435/435 [00:03<00:00, 129.86it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 878/878 [00:06<00:00, 131.17it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 885/885 [00:06<00:00, 131.33it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 811/811 [00:06<00:00, 132.25it/s]
+Running generate_until requests:   0%|                                                                                                     | 0/3009 [00:00<?, ?it/s]/home/gwlee/miniconda3/envs/science/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:631: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/home/gwlee/miniconda3/envs/science/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:636: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+Running generate_until requests: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 3009/3009 [05:30<00:00,  9.10it/s]
+2025-07-29 05:31:31,992 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'kormedmcqa' with 5 subtasks
+2025-07-29 05:31:32,150 - INFO -
+============================================================
+2025-07-29 05:31:32,150 - INFO - Task 'kormedmcqa' Results:
+2025-07-29 05:31:32,150 - INFO - ============================================================
+2025-07-29 05:31:32,151 - INFO -   kormedmcqa:
+2025-07-29 05:31:32,151 - INFO -     - exact_match: 0.4789
+2025-07-29 05:31:32,151 - INFO -   kormedmcqa_dentist:
+2025-07-29 05:31:32,151 - INFO -     - exact_match: 0.3872
+2025-07-29 05:31:32,152 - INFO -   kormedmcqa_doctor:
+2025-07-29 05:31:32,152 - INFO -     - exact_match: 0.4138
+2025-07-29 05:31:32,152 - INFO -   kormedmcqa_nurse:
+2025-07-29 05:31:32,152 - INFO -     - exact_match: 0.5661
+2025-07-29 05:31:32,152 - INFO -   kormedmcqa_pharm:
+2025-07-29 05:31:32,153 - INFO -     - exact_match: 0.5085
+2025-07-29 05:31:32,155 - INFO - ============================================================
+
+2025-07-29 05:31:32,193 - INFO - Llama-3.1-8B_harness_1: Processing task 7/10: mmlu
+2025-07-29 05:31:32,194 - INFO - Llama-3.1-8B_harness_1: Task 'mmlu' will use num_fewshot=5
+2025-07-29 05:31:32,322 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'mmlu' with num_fewshot=5
+2025-07-29 05:31:32,322 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.36it/s]
+2025-07-29 05:34:37,756 - WARNING - Overwriting default num_fewshot of mmlu_conceptual_physics from None to 5
+2025-07-29 05:34:37,756 - WARNING - Overwriting default num_fewshot of mmlu_high_school_statistics from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_astronomy from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_electrical_engineering from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_high_school_computer_science from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_college_mathematics from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_machine_learning from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_high_school_chemistry from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_high_school_biology from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_college_chemistry from None to 5
+2025-07-29 05:34:37,757 - WARNING - Overwriting default num_fewshot of mmlu_college_physics from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_high_school_physics from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_computer_security from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_abstract_algebra from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_high_school_mathematics from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_college_biology from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_college_computer_science from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_elementary_mathematics from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_anatomy from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_marketing from None to 5
+2025-07-29 05:34:37,758 - WARNING - Overwriting default num_fewshot of mmlu_global_facts from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_nutrition from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_virology from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_management from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_professional_medicine from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_medical_genetics from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_business_ethics from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_miscellaneous from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_college_medicine from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_human_aging from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_professional_accounting from None to 5
+2025-07-29 05:34:37,759 - WARNING - Overwriting default num_fewshot of mmlu_clinical_knowledge from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_high_school_microeconomics from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_high_school_government_and_politics from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_high_school_macroeconomics from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_public_relations from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_human_sexuality from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_sociology from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_security_studies from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_professional_psychology from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_econometrics from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_high_school_geography from None to 5
+2025-07-29 05:34:37,760 - WARNING - Overwriting default num_fewshot of mmlu_us_foreign_policy from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_high_school_psychology from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_jurisprudence from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_formal_logic from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_moral_scenarios from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_high_school_european_history from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_international_law from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_professional_law from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_logical_fallacies from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_world_religions from None to 5
+2025-07-29 05:34:37,761 - WARNING - Overwriting default num_fewshot of mmlu_moral_disputes from None to 5
+2025-07-29 05:34:37,762 - WARNING - Overwriting default num_fewshot of mmlu_high_school_world_history from None to 5
+2025-07-29 05:34:37,762 - WARNING - Overwriting default num_fewshot of mmlu_prehistory from None to 5
+2025-07-29 05:34:37,762 - WARNING - Overwriting default num_fewshot of mmlu_philosophy from None to 5
+2025-07-29 05:34:37,762 - WARNING - Overwriting default num_fewshot of mmlu_high_school_us_history from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 235/235 [00:01<00:00, 163.10it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 216/216 [00:01<00:00, 163.15it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 152/152 [00:00<00:00, 164.42it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 145/145 [00:00<00:00, 164.68it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 164.79it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 165.31it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 112/112 [00:00<00:00, 165.66it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 203/203 [00:01<00:00, 165.64it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 310/310 [00:01<00:00, 165.25it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 165.79it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 102/102 [00:00<00:00, 167.06it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 151/151 [00:00<00:00, 166.39it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.64it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.15it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 270/270 [00:01<00:00, 167.39it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 144/144 [00:00<00:00, 167.80it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.08it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 378/378 [00:02<00:00, 168.56it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 135/135 [00:00<00:00, 168.23it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 234/234 [00:01<00:00, 168.15it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.05it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 306/306 [00:01<00:00, 168.74it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 166/166 [00:00<00:00, 168.55it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 103/103 [00:00<00:00, 167.33it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 272/272 [00:01<00:00, 166.69it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.92it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.39it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 783/783 [00:04<00:00, 157.71it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 173/173 [00:01<00:00, 167.09it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 223/223 [00:01<00:00, 167.29it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 282/282 [00:01<00:00, 168.31it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 265/265 [00:01<00:00, 169.07it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 238/238 [00:01<00:00, 168.71it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:01<00:00, 168.44it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 390/390 [00:02<00:00, 169.09it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 110/110 [00:00<00:00, 169.09it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 131/131 [00:00<00:00, 170.47it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 201/201 [00:01<00:00, 168.15it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 245/245 [00:01<00:00, 167.96it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 612/612 [00:03<00:00, 169.09it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 114/114 [00:00<00:00, 168.95it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 198/198 [00:01<00:00, 170.31it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 170.33it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 545/545 [00:03<00:00, 170.93it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 108/108 [00:00<00:00, 171.94it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 126/126 [00:00<00:00, 171.23it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 895/895 [00:05<00:00, 170.36it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 165/165 [00:00<00:00, 165.99it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 121/121 [00:00<00:00, 169.89it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1534/1534 [00:09<00:00, 169.82it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 163/163 [00:00<00:00, 170.59it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 171/171 [00:01<00:00, 170.46it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 346/346 [00:02<00:00, 171.51it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 237/237 [00:01<00:00, 169.98it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 324/324 [00:01<00:00, 171.39it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 311/311 [00:01<00:00, 170.81it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 204/204 [00:01<00:00, 166.66it/s]
+Running loglikelihood requests: 100%|█████████████████████████████████████████████████████████████████████████████████████████| 56168/56168 [17:07<00:00, 54.64it/s]
+2025-07-29 05:56:53,948 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'mmlu' with 62 subtasks
+2025-07-29 05:56:54,097 - INFO -
+============================================================
+2025-07-29 05:56:54,097 - INFO - Task 'mmlu' Results:
+2025-07-29 05:56:54,097 - INFO - ============================================================
+2025-07-29 05:56:54,098 - INFO -   mmlu:
+2025-07-29 05:56:54,098 - INFO -     - accuracy: 0.6525
+2025-07-29 05:56:54,098 - INFO -   mmlu_humanities:
+2025-07-29 05:56:54,098 - INFO -     - accuracy: 0.6011
+2025-07-29 05:56:54,098 - INFO -   mmlu_formal_logic:
+2025-07-29 05:56:54,098 - INFO -     - accuracy: 0.4841
+2025-07-29 05:56:54,098 - INFO -   mmlu_high_school_european_history:
+2025-07-29 05:56:54,099 - INFO -     - accuracy: 0.7758
+2025-07-29 05:56:54,099 - INFO -   mmlu_high_school_us_history:
+2025-07-29 05:56:54,099 - INFO -     - accuracy: 0.8137
+2025-07-29 05:56:54,099 - INFO -   mmlu_high_school_world_history:
+2025-07-29 05:56:54,099 - INFO -     - accuracy: 0.8186
+2025-07-29 05:56:54,099 - INFO -   mmlu_international_law:
+2025-07-29 05:56:54,099 - INFO -     - accuracy: 0.8182
+2025-07-29 05:56:54,099 - INFO -   mmlu_jurisprudence:
+2025-07-29 05:56:54,099 - INFO -     - accuracy: 0.7315
+2025-07-29 05:56:54,100 - INFO -   mmlu_logical_fallacies:
+2025-07-29 05:56:54,100 - INFO -     - accuracy: 0.7362
+2025-07-29 05:56:54,100 - INFO -   mmlu_moral_disputes:
+2025-07-29 05:56:54,100 - INFO -     - accuracy: 0.7283
+2025-07-29 05:56:54,100 - INFO -   mmlu_moral_scenarios:
+2025-07-29 05:56:54,100 - INFO -     - accuracy: 0.4156
+2025-07-29 05:56:54,100 - INFO -   mmlu_philosophy:
+2025-07-29 05:56:54,100 - INFO -     - accuracy: 0.7363
+2025-07-29 05:56:54,100 - INFO -   mmlu_prehistory:
+2025-07-29 05:56:54,101 - INFO -     - accuracy: 0.7191
+2025-07-29 05:56:54,101 - INFO -   mmlu_professional_law:
+2025-07-29 05:56:54,101 - INFO -     - accuracy: 0.4935
+2025-07-29 05:56:54,101 - INFO -   mmlu_world_religions:
+2025-07-29 05:56:54,101 - INFO -     - accuracy: 0.8070
+2025-07-29 05:56:54,101 - INFO -   mmlu_other:
+2025-07-29 05:56:54,101 - INFO -     - accuracy: 0.7200
+2025-07-29 05:56:54,101 - INFO -   mmlu_business_ethics:
+2025-07-29 05:56:54,101 - INFO -     - accuracy: 0.6300
+2025-07-29 05:56:54,102 - INFO -   mmlu_clinical_knowledge:
+2025-07-29 05:56:54,102 - INFO -     - accuracy: 0.7472
+2025-07-29 05:56:54,102 - INFO -   mmlu_college_medicine:
+2025-07-29 05:56:54,102 - INFO -     - accuracy: 0.6474
+2025-07-29 05:56:54,102 - INFO -   mmlu_global_facts:
+2025-07-29 05:56:54,102 - INFO -     - accuracy: 0.3400
+2025-07-29 05:56:54,102 - INFO -   mmlu_human_aging:
+2025-07-29 05:56:54,102 - INFO -     - accuracy: 0.6906
+2025-07-29 05:56:54,102 - INFO -   mmlu_management:
+2025-07-29 05:56:54,103 - INFO -     - accuracy: 0.8447
+2025-07-29 05:56:54,103 - INFO -   mmlu_marketing:
+2025-07-29 05:56:54,103 - INFO -     - accuracy: 0.8632
+2025-07-29 05:56:54,103 - INFO -   mmlu_medical_genetics:
+2025-07-29 05:56:54,103 - INFO -     - accuracy: 0.8100
+2025-07-29 05:56:54,103 - INFO -   mmlu_miscellaneous:
+2025-07-29 05:56:54,103 - INFO -     - accuracy: 0.8135
+2025-07-29 05:56:54,103 - INFO -   mmlu_nutrition:
+2025-07-29 05:56:54,103 - INFO -     - accuracy: 0.8039
+2025-07-29 05:56:54,104 - INFO -   mmlu_professional_accounting:
+2025-07-29 05:56:54,104 - INFO -     - accuracy: 0.4965
+2025-07-29 05:56:54,104 - INFO -   mmlu_professional_medicine:
+2025-07-29 05:56:54,104 - INFO -     - accuracy: 0.6949
+2025-07-29 05:56:54,104 - INFO -   mmlu_virology:
+2025-07-29 05:56:54,104 - INFO -     - accuracy: 0.5663
+2025-07-29 05:56:54,104 - INFO -   mmlu_social_sciences:
+2025-07-29 05:56:54,104 - INFO -     - accuracy: 0.7628
+2025-07-29 05:56:54,104 - INFO -   mmlu_econometrics:
+2025-07-29 05:56:54,104 - INFO -     - accuracy: 0.4912
+2025-07-29 05:56:54,105 - INFO -   mmlu_high_school_geography:
+2025-07-29 05:56:54,105 - INFO -     - accuracy: 0.8182
+2025-07-29 05:56:54,105 - INFO -   mmlu_high_school_government_and_politics:
+2025-07-29 05:56:54,105 - INFO -     - accuracy: 0.8860
+2025-07-29 05:56:54,105 - INFO -   mmlu_high_school_macroeconomics:
+2025-07-29 05:56:54,105 - INFO -     - accuracy: 0.6462
+2025-07-29 05:56:54,105 - INFO -   mmlu_high_school_microeconomics:
+2025-07-29 05:56:54,105 - INFO -     - accuracy: 0.7437
+2025-07-29 05:56:54,106 - INFO -   mmlu_high_school_psychology:
+2025-07-29 05:56:54,106 - INFO -     - accuracy: 0.8495
+2025-07-29 05:56:54,106 - INFO -   mmlu_human_sexuality:
+2025-07-29 05:56:54,106 - INFO -     - accuracy: 0.7786
+2025-07-29 05:56:54,106 - INFO -   mmlu_professional_psychology:
+2025-07-29 05:56:54,106 - INFO -     - accuracy: 0.7173
+2025-07-29 05:56:54,106 - INFO -   mmlu_public_relations:
+2025-07-29 05:56:54,106 - INFO -     - accuracy: 0.7273
+2025-07-29 05:56:54,106 - INFO -   mmlu_security_studies:
+2025-07-29 05:56:54,106 - INFO -     - accuracy: 0.7347
+2025-07-29 05:56:54,107 - INFO -   mmlu_sociology:
+2025-07-29 05:56:54,107 - INFO -     - accuracy: 0.8806
+2025-07-29 05:56:54,107 - INFO -   mmlu_us_foreign_policy:
+2025-07-29 05:56:54,107 - INFO -     - accuracy: 0.8800
+2025-07-29 05:56:54,107 - INFO -   mmlu_stem:
+2025-07-29 05:56:54,107 - INFO -     - accuracy: 0.5550
+2025-07-29 05:56:54,107 - INFO -   mmlu_abstract_algebra:
+2025-07-29 05:56:54,107 - INFO -     - accuracy: 0.3000
+2025-07-29 05:56:54,107 - INFO -   mmlu_anatomy:
+2025-07-29 05:56:54,108 - INFO -     - accuracy: 0.6222
+2025-07-29 05:56:54,108 - INFO -   mmlu_astronomy:
+2025-07-29 05:56:54,108 - INFO -     - accuracy: 0.7237
+2025-07-29 05:56:54,108 - INFO -   mmlu_college_biology:
+2025-07-29 05:56:54,108 - INFO -     - accuracy: 0.7778
+2025-07-29 05:56:54,108 - INFO -   mmlu_college_chemistry:
+2025-07-29 05:56:54,108 - INFO -     - accuracy: 0.4400
+2025-07-29 05:56:54,108 - INFO -   mmlu_college_computer_science:
+2025-07-29 05:56:54,108 - INFO -     - accuracy: 0.4800
+2025-07-29 05:56:54,109 - INFO -   mmlu_college_mathematics:
+2025-07-29 05:56:54,109 - INFO -     - accuracy: 0.3500
+2025-07-29 05:56:54,109 - INFO -   mmlu_college_physics:
+2025-07-29 05:56:54,109 - INFO -     - accuracy: 0.4804
+2025-07-29 05:56:54,109 - INFO -   mmlu_computer_security:
+2025-07-29 05:56:54,109 - INFO -     - accuracy: 0.8300
+2025-07-29 05:56:54,109 - INFO -   mmlu_conceptual_physics:
+2025-07-29 05:56:54,109 - INFO -     - accuracy: 0.6000
+2025-07-29 05:56:54,109 - INFO -   mmlu_electrical_engineering:
+2025-07-29 05:56:54,110 - INFO -     - accuracy: 0.6207
+2025-07-29 05:56:54,110 - INFO -   mmlu_elementary_mathematics:
+2025-07-29 05:56:54,110 - INFO -     - accuracy: 0.4233
+2025-07-29 05:56:54,110 - INFO -   mmlu_high_school_biology:
+2025-07-29 05:56:54,110 - INFO -     - accuracy: 0.7710
+2025-07-29 05:56:54,110 - INFO -   mmlu_high_school_chemistry:
+2025-07-29 05:56:54,110 - INFO -     - accuracy: 0.5419
+2025-07-29 05:56:54,110 - INFO -   mmlu_high_school_computer_science:
+2025-07-29 05:56:54,110 - INFO -     - accuracy: 0.6500
+2025-07-29 05:56:54,111 - INFO -   mmlu_high_school_mathematics:
+2025-07-29 05:56:54,111 - INFO -     - accuracy: 0.4259
+2025-07-29 05:56:54,111 - INFO -   mmlu_high_school_physics:
+2025-07-29 05:56:54,111 - INFO -     - accuracy: 0.4371
+2025-07-29 05:56:54,111 - INFO -   mmlu_high_school_statistics:
+2025-07-29 05:56:54,111 - INFO -     - accuracy: 0.5463
+2025-07-29 05:56:54,111 - INFO -   mmlu_machine_learning:
+2025-07-29 05:56:54,111 - INFO -     - accuracy: 0.4554
+2025-07-29 05:56:54,111 - INFO - ============================================================
+
+2025-07-29 05:56:54,156 - INFO - Llama-3.1-8B_harness_1: Processing task 8/10: arc_challenge
+2025-07-29 05:56:54,161 - INFO - Llama-3.1-8B_harness_1: Task 'arc_challenge' will use num_fewshot=5
+2025-07-29 05:56:54,287 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'arc_challenge' with num_fewshot=5
+2025-07-29 05:56:54,288 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:03<00:00,  1.30it/s]
+2025-07-29 05:57:06,212 - WARNING - Overwriting default num_fewshot of arc_challenge from None to 5
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1172/1172 [00:07<00:00, 162.96it/s]
+Running loglikelihood requests: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 4687/4687 [02:27<00:00, 31.67it/s]
+2025-07-29 05:59:50,970 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'arc_challenge' with 1 subtasks
+2025-07-29 05:59:51,115 - INFO -
+============================================================
+2025-07-29 05:59:51,115 - INFO - Task 'arc_challenge' Results:
+2025-07-29 05:59:51,115 - INFO - ============================================================
+2025-07-29 05:59:51,115 - INFO -   arc_challenge:
+2025-07-29 05:59:51,115 - INFO -     - accuracy: 0.5435
+2025-07-29 05:59:51,115 - INFO -     - accuracy_norm: 0.5811
+2025-07-29 05:59:51,115 - INFO - ============================================================
+
+2025-07-29 05:59:51,152 - INFO - Llama-3.1-8B_harness_1: Processing task 9/10: arc_easy
+2025-07-29 05:59:51,154 - INFO - Llama-3.1-8B_harness_1: Task 'arc_easy' will use num_fewshot=5
+2025-07-29 05:59:51,278 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'arc_easy' with num_fewshot=5
+2025-07-29 05:59:51,279 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.41it/s]
+2025-07-29 06:00:01,719 - WARNING - Overwriting default num_fewshot of arc_easy from None to 5
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2376/2376 [00:14<00:00, 164.60it/s]
+Running loglikelihood requests: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 9501/9501 [04:28<00:00, 35.44it/s]
+2025-07-29 06:04:59,548 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'arc_easy' with 1 subtasks
+2025-07-29 06:04:59,698 - INFO -
+============================================================
+2025-07-29 06:04:59,699 - INFO - Task 'arc_easy' Results:
+2025-07-29 06:04:59,699 - INFO - ============================================================
+2025-07-29 06:04:59,699 - INFO -   arc_easy:
+2025-07-29 06:04:59,699 - INFO -     - accuracy: 0.8409
+2025-07-29 06:04:59,699 - INFO -     - accuracy_norm: 0.8489
+2025-07-29 06:04:59,700 - INFO - ============================================================
+
+2025-07-29 06:04:59,739 - INFO - Llama-3.1-8B_harness_1: Processing task 10/10: hellaswag
+2025-07-29 06:04:59,741 - INFO - Llama-3.1-8B_harness_1: Task 'hellaswag' will use num_fewshot=5
+2025-07-29 06:04:59,868 - INFO - Llama-3.1-8B_harness_1: Evaluating task 'hellaswag' with num_fewshot=5
+2025-07-29 06:04:59,869 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.35it/s]
+2025-07-29 06:05:19,292 - WARNING - Overwriting default num_fewshot of hellaswag from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10042/10042 [00:27<00:00, 364.22it/s]
+Running loglikelihood requests: 100%|█████████████████████████████████████████████████████████████████████████████████████████| 40168/40168 [36:05<00:00, 18.55it/s]
+2025-07-29 06:44:02,841 - INFO - Llama-3.1-8B_harness_1: Successfully completed task 'hellaswag' with 1 subtasks
+2025-07-29 06:44:02,987 - INFO -
+============================================================
+2025-07-29 06:44:02,987 - INFO - Task 'hellaswag' Results:
+2025-07-29 06:44:02,987 - INFO - ============================================================
+2025-07-29 06:44:02,987 - INFO -   hellaswag:
+2025-07-29 06:44:02,988 - INFO -     - accuracy: 0.6117
+2025-07-29 06:44:02,988 - INFO -     - accuracy_norm: 0.8095
+2025-07-29 06:44:02,988 - INFO - ============================================================
+
+2025-07-29 06:44:03,027 - INFO - Llama-3.1-8B_harness_1: Completed evaluation - 189 subtasks from 10 requested tasks
+2025-07-29 06:44:03,031 - INFO - [Process 1941996] Results saved to /home/gwlee/Benchmark/AIDE_Benchmark/experiments_results/exp_20250729_041113/model_results/Llama-3.1-8B/Llama-3.1-8B_harness_1.json
+2025-07-29 06:44:03,033 - INFO - [Process 1941996] Legacy results saved to /home/gwlee/Benchmark/AIDE_Benchmark/results/Llama-3.1-8B/Llama-3.1-8B_harness_1.json
+2025-07-29 06:44:03,335 - INFO - Results uploaded to WandB as artifact
+2025-07-29 06:44:03,344 - WARNING - lm-eval WandB logging failed, using direct logging: 'NoneType' object has no attribute 'get'
+2025-07-29 06:44:03,346 - INFO - [Process 1941996] Successfully completed Llama-3.1-8B_harness_1

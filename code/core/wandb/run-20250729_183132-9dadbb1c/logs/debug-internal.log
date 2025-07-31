@@ -1,0 +1,19 @@
+{"time":"2025-07-29T18:31:32.663054577Z","level":"INFO","msg":"stream: starting","core version":"0.19.10","symlink path":"/home/gwlee/Benchmark/AIDE_Benchmark/code/core/wandb/run-20250729_183132-9dadbb1c/logs/debug-core.log"}
+{"time":"2025-07-29T18:31:33.009842048Z","level":"INFO","msg":"created new stream","id":"9dadbb1c"}
+{"time":"2025-07-29T18:31:33.009860929Z","level":"INFO","msg":"stream: started","id":"9dadbb1c"}
+{"time":"2025-07-29T18:31:33.009865375Z","level":"INFO","msg":"writer: Do: started","stream_id":"9dadbb1c"}
+{"time":"2025-07-29T18:31:33.009876282Z","level":"INFO","msg":"handler: started","stream_id":"9dadbb1c"}
+{"time":"2025-07-29T18:31:33.009894957Z","level":"INFO","msg":"sender: started","stream_id":"9dadbb1c"}
+{"time":"2025-07-29T18:31:33.799016076Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-29T19:27:19.047646327Z","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": context deadline exceeded"}
+{"time":"2025-07-29T19:29:22.042226921Z","level":"INFO","msg":"api: retrying HTTP error","status":502,"url":"https://api.wandb.ai/files/gwleee/lm-eval-harness-integration/9dadbb1c/file_stream","body":"\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>502 Server Error</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Server Error</h1>\n<h2>The server encountered a temporary error and could not complete your request.<p>Please try again in 30 seconds.</h2>\n<h2></h2>\n</body></html>\n"}
+{"time":"2025-07-29T23:58:09.882511656Z","level":"INFO","msg":"api: retrying HTTP error","status":502,"url":"https://api.wandb.ai/files/gwleee/lm-eval-harness-integration/9dadbb1c/file_stream","body":"\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>502 Server Error</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Server Error</h1>\n<h2>The server encountered a temporary error and could not complete your request.<p>Please try again in 30 seconds.</h2>\n<h2></h2>\n</body></html>\n"}
+{"time":"2025-07-30T01:02:14.913251584Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-30T01:02:14.913291326Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-30T01:02:15.914337396Z","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading artifact EXAONE-3.5-2.4B-Instruct_results","runtime_seconds":1.533168912,"subtasks":[{"desc":"EXAONE-3.5-2.4B-Instruct_harness_7.json","runtime_seconds":0.427395988,"progress":"29.4KB/29.4KB"}]}],"total_operations":1}}
+{"time":"2025-07-30T01:02:17.088939257Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-30T01:02:17.70796102Z","level":"INFO","msg":"stream: closing","id":"9dadbb1c"}
+{"time":"2025-07-30T01:02:17.707976838Z","level":"INFO","msg":"handler: closed","stream_id":"9dadbb1c"}
+{"time":"2025-07-30T01:02:17.707989138Z","level":"INFO","msg":"writer: Close: closed","stream_id":"9dadbb1c"}
+{"time":"2025-07-30T01:02:17.708001032Z","level":"INFO","msg":"sender: closed","stream_id":"9dadbb1c"}
+{"time":"2025-07-30T01:02:17.708049908Z","level":"INFO","msg":"stream: closed","id":"9dadbb1c"}

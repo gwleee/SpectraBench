@@ -1,0 +1,80 @@
+{
+  "experiment_type": "phase1_accuracy_convergence",
+  "timestamp": "2025-07-24T08:41:45.653962",
+  "models": [
+    {
+      "id": "meta-llama/Llama-3.1-8B",
+      "name": "LLaMA 3.1 8B"
+    },
+    {
+      "id": "google/gemma-3-4b-it",
+      "name": "Gemma 3 4B"
+    },
+    {
+      "id": "google/gemma-3-12b-it",
+      "name": "Gemma 3 12B"
+    },
+    {
+      "id": "mistralai/Mistral-7B-v0.3",
+      "name": "Mistral 7B v0.3"
+    },
+    {
+      "id": "Qwen/Qwen3-8B",
+      "name": "Qwen 3 8B"
+    },
+    {
+      "id": "dnotitia/Llama-DNA-1.0-8B-Instruct",
+      "name": "Llama-DNA-1.0-8B-Instruct"
+    },
+    {
+      "id": "LGAI-EXAONE/EXAONE-3.5-2.4B-Instruct",
+      "name": "EXAONE-3.5-2.4B-Instruct"
+    },
+    {
+      "id": "LGAI-EXAONE/EXAONE-3.5-32B-Instruct",
+      "name": "EXAONE-3.5-32B-Instruct"
+    },
+    {
+      "id": "naver-hyperclovax/HyperCLOVAX-SEED-Text-Instruct-1.5B",
+      "name": "HyperCLOVAX-SEED-Text-Instruct-1.5B"
+    },
+    {
+      "id": "naver-hyperclovax/HyperCLOVAX-SEED-Text-Instruct-0.5B",
+      "name": "HyperCLOVAX-SEED-Text-Instruct-0.5B"
+    },
+    {
+      "id": "kakaocorp/kanana-1.5-2.1b-instruct-2505",
+      "name": "kanana-1.5-2.1b-instruct-2505"
+    },
+    {
+      "id": "etri-lirs/eagle-3b-preview",
+      "name": "eagle-3b-preview"
+    },
+    {
+      "id": "saltlux/luxia-21.4b-alignment-v1.2",
+      "name": "luxia-21.4b-alignment-v1.2"
+    }
+  ],
+  "tasks": [
+    "kmmlu",
+    "kmmlu_hard",
+    "haerae",
+    "kobest",
+    "csatqa",
+    "kormedmcqa",
+    "mmlu",
+    "arc_challenge",
+    "arc_easy",
+    "hellaswag"
+  ],
+  "test_limits": [
+    20,
+    40,
+    60,
+    80,
+    100,
+    120
+  ],
+  "convergence_threshold": 0.05,
+  "total_combinations": 130
+}

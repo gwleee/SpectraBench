@@ -1,0 +1,8 @@
+2025-07-18 04:17:27,058 - INFO - WandB run initialized: HyperCLOVAX-SEED-Text-Instruct-0.5B_20250718_041725 (ID: 6a0da255)
+Fetching 8 files: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:00<00:00, 74071.59it/s]
+2025-07-18 04:17:27,414 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_1: Processing task 1/1: humaneval
+2025-07-18 04:17:27,414 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_1: Task 'humaneval' detected as zero-shot task
+2025-07-18 04:17:27,541 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_1: Evaluating task 'humaneval' with num_fewshot=0
+2025-07-18 04:17:27,543 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 164/164 [00:00<00:00, 3762.39it/s]
+Running generate_until requests: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 164/164 [04:05<00:00,  1.49s/it]

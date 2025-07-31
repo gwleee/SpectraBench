@@ -1,0 +1,26 @@
+2025-07-29 12:37:23,916 INFO    MainThread:1941996 [wandb_init.py:setup_run_log_directory():724] Logging user logs to /home/gwlee/Benchmark/AIDE_Benchmark/code/core/wandb/run-20250729_123723-03094734/logs/debug.log
+2025-07-29 12:37:23,916 INFO    MainThread:1941996 [wandb_init.py:setup_run_log_directory():725] Logging internal logs to /home/gwlee/Benchmark/AIDE_Benchmark/code/core/wandb/run-20250729_123723-03094734/logs/debug-internal.log
+2025-07-29 12:37:23,916 INFO    MainThread:1941996 [wandb_init.py:init():852] calling init triggers
+2025-07-29 12:37:23,916 INFO    MainThread:1941996 [wandb_init.py:init():857] wandb.init called with sweep_config: {}
+config: {'model': 'Llama-DNA-1.0-8B-Instruct', 'tasks': ['kmmlu', 'kmmlu_hard', 'haerae', 'kobest', 'csatqa', 'kormedmcqa', 'mmlu', 'arc_challenge', 'arc_easy', 'hellaswag'], 'num_tasks': 10, 'full_run': True, 'num_gpus': 1, 'timestamp': '20250729_123723', 'model_id': 'dnotitia/Llama-DNA-1.0-8B-Instruct', 'model_name': 'Llama-DNA-1.0-8B-Instruct', 'batch_size': 1, 'is_large_model': False, 'is_medium_model': True, 'device': 'cuda:0', 'limit': None, 'tracking_mode': 'baseline', 'scheduler_optimized': False, '_wandb': {}}
+2025-07-29 12:37:23,916 INFO    MainThread:1941996 [wandb_init.py:init():893] starting backend
+2025-07-29 12:37:23,916 INFO    MainThread:1941996 [wandb_init.py:init():897] sending inform_init request
+2025-07-29 12:37:23,917 INFO    MainThread:1941996 [backend.py:_multiprocessing_setup():101] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2025-07-29 12:37:23,917 INFO    MainThread:1941996 [wandb_init.py:init():907] backend started and connected
+2025-07-29 12:37:23,919 INFO    MainThread:1941996 [wandb_init.py:init():1002] updated telemetry
+2025-07-29 12:37:23,919 INFO    MainThread:1941996 [wandb_init.py:init():1026] communicating run to backend with 90.0 second timeout
+2025-07-29 12:37:25,077 INFO    MainThread:1941996 [wandb_init.py:init():1096] run resumed
+2025-07-29 12:37:25,114 INFO    MainThread:1941996 [wandb_init.py:init():1101] starting run threads in backend
+2025-07-29 12:37:25,315 INFO    MainThread:1941996 [wandb_run.py:_console_start():2566] atexit reg
+2025-07-29 12:37:25,315 INFO    MainThread:1941996 [wandb_run.py:_redirect():2414] redirect: wrap_raw
+2025-07-29 12:37:25,315 INFO    MainThread:1941996 [wandb_run.py:_redirect():2483] Wrapping output streams.
+2025-07-29 12:37:25,316 INFO    MainThread:1941996 [wandb_run.py:_redirect():2506] Redirects installed.
+2025-07-29 12:37:25,316 INFO    MainThread:1941996 [wandb_init.py:init():1147] run started, returning control to user process
+2025-07-29 15:10:53,923 INFO    MainThread:1941996 [wandb_run.py:_config_callback():1429] config_cb None None {'task_configs': {}, 'cli_configs': {}}
+2025-07-29 15:10:54,462 INFO    MainThread:1941996 [wandb_run.py:_finish():2314] finishing run gwleee/lm-eval-harness-integration/03094734
+2025-07-29 15:10:54,465 INFO    MainThread:1941996 [wandb_run.py:_atexit_cleanup():2531] got exitcode: 0
+2025-07-29 15:10:54,465 INFO    MainThread:1941996 [wandb_run.py:_restore():2513] restore
+2025-07-29 15:10:54,465 INFO    MainThread:1941996 [wandb_run.py:_restore():2519] restore done
+2025-07-29 15:10:56,130 INFO    MainThread:1941996 [wandb_run.py:_footer_history_summary_info():4160] rendering history
+2025-07-29 15:10:56,140 INFO    MainThread:1941996 [wandb_run.py:_footer_history_summary_info():4192] rendering summary
+2025-07-29 15:10:56,292 INFO    MainThread:1941996 [wandb_run.py:_footer_sync_info():4121] logging synced files

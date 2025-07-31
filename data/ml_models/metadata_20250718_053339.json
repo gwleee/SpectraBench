@@ -1,0 +1,98 @@
+{
+  "last_training_time": "2025-07-18T05:33:39.950262",
+  "training_data_size": 1812,
+  "model_performance": {
+    "time_predictor": {
+      "mae": 138.0881610148963,
+      "relative_error": 0.8779649486343708,
+      "oob_score": 0.7256645200222953
+    },
+    "memory_predictor": {
+      "mae": 0.8420809598869244,
+      "relative_error": 0.9681080460143214,
+      "oob_score": 0.6267443117432299
+    },
+    "success_classifier": {
+      "accuracy": 0.9944903581267218,
+      "oob_score": 0.9882677708764666
+    },
+    "batch_size_predictor": {
+      "mae": 0.014933244785162498,
+      "oob_score": -0.10768082982732996
+    },
+    "fewshot_predictor": {
+      "mae": 0.001526721630840423,
+      "oob_score": -0.0612665983176488
+    }
+  },
+  "feature_names": [
+    "model_size_numeric",
+    "model_size_category",
+    "model_type",
+    "task_name",
+    "task_type",
+    "task_complexity",
+    "gpu_memory_available",
+    "gpu_utilization",
+    "gpu_temperature",
+    "cpu_percent",
+    "ram_available",
+    "historical_avg_time",
+    "historical_avg_memory",
+    "historical_success_rate",
+    "historical_oom_rate",
+    "historical_sample_count",
+    "model_avg_time",
+    "model_avg_memory",
+    "model_run_count",
+    "hour",
+    "day_of_week",
+    "num_gpus"
+  ],
+  "label_encoders": {
+    "model_size_category": {
+      "classes_": [
+        "large",
+        "medium",
+        "small",
+        "xlarge"
+      ]
+    },
+    "model_type": {
+      "classes_": [
+        "exaone",
+        "gemma",
+        "llama",
+        "mistral",
+        "other",
+        "qwen"
+      ]
+    },
+    "task_name": {
+      "classes_": [
+        "arc_challenge",
+        "arc_easy",
+        "csatqa",
+        "haerae",
+        "hellaswag",
+        "humaneval",
+        "kmmlu",
+        "kmmlu_hard",
+        "kobest",
+        "komt_bench",
+        "kormedmcqa",
+        "mmlu"
+      ]
+    },
+    "task_type": {
+      "classes_": [
+        "coding",
+        "knowledge",
+        "korean",
+        "language",
+        "other",
+        "reasoning"
+      ]
+    }
+  }
+}

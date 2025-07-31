@@ -1,0 +1,44 @@
+================================================================================
+PHASE 1 ACCURACY CONVERGENCE ANALYSIS REPORT
+Optimal Data Limit Determination for Model-Task Combinations
+================================================================================
+Generated: 2025-07-26 06:00:20
+
+## EXPERIMENT OVERVIEW
+----------------------------------------
+Limits tested: 6
+Total model-task pairs tested: 420
+Convergence threshold: 5.0%
+
+## ACCURACY PERFORMANCE BY LIMIT
+----------------------------------------
+       Limit 20: avg=0.5196, std=0.1934, pairs=70
+       Limit 40: avg=0.5239, std=0.1862, pairs=70
+       Limit 60: avg=0.5242, std=0.1871, pairs=70
+       Limit 80: avg=0.5276, std=0.1878, pairs=70
+      Limit 100: avg=0.5250, std=0.1866, pairs=70
+      Limit 120: avg=0.5232, std=0.1873, pairs=70
+
+## CONVERGENCE ANALYSIS
+----------------------------------------
+Convergence point found: 20
+Convergence threshold: 5.0%
+Interpretation: Accuracy improvement < 5% beyond limit=20
+
+## RECOMMENDATIONS
+----------------------------------------
+- Accuracy converges at limit=20
+- Recommended limit for Phase 2: 20
+- Convergence threshold: 5.0%
+- Low convergence point: Efficient execution with acceptable accuracy
+- Model-task combinations tested: 420
+- Accuracy range: 0.5196 - 0.5276
+
+## NEXT STEPS
+----------------------------------------
+1. Use limit=20 for Phase 2 threshold optimization
+2. Proceed to Phase 2 with identified optimal limit
+3. Monitor accuracy vs execution time trade-offs
+4. Validate results with production workloads
+
+================================================================================

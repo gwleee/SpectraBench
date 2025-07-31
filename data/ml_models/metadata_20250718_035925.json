@@ -1,0 +1,96 @@
+{
+  "last_training_time": "2025-07-18T03:59:25.989916",
+  "training_data_size": 706,
+  "model_performance": {
+    "time_predictor": {
+      "mae": 314.13804925410324,
+      "relative_error": 1.0207697932768063,
+      "oob_score": 0.7138300188379527
+    },
+    "memory_predictor": {
+      "mae": 1.8941238682596855,
+      "relative_error": 0.9446095922979458,
+      "oob_score": 0.494991070508623
+    },
+    "success_classifier": {
+      "accuracy": 0.971830985915493,
+      "oob_score": 0.9840425531914894
+    },
+    "batch_size_predictor": {
+      "mae": 0.035211267605633804,
+      "oob_score": -0.1569503230757039
+    },
+    "fewshot_predictor": {
+      "mae": 0.015798188509456107,
+      "oob_score": -0.12565039634655584
+    }
+  },
+  "feature_names": [
+    "model_size_numeric",
+    "model_size_category",
+    "model_type",
+    "task_name",
+    "task_type",
+    "task_complexity",
+    "gpu_memory_available",
+    "gpu_utilization",
+    "gpu_temperature",
+    "cpu_percent",
+    "ram_available",
+    "historical_avg_time",
+    "historical_avg_memory",
+    "historical_success_rate",
+    "historical_oom_rate",
+    "historical_sample_count",
+    "model_avg_time",
+    "model_avg_memory",
+    "model_run_count",
+    "hour",
+    "day_of_week",
+    "num_gpus"
+  ],
+  "label_encoders": {
+    "model_size_category": {
+      "classes_": [
+        "large",
+        "medium",
+        "small",
+        "xlarge"
+      ]
+    },
+    "model_type": {
+      "classes_": [
+        "exaone",
+        "gemma",
+        "llama",
+        "mistral",
+        "other",
+        "qwen"
+      ]
+    },
+    "task_name": {
+      "classes_": [
+        "arc_challenge",
+        "arc_easy",
+        "csatqa",
+        "haerae",
+        "hellaswag",
+        "kmmlu",
+        "kmmlu_hard",
+        "kobest",
+        "komt_bench",
+        "kormedmcqa",
+        "mmlu"
+      ]
+    },
+    "task_type": {
+      "classes_": [
+        "knowledge",
+        "korean",
+        "language",
+        "other",
+        "reasoning"
+      ]
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "optimal_limit": 20,
+  "execution_time": 12982.767675638199,
+  "accuracy_results": {
+    "meta-llama/Llama-3.1-8B": {
+      "kmmlu": 0.3288888888888889,
+      "kmmlu_hard": 0.26,
+      "haerae": 0.48,
+      "kobest": 0.6,
+      "csatqa": 0.2702702702702703,
+      "kormedmcqa": 0.0875,
+      "mmlu": 0.6622807017543859,
+      "arc_challenge": 0.4,
+      "arc_easy": 0.85,
+      "hellaswag": 0.45
+    },
+    "google/gemma-3-12b-it": {
+      "kmmlu": 0.37333333333333335,
+      "kmmlu_hard": 0.25666666666666665,
+      "haerae": 0.81,
+      "kobest": 0.72,
+      "csatqa": 0.4774774774774775,
+      "kormedmcqa": 0.5875,
+      "mmlu": 0.7385964912280701,
+      "arc_challenge": 0.65,
+      "arc_easy": 0.8,
+      "hellaswag": 0.6
+    },
+    "mistralai/Mistral-7B-v0.3": {
+      "kmmlu": 0.30444444444444446,
+      "kmmlu_hard": 0.25,
+      "haerae": 0.44,
+      "kobest": 0.53,
+      "csatqa": 0.22522522522522523,
+      "kormedmcqa": 0.4375,
+      "mmlu": 0.6087719298245614,
+      "arc_challenge": 0.45,
+      "arc_easy": 0.85,
+      "hellaswag": 0.45
+    },
+    "Qwen/Qwen3-8B": {
+      "kmmlu": 0.43333333333333335,
+      "kmmlu_hard": 0.27,
+      "haerae": 0.67,
+      "kobest": 0.63,
+      "csatqa": 0.46846846846846846,
+      "kormedmcqa": 0.25,
+      "mmlu": 0.7614035087719299,
+      "arc_challenge": 0.45,
+      "arc_easy": 0.75,
+      "hellaswag": 0.4
+    },
+    "dnotitia/Llama-DNA-1.0-8B-Instruct": {
+      "kmmlu": 0.43444444444444447,
+      "kmmlu_hard": 0.2822222222222222,
+      "haerae": 0.68,
+      "kobest": 0.75,
+      "csatqa": 0.40540540540540543,
+      "kormedmcqa": 0.575,
+      "mmlu": 0.6640350877192982,
+      "arc_challenge": 0.55,
+      "arc_easy": 0.8,
+      "hellaswag": 0.45
+    },
+    "LGAI-EXAONE/EXAONE-3.5-32B-Instruct": {
+      "kmmlu": 0.4211111111111111,
+      "kmmlu_hard": 0.24,
+      "haerae": 0.87,
+      "kobest": 0.76,
+      "csatqa": 0.4864864864864865,
+      "kormedmcqa": 0.6125,
+      "mmlu": 0.7070175438596491,
+      "arc_challenge": 0.6,
+      "arc_easy": 0.85,
+      "hellaswag": 0.5
+    },
+    "saltlux/luxia-21.4b-alignment-v1.2": {
+      "kmmlu": 0.23444444444444446,
+      "kmmlu_hard": 0.2,
+      "haerae": 0.39,
+      "kobest": 0.54,
+      "csatqa": 0.25225225225225223,
+      "kormedmcqa": 0.4375,
+      "mmlu": 0.6482456140350877,
+      "arc_challenge": 0.6,
+      "arc_easy": 0.8,
+      "hellaswag": 0.6
+    }
+  },
+  "threshold_results": {
+    

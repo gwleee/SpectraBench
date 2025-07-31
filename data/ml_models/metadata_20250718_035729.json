@@ -1,0 +1,96 @@
+{
+  "last_training_time": "2025-07-18T03:57:29.209957",
+  "training_data_size": 316,
+  "model_performance": {
+    "time_predictor": {
+      "mae": 467.6368073769052,
+      "relative_error": 1.506058236849962,
+      "oob_score": 0.6183522628247158
+    },
+    "memory_predictor": {
+      "mae": 4.040780757557476,
+      "relative_error": 0.9352057737822843,
+      "oob_score": 0.545714129275727
+    },
+    "success_classifier": {
+      "accuracy": 0.96875,
+      "oob_score": 0.9722222222222222
+    },
+    "batch_size_predictor": {
+      "mae": 0.04489304315476189,
+      "oob_score": 0.19416030289235808
+    },
+    "fewshot_predictor": {
+      "mae": 0.015047877214697025,
+      "oob_score": -0.07512483720415597
+    }
+  },
+  "feature_names": [
+    "model_size_numeric",
+    "model_size_category",
+    "model_type",
+    "task_name",
+    "task_type",
+    "task_complexity",
+    "gpu_memory_available",
+    "gpu_utilization",
+    "gpu_temperature",
+    "cpu_percent",
+    "ram_available",
+    "historical_avg_time",
+    "historical_avg_memory",
+    "historical_success_rate",
+    "historical_oom_rate",
+    "historical_sample_count",
+    "model_avg_time",
+    "model_avg_memory",
+    "model_run_count",
+    "hour",
+    "day_of_week",
+    "num_gpus"
+  ],
+  "label_encoders": {
+    "model_size_category": {
+      "classes_": [
+        "large",
+        "medium",
+        "small",
+        "xlarge"
+      ]
+    },
+    "model_type": {
+      "classes_": [
+        "exaone",
+        "gemma",
+        "llama",
+        "mistral",
+        "other",
+        "qwen"
+      ]
+    },
+    "task_name": {
+      "classes_": [
+        "arc_challenge",
+        "arc_easy",
+        "csatqa",
+        "haerae",
+        "hellaswag",
+        "kmmlu",
+        "kmmlu_hard",
+        "kobest",
+        "komt_bench",
+        "kormedmcqa",
+        "mmlu"
+      ]
+    },
+    "task_type": {
+      "classes_": [
+        "knowledge",
+        "korean",
+        "language",
+        "other",
+        "reasoning"
+      ]
+    }
+  }
+}

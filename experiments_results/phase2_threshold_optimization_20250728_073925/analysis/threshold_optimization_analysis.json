@@ -1,0 +1,165 @@
+{
+  "best_thresholds": {
+    "stage1_threshold": 19,
+    "stage2_threshold": 72,
+    "overall_performance": 0.507341712994681
+  },
+  "performance_data": [
+    {
+      "stage1_threshold": 19,
+      "stage2_threshold": 72,
+      "overall_performance": 0.507341712994681,
+      "transition_efficiency": 0.780952380952381,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 19,
+      "stage2_threshold": 81,
+      "overall_performance": 0.507341712994681,
+      "transition_efficiency": 0.780952380952381,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 19,
+      "stage2_threshold": 91,
+      "overall_performance": 0.507341712994681,
+      "transition_efficiency": 0.780952380952381,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 19,
+      "stage2_threshold": 100,
+      "overall_performance": 0.507341712994681,
+      "transition_efficiency": 0.780952380952381,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 31,
+      "stage2_threshold": 72,
+      "overall_performance": 0.5046569707239463,
+      "transition_efficiency": 0.8,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 31,
+      "stage2_threshold": 81,
+      "overall_performance": 0.5046569707239463,
+      "transition_efficiency": 0.8,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 31,
+      "stage2_threshold": 91,
+      "overall_performance": 0.5046569707239463,
+      "transition_efficiency": 0.8,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 31,
+      "stage2_threshold": 100,
+      "overall_performance": 0.5046569707239463,
+      "transition_efficiency": 0.8,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 39,
+      "stage2_threshold": 72,
+      "overall_performance": 0.5028671425434564,
+      "transition_efficiency": 0.8,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 39,
+      "stage2_threshold": 81,
+      "overall_performance": 0.5028671425434564,
+      "transition_efficiency": 0.8,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 39,
+      "stage2_threshold": 91,
+      "overall_performance": 0.5028671425434564,
+      "transition_efficiency": 0.8,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 39,
+      "stage2_threshold": 100,
+      "overall_performance": 0.5028671425434564,
+      "transition_efficiency": 0.8,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 46,
+      "stage2_threshold": 72,
+      "overall_performance": 0.5013010428855279,
+      "transition_efficiency": 0.7619047619047619,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 46,
+      "stage2_threshold": 81,
+      "overall_performance": 0.5013010428855279,
+      "transition_efficiency": 0.7619047619047619,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 46,
+      "stage2_threshold": 91,
+      "overall_performance": 0.5013010428855279,
+      "transition_efficiency": 0.7619047619047619,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    },
+    {
+      "stage1_threshold": 46,
+      "stage2_threshold": 100,
+      "overall_performance": 0.5013010428855279,
+      "transition_efficiency": 0.7619047619047619,
+      "stage1_performance": 0.4959315583440584,
+      "stage2_performance": 0.5115925549233444,
+      "stage3_performance": 0.5011518905371537
+    }
+  ],
+  "optimal_limit_used": 20,
+  "total_combinations_tested": 16,
+  "recommendations": [
+    "Optimal thresholds found: Stage1=19, Stage2=72",
+    "Expected overall performance: 0.5073",
+    "Stage 1 performance: 0.4959",
+    "Stage 2 performance: 0.5116",
+    "Stage 3 performance: 0.5012",
+    "Transition efficiency: 0.7810",
+    "Low Stage 1 threshold: Quick transition to hybrid mode",
+    "Low Stage 2 threshold: Early ML adoption"
+  ]
+}

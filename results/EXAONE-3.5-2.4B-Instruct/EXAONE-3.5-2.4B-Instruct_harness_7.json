@@ -1,0 +1,995 @@
+{
+  "kmmlu": {
+    "acc,none": 0.4379389095061376,
+    "acc_stderr,none": 0.002603708701485249,
+    "alias": "kmmlu"
+  },
+  "kmmlu_applied_science": {
+    "acc,none": 0.42163793103448277,
+    "acc_stderr,none": 0.004533450011807568,
+    "alias": " - kmmlu_applied_science"
+  },
+  "kmmlu_aviation_engineering_and_maintenance": {
+    "alias": "  - kmmlu_aviation_engineering_and_maintenance",
+    "acc,none": 0.419,
+    "acc_stderr,none": 0.0156103389675778
+  },
+  "kmmlu_electronics_engineering": {
+    "alias": "  - kmmlu_electronics_engineering",
+    "acc,none": 0.545,
+    "acc_stderr,none": 0.01575510149834709
+  },
+  "kmmlu_energy_management": {
+    "alias": "  - kmmlu_energy_management",
+    "acc,none": 0.322,
+    "acc_stderr,none": 0.014782913600996673
+  },
+  "kmmlu_environmental_science": {
+    "alias": "  - kmmlu_environmental_science",
+    "acc,none": 0.344,
+    "acc_stderr,none": 0.015029633724408947
+  },
+  "kmmlu_gas_technology_and_engineering": {
+    "alias": "  - kmmlu_gas_technology_and_engineering",
+    "acc,none": 0.37,
+    "acc_stderr,none": 0.015275252316519364
+  },
+  "kmmlu_geomatics": {
+    "alias": "  - kmmlu_geomatics",
+    "acc,none": 0.402,
+    "acc_stderr,none": 0.015512467135715073
+  },
+  "kmmlu_industrial_engineer": {
+    "alias": "  - kmmlu_industrial_engineer",
+    "acc,none": 0.433,
+    "acc_stderr,none": 0.015676630912181334
+  },
+  "kmmlu_machine_design_and_manufacturing": {
+    "alias": "  - kmmlu_machine_design_and_manufacturing",
+    "acc,none": 0.429,
+    "acc_stderr,none": 0.015658997547870254
+  },
+  "kmmlu_maritime_engineering": {
+    "alias": "  - kmmlu_maritime_engineering",
+    "acc,none": 0.425,
+    "acc_stderr,none": 0.020198307339121493
+  },
+  "kmmlu_nondestructive_testing": {
+    "alias": "  - kmmlu_nondestructive_testing",
+    "acc,none": 0.429,
+    "acc_stderr,none": 0.01565899754787025
+  },
+  "kmmlu_railway_and_automotive_engineering": {
+    "alias": "  - kmmlu_railway_and_automotive_engineering",
+    "acc,none": 0.356,
+    "acc_stderr,none": 0.015149042659306625
+  },
+  "kmmlu_telecommunications_and_wireless_technology": {
+    "alias": "  - kmmlu_telecommunications_and_wireless_technology",
+    "acc,none": 0.587,
+    "acc_stderr,none": 0.01557798682993653
+  },
+  "kmmlu_humss": {
+    "acc,none": 0.4415204678362573,
+    "acc_stderr,none": 0.006885606684859682,
+    "alias": " - kmmlu_humss"
+  },
+  "kmmlu_accounting": {
+    "alias": "  - kmmlu_accounting",
+    "acc,none": 0.36,
+    "acc_stderr,none": 0.04824181513244218
+  },
+  "kmmlu_criminal_law": {
+    "alias": "  - kmmlu_criminal_law",
+    "acc,none": 0.265,
+    "acc_stderr,none": 0.03128528159088722
+  },
+  "kmmlu_economics": {
+    "alias": "  - kmmlu_economics",
+    "acc,none": 0.43846153846153846,
+    "acc_stderr,none": 0.043687847790719915
+  },
+  "kmmlu_education": {
+    "alias": "  - kmmlu_education",
+    "acc,none": 0.53,
+    "acc_stderr,none": 0.05016135580465919
+  },
+  "kmmlu_korean_history": {
+    "alias": "  - kmmlu_korean_history",
+    "acc,none": 0.31,
+    "acc_stderr,none": 0.04648231987117316
+  },
+  "kmmlu_law": {
+    "alias": "  - kmmlu_law",
+    "acc,none": 0.419,
+    "acc_stderr,none": 0.015610338967577806
+  },
+  "kmmlu_management": {
+    "alias": "  - kmmlu_management",
+    "acc,none": 0.494,
+    "acc_stderr,none": 0.015818160898606715
+  },
+  "kmmlu_political_science_and_sociology": {
+    "alias": "  - kmmlu_political_science_and_sociology",
+    "acc,none": 0.49333333333333335,
+    "acc_stderr,none": 0.02891317619548031
+  },
+  "kmmlu_psychology": {
+    "alias": "  - kmmlu_psychology",
+    "acc,none": 0.406,
+    "acc_stderr,none": 0.015537226438634578
+  },
+  "kmmlu_social_welfare": {
+    "alias": "  - kmmlu_social_welfare",
+    "acc,none": 0.499,
+    "acc_stderr,none": 0.01581926829057683
+  },
+  "kmmlu_taxation": {
+    "alias": "  - kmmlu_taxation",
+    "acc,none": 0.345,
+    "acc_stderr,none": 0.03369796379336736
+  },
+  "kmmlu_other": {
+    "acc,none": 0.44333333333333336,
+    "acc_stderr,none": 0.005275727638280014,
+    "alias": " - kmmlu_other"
+  },
+  "kmmlu_agricultural_sciences": {
+    "alias": "  - kmmlu_agricultural_sciences",
+    "acc,none": 0.368,
+    "acc_stderr,none": 0.015258073561521797
+  },
+  "kmmlu_construction": {
+    "alias": "  - kmmlu_construction",
+    "acc,none": 0.375,
+    "acc_stderr,none": 0.015316971293620996
+  },
+  "kmmlu_fashion": {
+    "alias": "  - kmmlu_fashion",
+    "acc,none": 0.428,
+    "acc_stderr,none": 0.01565442624502928
+  },
+  "kmmlu_food_processing": {
+    "alias": "  - kmmlu_food_processing",
+    "acc,none": 0.381,
+    "acc_stderr,none": 0.015364734787007436
+  },
+  "kmmlu_health": {
+    "alias": "  - kmmlu_health",
+    "acc,none": 0.52,
+    "acc_stderr,none": 0.050211673156867795
+  },
+  "kmmlu_interior_architecture_and_design": {
+    "alias": "  - kmmlu_interior_architecture_and_design",
+    "acc,none": 0.551,
+    "acc_stderr,none": 0.015736792768752006
+  },
+  "kmmlu_marketing": {
+    "alias": "  - kmmlu_marketing",
+    "acc,none": 0.713,
+    "acc_stderr,none": 0.014312087053809961
+  },
+  "kmmlu_patent": {
+    "alias": "  - kmmlu_patent",
+    "acc,none": 0.36,
+    "acc_stderr,none": 0.048241815132442176
+  },
+  "kmmlu_public_safety": {
+    "alias": "  - kmmlu_public_safety",
+    "acc,none": 0.387,
+    "acc_stderr,none": 0.015410011955493928
+  },
+  "kmmlu_real_estate": {
+    "alias": "  - kmmlu_real_estate",
+    "acc,none": 0.395,
+    "acc_stderr,none": 0.03465370682892271
+  },
+  "kmmlu_refrigerating_machinery": {
+    "alias": "  - kmmlu_refrigerating_machinery",
+    "acc,none": 0.354,
+    "acc_stderr,none": 0.015129868238451772
+  },
+  "kmmlu_stem": {
+    "acc,none": 0.4506060606060606,
+    "acc_stderr,none": 0.004888058156270531,
+    "alias": " - kmmlu_stem"
+  },
+  "kmmlu_biology": {
+    "alias": "  - kmmlu_biology",
+    "acc,none": 0.35,
+    "acc_stderr,none": 0.015090650341444236
+  },
+  "kmmlu_chemical_engineering": {
+    "alias": "  - kmmlu_chemical_engineering",
+    "acc,none": 0.453,
+    "acc_stderr,none": 0.015749255189977596
+  },
+  "kmmlu_chemistry": {
+    "alias": "  - kmmlu_chemistry",
+    "acc,none": 0.42,
+    "acc_stderr,none": 0.020166253899205264
+  },
+  "kmmlu_civil_engineering": {
+    "alias": "  - kmmlu_civil_engineering",
+    "acc,none": 0.404,
+    "acc_stderr,none": 0.015524980677122581
+  },
+  "kmmlu_computer_science": {
+    "alias": "  - kmmlu_computer_science",
+    "acc,none": 0.648,
+    "acc_stderr,none": 0.015110404505648678
+  },
+  "kmmlu_ecology": {
+    "alias": "  - kmmlu_ecology",
+    "acc,none": 0.475,
+    "acc_stderr,none": 0.01579951342999601
+  },
+  "kmmlu_electrical_engineering": {
+    "alias": "  - kmmlu_electrical_engineering",
+    "acc,none": 0.352,
+    "acc_stderr,none": 0.015110404505648671
+  },
+  "kmmlu_information_technology": {
+    "alias": "  - kmmlu_information_technology",
+    "acc,none": 0.637,
+    "acc_stderr,none": 0.015213890444671283
+  },
+  "kmmlu_materials_engineering": {
+    "alias": "  - kmmlu_materials_engineering",
+    "acc,none": 0.424,
+    "acc_stderr,none": 0.015635487471405186
+  },
+  "kmmlu_math": {
+    "alias": "  - kmmlu_math",
+    "acc,none": 0.27,
+    "acc_stderr,none": 0.025674838352260615
+  },
+  "kmmlu_mechanical_engineering": {
+    "alias": "  - kmmlu_mechanical_engineering",
+    "acc,none": 0.385,
+    "acc_stderr,none": 0.015395194445410806
+  },
+  "kmmlu_hard": {
+    "acc,none": 0.21101364522417154,
+    "acc_stderr,none": 0.0063649738901135474,
+    "alias": "kmmlu_hard"
+  },
+  "kmmlu_hard_applied_science": {
+    "acc,none": 0.21166666666666667,
+    "acc_stderr,none": 0.011813648444163624,
+    "alias": " - kmmlu_hard_applied_science"
+  },
+  "kmmlu_hard_aviation_engineering_and_maintenance": {
+    "alias": "  - kmmlu_hard_aviation_engineering_and_maintenance",
+    "acc,none": 0.17,
+    "acc_stderr,none": 0.0377525168068637
+  },
+  "kmmlu_hard_electronics_engineering": {
+    "alias": "  - kmmlu_hard_electronics_engineering",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.040936018074033256
+  },
+  "kmmlu_hard_energy_management": {
+    "alias": "  - kmmlu_hard_energy_management",
+    "acc,none": 0.23,
+    "acc_stderr,none": 0.042295258468165044
+  },
+  "kmmlu_hard_environmental_science": {
+    "alias": "  - kmmlu_hard_environmental_science",
+    "acc,none": 0.17,
+    "acc_stderr,none": 0.0377525168068637
+  },
+  "kmmlu_hard_gas_technology_and_engineering": {
+    "alias": "  - kmmlu_hard_gas_technology_and_engineering",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.040936018074033256
+  },
+  "kmmlu_hard_geomatics": {
+    "alias": "  - kmmlu_hard_geomatics",
+    "acc,none": 0.26,
+    "acc_stderr,none": 0.04408440022768081
+  },
+  "kmmlu_hard_industrial_engineer": {
+    "alias": "  - kmmlu_hard_industrial_engineer",
+    "acc,none": 0.17,
+    "acc_stderr,none": 0.03775251680686371
+  },
+  "kmmlu_hard_machine_design_and_manufacturing": {
+    "alias": "  - kmmlu_hard_machine_design_and_manufacturing",
+    "acc,none": 0.25,
+    "acc_stderr,none": 0.04351941398892446
+  },
+  "kmmlu_hard_maritime_engineering": {
+    "alias": "  - kmmlu_hard_maritime_engineering",
+    "acc,none": 0.18,
+    "acc_stderr,none": 0.03861229196653695
+  },
+  "kmmlu_hard_nondestructive_testing": {
+    "alias": "  - kmmlu_hard_nondestructive_testing",
+    "acc,none": 0.24,
+    "acc_stderr,none": 0.042923469599092816
+  },
+  "kmmlu_hard_railway_and_automotive_engineering": {
+    "alias": "  - kmmlu_hard_railway_and_automotive_engineering",
+    "acc,none": 0.2,
+    "acc_stderr,none": 0.04020151261036845
+  },
+  "kmmlu_hard_telecommunications_and_wireless_technology": {
+    "alias": "  - kmmlu_hard_telecommunications_and_wireless_technology",
+    "acc,none": 0.25,
+    "acc_stderr,none": 0.04351941398892446
+  },
+  "kmmlu_hard_humss": {
+    "acc,none": 0.1985731272294887,
+    "acc_stderr,none": 0.013575464019695043,
+    "alias": " - kmmlu_hard_humss"
+  },
+  "kmmlu_hard_accounting": {
+    "alias": "  - kmmlu_hard_accounting",
+    "acc,none": 0.15217391304347827,
+    "acc_stderr,none": 0.05354479188959758
+  },
+  "kmmlu_hard_criminal_law": {
+    "alias": "  - kmmlu_hard_criminal_law",
+    "acc,none": 0.14,
+    "acc_stderr,none": 0.03487350880197769
+  },
+  "kmmlu_hard_economics": {
+    "alias": "  - kmmlu_hard_economics",
+    "acc,none": 0.23809523809523808,
+    "acc_stderr,none": 0.06651717102567414
+  },
+  "kmmlu_hard_education": {
+    "alias": "  - kmmlu_hard_education",
+    "acc,none": 0.2608695652173913,
+    "acc_stderr,none": 0.09361833424764439
+  },
+  "kmmlu_hard_korean_history": {
+    "alias": "  - kmmlu_hard_korean_history",
+    "acc,none": 0.1590909090909091,
+    "acc_stderr,none": 0.05577800511236323
+  },
+  "kmmlu_hard_law": {
+    "alias": "  - kmmlu_hard_law",
+    "acc,none": 0.19,
+    "acc_stderr,none": 0.03942772444036623
+  },
+  "kmmlu_hard_management": {
+    "alias": "  - kmmlu_hard_management",
+    "acc,none": 0.24,
+    "acc_stderr,none": 0.042923469599092816
+  },
+  "kmmlu_hard_political_science_and_sociology": {
+    "alias": "  - kmmlu_hard_political_science_and_sociology",
+    "acc,none": 0.18888888888888888,
+    "acc_stderr,none": 0.04149047224366524
+  },
+  "kmmlu_hard_psychology": {
+    "alias": "  - kmmlu_hard_psychology",
+    "acc,none": 0.11,
+    "acc_stderr,none": 0.03144660377352203
+  },
+  "kmmlu_hard_social_welfare": {
+    "alias": "  - kmmlu_hard_social_welfare",
+    "acc,none": 0.38,
+    "acc_stderr,none": 0.048783173121456316
+  },
+  "kmmlu_hard_taxation": {
+    "alias": "  - kmmlu_hard_taxation",
+    "acc,none": 0.14583333333333334,
+    "acc_stderr,none": 0.036210782375335614
+  },
+  "kmmlu_hard_other": {
+    "acc,none": 0.21495327102803738,
+    "acc_stderr,none": 0.013282707280394063,
+    "alias": " - kmmlu_hard_other"
+  },
+  "kmmlu_hard_agricultural_sciences": {
+    "alias": "  - kmmlu_hard_agricultural_sciences",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.040936018074033256
+  },
+  "kmmlu_hard_construction": {
+    "alias": "  - kmmlu_hard_construction",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.04093601807403326
+  },
+  "kmmlu_hard_fashion": {
+    "alias": "  - kmmlu_hard_fashion",
+    "acc,none": 0.23,
+    "acc_stderr,none": 0.04229525846816505
+  },
+  "kmmlu_hard_food_processing": {
+    "alias": "  - kmmlu_hard_food_processing",
+    "acc,none": 0.2,
+    "acc_stderr,none": 0.04020151261036846
+  },
+  "kmmlu_hard_health": {
+    "alias": "  - kmmlu_hard_health",
+    "acc,none": 0.13043478260869565,
+    "acc_stderr,none": 0.07180198468215397
+  },
+  "kmmlu_hard_interior_architecture_and_design": {
+    "alias": "  - kmmlu_hard_interior_architecture_and_design",
+    "acc,none": 0.27,
+    "acc_stderr,none": 0.044619604333847394
+  },
+  "kmmlu_hard_marketing": {
+    "alias": "  - kmmlu_hard_marketing",
+    "acc,none": 0.23,
+    "acc_stderr,none": 0.04229525846816505
+  },
+  "kmmlu_hard_patent": {
+    "alias": "  - kmmlu_hard_patent",
+    "acc,none": 0.23529411764705882,
+    "acc_stderr,none": 0.059988464865797474
+  },
+  "kmmlu_hard_public_safety": {
+    "alias": "  - kmmlu_hard_public_safety",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.04093601807403326
+  },
+  "kmmlu_hard_real_estate": {
+    "alias": "  - kmmlu_hard_real_estate",
+    "acc,none": 0.16853932584269662,
+    "acc_stderr,none": 0.03990526017490821
+  },
+  "kmmlu_hard_refrigerating_machinery": {
+    "alias": "  - kmmlu_hard_refrigerating_machinery",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.040936018074033256
+  },
+  "kmmlu_hard_stem": {
+    "acc,none": 0.21636363636363637,
+    "acc_stderr,none": 0.01244471873095218,
+    "alias": " - kmmlu_hard_stem"
+  },
+  "kmmlu_hard_biology": {
+    "alias": "  - kmmlu_hard_biology",
+    "acc,none": 0.15,
+    "acc_stderr,none": 0.035887028128263714
+  },
+  "kmmlu_hard_chemical_engineering": {
+    "alias": "  - kmmlu_hard_chemical_engineering",
+    "acc,none": 0.23,
+    "acc_stderr,none": 0.04229525846816508
+  },
+  "kmmlu_hard_chemistry": {
+    "alias": "  - kmmlu_hard_chemistry",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.04093601807403326
+  },
+  "kmmlu_hard_civil_engineering": {
+    "alias": "  - kmmlu_hard_civil_engineering",
+    "acc,none": 0.2,
+    "acc_stderr,none": 0.04020151261036845
+  },
+  "kmmlu_hard_computer_science": {
+    "alias": "  - kmmlu_hard_computer_science",
+    "acc,none": 0.19,
+    "acc_stderr,none": 0.03942772444036623
+  },
+  "kmmlu_hard_ecology": {
+    "alias": "  - kmmlu_hard_ecology",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.040936018074033256
+  },
+  "kmmlu_hard_electrical_engineering": {
+    "alias": "  - kmmlu_hard_electrical_engineering",
+    "acc,none": 0.23,
+    "acc_stderr,none": 0.042295258468165065
+  },
+  "kmmlu_hard_information_technology": {
+    "alias": "  - kmmlu_hard_information_technology",
+    "acc,none": 0.27,
+    "acc_stderr,none": 0.044619604333847394
+  },
+  "kmmlu_hard_materials_engineering": {
+    "alias": "  - kmmlu_hard_materials_engineering",
+    "acc,none": 0.24,
+    "acc_stderr,none": 0.04292346959909284
+  },
+  "kmmlu_hard_math": {
+    "alias": "  - kmmlu_hard_math",
+    "acc,none": 0.21,
+    "acc_stderr,none": 0.040936018074033256
+  },
+  "kmmlu_hard_mechanical_engineering": {
+    "alias": "  - kmmlu_hard_mechanical_engineering",
+    "acc,none": 0.24,
+    "acc_stderr,none": 0.042923469599092816
+  },
+  "haerae": {
+    "acc,none": 0.6617781851512374,
+    "acc_stderr,none": 0.013826126366616506,
+    "acc_norm,none": 0.6617781851512374,
+    "acc_norm_stderr,none": 0.013826126366616506,
+    "alias": "haerae"
+  },
+  "haerae_general_knowledge": {
+    "alias": " - haerae_general_knowledge",
+    "acc,none": 0.38636363636363635,
+    "acc_stderr,none": 0.036807357716281526,
+    "acc_norm,none": 0.38636363636363635,
+    "acc_norm_stderr,none": 0.036807357716281526
+  },
+  "haerae_history": {
+    "alias": " - haerae_history",
+    "acc,none": 0.6542553191489362,
+    "acc_stderr,none": 0.03478008039172517,
+    "acc_norm,none": 0.6542553191489362,
+    "acc_norm_stderr,none": 0.03478008039172517
+  },
+  "haerae_loan_word": {
+    "alias": " - haerae_loan_word",
+    "acc,none": 0.7869822485207101,
+    "acc_stderr,none": 0.03158898891133521,
+    "acc_norm,none": 0.7869822485207101,
+    "acc_norm_stderr,none": 0.03158898891133521
+  },
+  "haerae_rare_word": {
+    "alias": " - haerae_rare_word",
+    "acc,none": 0.7012345679012346,
+    "acc_stderr,none": 0.022772260824812145,
+    "acc_norm,none": 0.7012345679012346,
+    "acc_norm_stderr,none": 0.022772260824812145
+  },
+  "haerae_standard_nomenclature": {
+    "alias": " - haerae_standard_nomenclature",
+    "acc,none": 0.7450980392156863,
+    "acc_stderr,none": 0.03534854191631358,
+    "acc_norm,none": 0.7450980392156863,
+    "acc_norm_stderr,none": 0.03534854191631358
+  },
+  "kobest": {
+    "f1,none": 0.7485481096352786,
+    "f1_stderr,none": "N/A",
+    "acc,none": 0.7491778118833589,
+    "acc_stderr,none": 0.006016520305132479,
+    "acc_norm,none": 0.578,
+    "acc_norm_stderr,none": 0.022109039310618552,
+    "alias": "kobest"
+  },
+  "kobest_boolq": {
+    "alias": " - kobest_boolq",
+    "acc,none": 0.8753561253561254,
+    "acc_stderr,none": 0.008818587379083727,
+    "f1,none": 0.8752598752598753,
+    "f1_stderr,none": "N/A"
+  },
+  "kobest_copa": {
+    "alias": " - kobest_copa",
+    "acc,none": 0.77,
+    "acc_stderr,none": 0.013314551335935931,
+    "f1,none": 0.7696314102564102,
+    "f1_stderr,none": "N/A"
+  },
+  "kobest_hellaswag": {
+    "alias": " - kobest_hellaswag",
+    "acc,none": 0.454,
+    "acc_stderr,none": 0.02228814759117695,
+    "f1,none": 0.45179459006531,
+    "f1_stderr,none": "N/A",
+    "acc_norm,none": 0.578,
+    "acc_norm_stderr,none": 0.022109039310618552
+  },
+  "kobest_sentineg": {
+    "alias": " - kobest_sentineg",
+    "acc,none": 0.9848866498740554,
+    "acc_stderr,none": 0.006130923598981937,
+    "f1,none": 0.9848865539820314,
+    "f1_stderr,none": "N/A"
+  },
+  "kobest_wic": {
+    "alias": " - kobest_wic",
+    "acc,none": 0.6349206349206349,
+    "acc_stderr,none": 0.013568770569501187,
+    "f1,none": 0.6339161872711976,
+    "f1_stderr,none": "N/A"
+  },
+  "csatqa": {
+    "acc,none": 0.37433155080213903,
+    "acc_stderr,none": 0.03433673078815268,
+    "acc_norm,none": 0.37433155080213903,
+    "acc_norm_stderr,none": 0.03433673078815268,
+    "alias": "csatqa"
+  },
+  "csatqa_gr": {
+    "alias": " - csatqa_gr",
+    "acc,none": 0.08,
+    "acc_stderr,none": 0.05537749241945382,
+    "acc_norm,none": 0.08,
+    "acc_norm_stderr,none": 0.05537749241945382
+  },
+  "csatqa_li": {
+    "alias": " - csatqa_li",
+    "acc,none": 0.40540540540540543,
+    "acc_stderr,none": 0.08182838794858087,
+    "acc_norm,none": 0.40540540540540543,
+    "acc_norm_stderr,none": 0.08182838794858087
+  },
+  "csatqa_rch": {
+    "alias": " - csatqa_rch",
+    "acc,none": 0.5714285714285714,
+    "acc_stderr,none": 0.08486978939800069,
+    "acc_norm,none": 0.5714285714285714,
+    "acc_norm_stderr,none": 0.08486978939800069
+  },
+  "csatqa_rcs": {
+    "alias": " - csatqa_rcs",
+    "acc,none": 0.32432432432432434,
+    "acc_stderr,none": 0.07802030664724674,
+    "acc_norm,none": 0.32432432432432434,
+    "acc_norm_stderr,none": 0.07802030664724674
+  },
+  "csatqa_rcss": {
+    "alias": " - csatqa_rcss",
+    "acc,none": 0.42857142857142855,
+    "acc_stderr,none": 0.07728596868577994,
+    "acc_norm,none": 0.42857142857142855,
+    "acc_norm_stderr,none": 0.07728596868577994
+  },
+  "csatqa_wr": {
+    "alias": " - csatqa_wr",
+    "acc,none": 0.2727272727272727,
+    "acc_stderr,none": 0.14083575804390605,
+    "acc_norm,none": 0.2727272727272727,
+    "acc_norm_stderr,none": 0.14083575804390605
+  },
+  "kormedmcqa": {
+    "exact_match,none": 0.484214024592888,
+    "exact_match_stderr,none": 0.009005465680696833,
+    "alias": "kormedmcqa"
+  },
+  "kormedmcqa_dentist": {
+    "alias": " - kormedmcqa_dentist",
+    "exact_match,none": 0.40567200986436497,
+    "exact_match_stderr,none": 0.017252741069639248
+  },
+  "kormedmcqa_doctor": {
+    "alias": " - kormedmcqa_doctor",
+    "exact_match,none": 0.43448275862068964,
+    "exact_match_stderr,none": 0.023793828880946725
+  },
+  "kormedmcqa_nurse": {
+    "alias": " - kormedmcqa_nurse",
+    "exact_match,none": 0.6002277904328018,
+    "exact_match_stderr,none": 0.016541106324309357
+  },
+  "kormedmcqa_pharm": {
+    "alias": " - kormedmcqa_pharm",
+    "exact_match,none": 0.4655367231638418,
+    "exact_match_stderr,none": 0.01677682503002008
+  },
+  "mmlu": {
+    "acc,none": 0.5913687508901866,
+    "acc_stderr,none": 0.003982057766973184,
+    "alias": "mmlu"
+  },
+  "mmlu_humanities": {
+    "acc,none": 0.5356004250797024,
+    "acc_stderr,none": 0.006957219252563641,
+    "alias": " - humanities"
+  },
+  "mmlu_formal_logic": {
+    "alias": "  - formal_logic",
+    "acc,none": 0.3888888888888889,
+    "acc_stderr,none": 0.04360314860077459
+  },
+  "mmlu_high_school_european_history": {
+    "alias": "  - high_school_european_history",
+    "acc,none": 0.7272727272727273,
+    "acc_stderr,none": 0.0347769116216366
+  },
+  "mmlu_high_school_us_history": {
+    "alias": "  - high_school_us_history",
+    "acc,none": 0.7156862745098039,
+    "acc_stderr,none": 0.031660096793998116
+  },
+  "mmlu_high_school_world_history": {
+    "alias": "  - high_school_world_history",
+    "acc,none": 0.7679324894514767,
+    "acc_stderr,none": 0.02747974455080852
+  },
+  "mmlu_international_law": {
+    "alias": "  - international_law",
+    "acc,none": 0.7520661157024794,
+    "acc_stderr,none": 0.03941897526516302
+  },
+  "mmlu_jurisprudence": {
+    "alias": "  - jurisprudence",
+    "acc,none": 0.7129629629629629,
+    "acc_stderr,none": 0.043733130409147614
+  },
+  "mmlu_logical_fallacies": {
+    "alias": "  - logical_fallacies",
+    "acc,none": 0.6932515337423313,
+    "acc_stderr,none": 0.036230899157241474
+  },
+  "mmlu_moral_disputes": {
+    "alias": "  - moral_disputes",
+    "acc,none": 0.6242774566473989,
+    "acc_stderr,none": 0.026074314851657083
+  },
+  "mmlu_moral_scenarios": {
+    "alias": "  - moral_scenarios",
+    "acc,none": 0.3463687150837989,
+    "acc_stderr,none": 0.015913546784020117
+  },
+  "mmlu_philosophy": {
+    "alias": "  - philosophy",
+    "acc,none": 0.639871382636656,
+    "acc_stderr,none": 0.027264297599804012
+  },
+  "mmlu_prehistory": {
+    "alias": "  - prehistory",
+    "acc,none": 0.6604938271604939,
+    "acc_stderr,none": 0.026348564412011635
+  },
+  "mmlu_professional_law": {
+    "alias": "  - professional_law",
+    "acc,none": 0.4452411994784876,
+    "acc_stderr,none": 0.012693421303973294
+  },
+  "mmlu_world_religions": {
+    "alias": "  - world_religions",
+    "acc,none": 0.7017543859649122,
+    "acc_stderr,none": 0.03508771929824565
+  },
+  "mmlu_other": {
+    "acc,none": 0.6372706791116833,
+    "acc_stderr,none": 0.008345075923676627,
+    "alias": " - other"
+  },
+  "mmlu_business_ethics": {
+    "alias": "  - business_ethics",
+    "acc,none": 0.6,
+    "acc_stderr,none": 0.049236596391733084
+  },
+  "mmlu_clinical_knowledge": {
+    "alias": "  - clinical_knowledge",
+    "acc,none": 0.6830188679245283,
+    "acc_stderr,none": 0.0286372356398009
+  },
+  "mmlu_college_medicine": {
+    "alias": "  - college_medicine",
+    "acc,none": 0.5838150289017341,
+    "acc_stderr,none": 0.03758517775404947
+  },
+  "mmlu_global_facts": {
+    "alias": "  - global_facts",
+    "acc,none": 0.33,
+    "acc_stderr,none": 0.04725815626252604
+  },
+  "mmlu_human_aging": {
+    "alias": "  - human_aging",
+    "acc,none": 0.6771300448430493,
+    "acc_stderr,none": 0.031381476375755
+  },
+  "mmlu_management": {
+    "alias": "  - management",
+    "acc,none": 0.7572815533980582,
+    "acc_stderr,none": 0.04245022486384495
+  },
+  "mmlu_marketing": {
+    "alias": "  - marketing",
+    "acc,none": 0.8247863247863247,
+    "acc_stderr,none": 0.02490443909891823
+  },
+  "mmlu_medical_genetics": {
+    "alias": "  - medical_genetics",
+    "acc,none": 0.66,
+    "acc_stderr,none": 0.04760952285695238
+  },
+  "mmlu_miscellaneous": {
+    "alias": "  - miscellaneous",
+    "acc,none": 0.7420178799489144,
+    "acc_stderr,none": 0.01564583018834895
+  },
+  "mmlu_nutrition": {
+    "alias": "  - nutrition",
+    "acc,none": 0.6372549019607843,
+    "acc_stderr,none": 0.0275300784471103
+  },
+  "mmlu_professional_accounting": {
+    "alias": "  - professional_accounting",
+    "acc,none": 0.4574468085106383,
+    "acc_stderr,none": 0.029719281272236844
+  },
+  "mmlu_professional_medicine": {
+    "alias": "  - professional_medicine",
+    "acc,none": 0.48161764705882354,
+    "acc_stderr,none": 0.030352303395351964
+  },
+  "mmlu_virology": {
+    "alias": "  - virology",
+    "acc,none": 0.4879518072289157,
+    "acc_stderr,none": 0.03891364495835819
+  },
+  "mmlu_social_sciences": {
+    "acc,none": 0.6841078973025674,
+    "acc_stderr,none": 0.008220983829089989,
+    "alias": " - social sciences"
+  },
+  "mmlu_econometrics": {
+    "alias": "  - econometrics",
+    "acc,none": 0.38596491228070173,
+    "acc_stderr,none": 0.04579639422070435
+  },
+  "mmlu_high_school_geography": {
+    "alias": "  - high_school_geography",
+    "acc,none": 0.7424242424242424,
+    "acc_stderr,none": 0.03115626951964686
+  },
+  "mmlu_high_school_government_and_politics": {
+    "alias": "  - high_school_government_and_politics",
+    "acc,none": 0.772020725388601,
+    "acc_stderr,none": 0.030276909945178277
+  },
+  "mmlu_high_school_macroeconomics": {
+    "alias": "  - high_school_macroeconomics",
+    "acc,none": 0.6307692307692307,
+    "acc_stderr,none": 0.02446861524147892
+  },
+  "mmlu_high_school_microeconomics": {
+    "alias": "  - high_school_microeconomics",
+    "acc,none": 0.680672268907563,
+    "acc_stderr,none": 0.030283995525884396
+  },
+  "mmlu_high_school_psychology": {
+    "alias": "  - high_school_psychology",
+    "acc,none": 0.7743119266055046,
+    "acc_stderr,none": 0.01792308766780306
+  },
+  "mmlu_human_sexuality": {
+    "alias": "  - human_sexuality",
+    "acc,none": 0.7022900763358778,
+    "acc_stderr,none": 0.04010358942462202
+  },
+  "mmlu_professional_psychology": {
+    "alias": "  - professional_psychology",
+    "acc,none": 0.5964052287581699,
+    "acc_stderr,none": 0.01984828016840116
+  },
+  "mmlu_public_relations": {
+    "alias": "  - public_relations",
+    "acc,none": 0.5636363636363636,
+    "acc_stderr,none": 0.04750185058907296
+  },
+  "mmlu_security_studies": {
+    "alias": "  - security_studies",
+    "acc,none": 0.7510204081632653,
+    "acc_stderr,none": 0.027682979522960224
+  },
+  "mmlu_sociology": {
+    "alias": "  - sociology",
+    "acc,none": 0.7661691542288557,
+    "acc_stderr,none": 0.029929415408348398
+  },
+  "mmlu_us_foreign_policy": {
+    "alias": "  - us_foreign_policy",
+    "acc,none": 0.78,
+    "acc_stderr,none": 0.04163331998932261
+  },
+  "mmlu_stem": {
+    "acc,none": 0.5388518870916588,
+    "acc_stderr,none": 0.00864515860508358,
+    "alias": " - stem"
+  },
+  "mmlu_abstract_algebra": {
+    "alias": "  - abstract_algebra",
+    "acc,none": 0.35,
+    "acc_stderr,none": 0.0479372485441102
+  },
+  "mmlu_anatomy": {
+    "alias": "  - anatomy",
+    "acc,none": 0.4962962962962963,
+    "acc_stderr,none": 0.04319223625811331
+  },
+  "mmlu_astronomy": {
+    "alias": "  - astronomy",
+    "acc,none": 0.6710526315789473,
+    "acc_stderr,none": 0.03823428969926604
+  },
+  "mmlu_college_biology": {
+    "alias": "  - college_biology",
+    "acc,none": 0.6736111111111112,
+    "acc_stderr,none": 0.03921067198982266
+  },
+  "mmlu_college_chemistry": {
+    "alias": "  - college_chemistry",
+    "acc,none": 0.44,
+    "acc_stderr,none": 0.0498887651569859
+  },
+  "mmlu_college_computer_science": {
+    "alias": "  - college_computer_science",
+    "acc,none": 0.47,
+    "acc_stderr,none": 0.050161355804659205
+  },
+  "mmlu_college_mathematics": {
+    "alias": "  - college_mathematics",
+    "acc,none": 0.38,
+    "acc_stderr,none": 0.04878317312145633
+  },
+  "mmlu_college_physics": {
+    "alias": "  - college_physics",
+    "acc,none": 0.3333333333333333,
+    "acc_stderr,none": 0.04690650298201943
+  },
+  "mmlu_computer_security": {
+    "alias": "  - computer_security",
+    "acc,none": 0.71,
+    "acc_stderr,none": 0.045604802157206845
+  },
+  "mmlu_conceptual_physics": {
+    "alias": "  - conceptual_physics",
+    "acc,none": 0.548936170212766,
+    "acc_stderr,none": 0.03252909619613197
+  },
+  "mmlu_electrical_engineering": {
+    "alias": "  - electrical_engineering",
+    "acc,none": 0.5655172413793104,
+    "acc_stderr,none": 0.04130740879555497
+  },
+  "mmlu_elementary_mathematics": {
+    "alias": "  - elementary_mathematics",
+    "acc,none": 0.5026455026455027,
+    "acc_stderr,none": 0.02575094967813039
+  },
+  "mmlu_high_school_biology": {
+    "alias": "  - high_school_biology",
+    "acc,none": 0.7516129032258064,
+    "acc_stderr,none": 0.024580028921481003
+  },
+  "mmlu_high_school_chemistry": {
+    "alias": "  - high_school_chemistry",
+    "acc,none": 0.5517241379310345,
+    "acc_stderr,none": 0.03499113137676744
+  },
+  "mmlu_high_school_computer_science": {
+    "alias": "  - high_school_computer_science",
+    "acc,none": 0.69,
+    "acc_stderr,none": 0.04648231987117316
+  },
+  "mmlu_high_school_mathematics": {
+    "alias": "  - high_school_mathematics",
+    "acc,none": 0.42592592592592593,
+    "acc_stderr,none": 0.030149135601365944
+  },
+  "mmlu_high_school_physics": {
+    "alias": "  - high_school_physics",
+    "acc,none": 0.3973509933774834,
+    "acc_stderr,none": 0.03995524007681681
+  },
+  "mmlu_high_school_statistics": {
+    "alias": "  - high_school_statistics",
+    "acc,none": 0.5740740740740741,
+    "acc_stderr,none": 0.03372343271653063
+  },
+  "mmlu_machine_learning": {
+    "alias": "  - machine_learning",
+    "acc,none": 0.44642857142857145,
+    "acc_stderr,none": 0.047184714852195886
+  },
+  "arc_challenge": {
+    "alias": "arc_challenge",
+    "acc,none": 0.5068259385665529,
+    "acc_stderr,none": 0.014610029151379813,
+    "acc_norm,none": 0.5426621160409556,
+    "acc_norm_stderr,none": 0.01455810654392407
+  },
+  "arc_easy": {
+    "alias": "arc_easy",
+    "acc,none": 0.7727272727272727,
+    "acc_stderr,none": 0.008599139117517507,
+    "acc_norm,none": 0.7664141414141414,
+    "acc_norm_stderr,none": 0.008682068762796197
+  },
+  "hellaswag": {
+    "alias": "hellaswag",
+    "acc,none": 0.5403306114319857,
+    "acc_stderr,none": 0.004973522582431221,
+    "acc_norm,none": 0.7224656442939653,
+    "acc_norm_stderr,none": 0.004468672138910933
+  }
+}

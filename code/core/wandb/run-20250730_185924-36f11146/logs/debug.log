@@ -1,0 +1,18 @@
+2025-07-30 18:59:24,656 INFO    MainThread:1941996 [wandb_init.py:setup_run_log_directory():724] Logging user logs to /home/gwlee/Benchmark/AIDE_Benchmark/code/core/wandb/run-20250730_185924-36f11146/logs/debug.log
+2025-07-30 18:59:24,656 INFO    MainThread:1941996 [wandb_init.py:setup_run_log_directory():725] Logging internal logs to /home/gwlee/Benchmark/AIDE_Benchmark/code/core/wandb/run-20250730_185924-36f11146/logs/debug-internal.log
+2025-07-30 18:59:24,656 INFO    MainThread:1941996 [wandb_init.py:init():852] calling init triggers
+2025-07-30 18:59:24,656 INFO    MainThread:1941996 [wandb_init.py:init():857] wandb.init called with sweep_config: {}
+config: {'model': 'EXAONE-3.5-32B-Instruct', 'tasks': ['kmmlu', 'kmmlu_hard', 'haerae', 'kobest', 'csatqa', 'kormedmcqa', 'mmlu', 'arc_challenge', 'arc_easy', 'hellaswag'], 'num_tasks': 10, 'full_run': True, 'num_gpus': 1, 'timestamp': '20250730_185924', 'model_id': 'LGAI-EXAONE/EXAONE-3.5-32B-Instruct', 'model_name': 'EXAONE-3.5-32B-Instruct', 'batch_size': 1, 'is_large_model': True, 'is_medium_model': False, 'device': 'cuda:0', 'limit': None, 'tracking_mode': 'baseline', 'scheduler_optimized': False, '_wandb': {}}
+2025-07-30 18:59:24,656 INFO    MainThread:1941996 [wandb_init.py:init():893] starting backend
+2025-07-30 18:59:24,656 INFO    MainThread:1941996 [wandb_init.py:init():897] sending inform_init request
+2025-07-30 18:59:24,657 INFO    MainThread:1941996 [backend.py:_multiprocessing_setup():101] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2025-07-30 18:59:24,657 INFO    MainThread:1941996 [wandb_init.py:init():907] backend started and connected
+2025-07-30 18:59:24,659 INFO    MainThread:1941996 [wandb_init.py:init():1002] updated telemetry
+2025-07-30 18:59:24,659 INFO    MainThread:1941996 [wandb_init.py:init():1026] communicating run to backend with 90.0 second timeout
+2025-07-30 18:59:25,770 INFO    MainThread:1941996 [wandb_init.py:init():1096] run resumed
+2025-07-30 18:59:25,799 INFO    MainThread:1941996 [wandb_init.py:init():1101] starting run threads in backend
+2025-07-30 18:59:26,004 INFO    MainThread:1941996 [wandb_run.py:_console_start():2566] atexit reg
+2025-07-30 18:59:26,004 INFO    MainThread:1941996 [wandb_run.py:_redirect():2414] redirect: wrap_raw
+2025-07-30 18:59:26,004 INFO    MainThread:1941996 [wandb_run.py:_redirect():2483] Wrapping output streams.
+2025-07-30 18:59:26,004 INFO    MainThread:1941996 [wandb_run.py:_redirect():2506] Redirects installed.
+2025-07-30 18:59:26,004 INFO    MainThread:1941996 [wandb_init.py:init():1147] run started, returning control to user process

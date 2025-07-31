@@ -1,0 +1,96 @@
+{
+  "last_training_time": "2025-07-18T05:30:05.339964",
+  "training_data_size": 1097,
+  "model_performance": {
+    "time_predictor": {
+      "mae": 189.8824201639752,
+      "relative_error": 1.4463044374418281,
+      "oob_score": 0.578428285603658
+    },
+    "memory_predictor": {
+      "mae": 1.4642709556460916,
+      "relative_error": 1.082509519597646,
+      "oob_score": 0.6019399058447947
+    },
+    "success_classifier": {
+      "accuracy": 0.9954545454545455,
+      "oob_score": 1.0
+    },
+    "batch_size_predictor": {
+      "mae": 0.020164889125283504,
+      "oob_score": -0.16435712823085868
+    },
+    "fewshot_predictor": {
+      "mae": 0.022727272727272728,
+      "oob_score": 1.0
+    }
+  },
+  "feature_names": [
+    "model_size_numeric",
+    "model_size_category",
+    "model_type",
+    "task_name",
+    "task_type",
+    "task_complexity",
+    "gpu_memory_available",
+    "gpu_utilization",
+    "gpu_temperature",
+    "cpu_percent",
+    "ram_available",
+    "historical_avg_time",
+    "historical_avg_memory",
+    "historical_success_rate",
+    "historical_oom_rate",
+    "historical_sample_count",
+    "model_avg_time",
+    "model_avg_memory",
+    "model_run_count",
+    "hour",
+    "day_of_week",
+    "num_gpus"
+  ],
+  "label_encoders": {
+    "model_size_category": {
+      "classes_": [
+        "large",
+        "medium",
+        "small",
+        "xlarge"
+      ]
+    },
+    "model_type": {
+      "classes_": [
+        "exaone",
+        "gemma",
+        "llama",
+        "mistral",
+        "other",
+        "qwen"
+      ]
+    },
+    "task_name": {
+      "classes_": [
+        "arc_challenge",
+        "arc_easy",
+        "csatqa",
+        "haerae",
+        "hellaswag",
+        "kmmlu",
+        "kmmlu_hard",
+        "kobest",
+        "komt_bench",
+        "kormedmcqa",
+        "mmlu"
+      ]
+    },
+    "task_type": {
+      "classes_": [
+        "knowledge",
+        "korean",
+        "language",
+        "other",
+        "reasoning"
+      ]
+    }
+  }
+}

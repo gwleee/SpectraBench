@@ -1,0 +1,88 @@
+{
+  "last_training_time": "2025-07-17T04:49:18.197563",
+  "training_data_size": 100,
+  "model_performance": {
+    "time_predictor": {
+      "mae": 3078.603077979592,
+      "relative_error": 0.8231131866585076,
+      "oob_score": -0.4072111007006669
+    },
+    "memory_predictor": {
+      "mae": 13.892366444743136,
+      "relative_error": 0.6653674410879659,
+      "oob_score": -0.30096687273904954
+    },
+    "oom_classifier": {
+      "accuracy": 0.75,
+      "oob_score": 0.8125
+    },
+    "success_classifier": {
+      "accuracy": 0.65,
+      "oob_score": 0.6
+    },
+    "batch_size_predictor": {
+      "mae": 0.0,
+      "oob_score": 1.0
+    },
+    "fewshot_predictor": {
+      "mae": 0.0,
+      "oob_score": 1.0
+    }
+  },
+  "feature_names": [
+    "model_size_numeric",
+    "model_size_category",
+    "model_type",
+    "task_name",
+    "task_type",
+    "task_complexity",
+    "gpu_memory_available",
+    "gpu_utilization",
+    "gpu_temperature",
+    "cpu_percent",
+    "ram_available",
+    "historical_avg_time",
+    "historical_avg_memory",
+    "historical_success_rate",
+    "historical_oom_rate",
+    "historical_sample_count",
+    "model_avg_time",
+    "model_avg_memory",
+    "model_run_count",
+    "hour",
+    "day_of_week",
+    "num_gpus"
+  ],
+  "label_encoders": {
+    "model_size_category": {
+      "classes_": [
+        "medium"
+      ]
+    },
+    "model_type": {
+      "classes_": [
+        "exaone",
+        "gemma",
+        "llama",
+        "mistral"
+      ]
+    },
+    "task_name": {
+      "classes_": [
+        "bbh",
+        "gsm8k",
+        "hellaswag",
+        "humaneval",
+        "mmlu"
+      ]
+    },
+    "task_type": {
+      "classes_": [
+        "coding",
+        "knowledge",
+        "language",
+        "reasoning"
+      ]
+    }
+  }
+}

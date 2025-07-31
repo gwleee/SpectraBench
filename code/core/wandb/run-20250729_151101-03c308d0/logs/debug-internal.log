@@ -1,0 +1,16 @@
+{"time":"2025-07-29T15:11:01.763759445Z","level":"INFO","msg":"stream: starting","core version":"0.19.10","symlink path":"/home/gwlee/Benchmark/AIDE_Benchmark/code/core/wandb/run-20250729_151101-03c308d0/logs/debug-core.log"}
+{"time":"2025-07-29T15:11:02.147601745Z","level":"INFO","msg":"created new stream","id":"03c308d0"}
+{"time":"2025-07-29T15:11:02.147628052Z","level":"INFO","msg":"stream: started","id":"03c308d0"}
+{"time":"2025-07-29T15:11:02.147640073Z","level":"INFO","msg":"handler: started","stream_id":"03c308d0"}
+{"time":"2025-07-29T15:11:02.147646162Z","level":"INFO","msg":"sender: started","stream_id":"03c308d0"}
+{"time":"2025-07-29T15:11:02.147672342Z","level":"INFO","msg":"writer: Do: started","stream_id":"03c308d0"}
+{"time":"2025-07-29T15:11:02.907115197Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-29T18:31:29.520179878Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-29T18:31:29.520222278Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-29T18:31:30.521397262Z","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading artifact gemma-3-4b-it_results","runtime_seconds":1.596686507},{"desc":"uploading output.log","runtime_seconds":0.749600624,"progress":"127.5KB/127.5KB"}],"total_operations":2}}
+{"time":"2025-07-29T18:31:31.696765843Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-29T18:31:32.620615606Z","level":"INFO","msg":"stream: closing","id":"03c308d0"}
+{"time":"2025-07-29T18:31:32.620633174Z","level":"INFO","msg":"handler: closed","stream_id":"03c308d0"}
+{"time":"2025-07-29T18:31:32.620640487Z","level":"INFO","msg":"writer: Close: closed","stream_id":"03c308d0"}
+{"time":"2025-07-29T18:31:32.620658778Z","level":"INFO","msg":"sender: closed","stream_id":"03c308d0"}
+{"time":"2025-07-29T18:31:32.620701262Z","level":"INFO","msg":"stream: closed","id":"03c308d0"}

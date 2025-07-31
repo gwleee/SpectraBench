@@ -1,0 +1,871 @@
+2025-07-30 01:02:22,259 - INFO - WandB run initialized: HyperCLOVAX-SEED-Text-Instruct-0.5B_20250730_010220 (ID: f06132cd)
+Fetching 8 files: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:00<00:00, 55461.87it/s]
+2025-07-30 01:02:22,468 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 1/10: kmmlu
+2025-07-30 01:02:22,469 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'kmmlu' will use num_fewshot=5
+2025-07-30 01:02:22,469 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'kmmlu' with num_fewshot=5
+2025-07-30 01:02:22,469 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:03:30,775 - WARNING - Overwriting default num_fewshot of kmmlu_civil_engineering from None to 5
+2025-07-30 01:03:30,776 - WARNING - Overwriting default num_fewshot of kmmlu_materials_engineering from None to 5
+2025-07-30 01:03:30,776 - WARNING - Overwriting default num_fewshot of kmmlu_chemical_engineering from None to 5
+2025-07-30 01:03:30,776 - WARNING - Overwriting default num_fewshot of kmmlu_ecology from None to 5
+2025-07-30 01:03:30,776 - WARNING - Overwriting default num_fewshot of kmmlu_math from None to 5
+2025-07-30 01:03:30,776 - WARNING - Overwriting default num_fewshot of kmmlu_electrical_engineering from None to 5
+2025-07-30 01:03:30,776 - WARNING - Overwriting default num_fewshot of kmmlu_biology from None to 5
+2025-07-30 01:03:30,776 - WARNING - Overwriting default num_fewshot of kmmlu_mechanical_engineering from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_information_technology from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_chemistry from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_computer_science from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_agricultural_sciences from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_patent from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_interior_architecture_and_design from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_real_estate from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_food_processing from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_public_safety from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_refrigerating_machinery from None to 5
+2025-07-30 01:03:30,777 - WARNING - Overwriting default num_fewshot of kmmlu_health from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_marketing from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_fashion from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_construction from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_environmental_science from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_electronics_engineering from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_industrial_engineer from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_geomatics from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_railway_and_automotive_engineering from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_maritime_engineering from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_nondestructive_testing from None to 5
+2025-07-30 01:03:30,778 - WARNING - Overwriting default num_fewshot of kmmlu_energy_management from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_telecommunications_and_wireless_technology from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_gas_technology_and_engineering from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_machine_design_and_manufacturing from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_aviation_engineering_and_maintenance from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_korean_history from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_taxation from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_management from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_accounting from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_criminal_law from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_law from None to 5
+2025-07-30 01:03:30,779 - WARNING - Overwriting default num_fewshot of kmmlu_psychology from None to 5
+2025-07-30 01:03:30,780 - WARNING - Overwriting default num_fewshot of kmmlu_political_science_and_sociology from None to 5
+2025-07-30 01:03:30,780 - WARNING - Overwriting default num_fewshot of kmmlu_economics from None to 5
+2025-07-30 01:03:30,780 - WARNING - Overwriting default num_fewshot of kmmlu_social_welfare from None to 5
+2025-07-30 01:03:30,780 - WARNING - Overwriting default num_fewshot of kmmlu_education from None to 5
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 163.50it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 157.12it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 162.94it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 164.99it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 300/300 [00:01<00:00, 166.64it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 167.66it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 166.12it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 164.05it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 166.40it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 600/600 [00:03<00:00, 168.82it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 167.99it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.67it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 163.73it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:06<00:00, 158.49it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 200/200 [00:01<00:00, 168.12it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.98it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 167.05it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.80it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.59it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.12it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.01it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.41it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.95it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.10it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 166.94it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.73it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.12it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 600/600 [00:03<00:00, 152.32it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 167.77it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.72it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 167.35it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.14it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 169.64it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.85it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.52it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 200/200 [00:01<00:00, 166.87it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 167.96it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.22it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 200/200 [00:01<00:00, 167.35it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.09it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.06it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 300/300 [00:01<00:00, 168.40it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 130/130 [00:00<00:00, 168.69it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:05<00:00, 168.77it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.32it/s]
+Running loglikelihood requests: 100%|██████████████████████████████████████████████████████████████████████████████████████| 140120/140120 [12:14<00:00, 190.76it/s]
+2025-07-30 01:26:24,715 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'kmmlu' with 50 subtasks
+2025-07-30 01:26:24,717 - INFO -
+============================================================
+2025-07-30 01:26:24,718 - INFO - Task 'kmmlu' Results:
+2025-07-30 01:26:24,718 - INFO - ============================================================
+2025-07-30 01:26:24,719 - INFO -   kmmlu:
+2025-07-30 01:26:24,721 - INFO -     - accuracy: 0.3789
+2025-07-30 01:26:24,721 - INFO -   kmmlu_applied_science:
+2025-07-30 01:26:24,721 - INFO -     - accuracy: 0.3753
+2025-07-30 01:26:24,721 - INFO -   kmmlu_aviation_engineering_and_maintenance:
+2025-07-30 01:26:24,721 - INFO -     - accuracy: 0.3510
+2025-07-30 01:26:24,722 - INFO -   kmmlu_electronics_engineering:
+2025-07-30 01:26:24,722 - INFO -     - accuracy: 0.4410
+2025-07-30 01:26:24,722 - INFO -   kmmlu_energy_management:
+2025-07-30 01:26:24,722 - INFO -     - accuracy: 0.2940
+2025-07-30 01:26:24,722 - INFO -   kmmlu_environmental_science:
+2025-07-30 01:26:24,722 - INFO -     - accuracy: 0.3130
+2025-07-30 01:26:24,722 - INFO -   kmmlu_gas_technology_and_engineering:
+2025-07-30 01:26:24,722 - INFO -     - accuracy: 0.3550
+2025-07-30 01:26:24,722 - INFO -   kmmlu_geomatics:
+2025-07-30 01:26:24,722 - INFO -     - accuracy: 0.3740
+2025-07-30 01:26:24,723 - INFO -   kmmlu_industrial_engineer:
+2025-07-30 01:26:24,723 - INFO -     - accuracy: 0.3790
+2025-07-30 01:26:24,723 - INFO -   kmmlu_machine_design_and_manufacturing:
+2025-07-30 01:26:24,723 - INFO -     - accuracy: 0.3950
+2025-07-30 01:26:24,723 - INFO -   kmmlu_maritime_engineering:
+2025-07-30 01:26:24,723 - INFO -     - accuracy: 0.3883
+2025-07-30 01:26:24,723 - INFO -   kmmlu_nondestructive_testing:
+2025-07-30 01:26:24,723 - INFO -     - accuracy: 0.4020
+2025-07-30 01:26:24,723 - INFO -   kmmlu_railway_and_automotive_engineering:
+2025-07-30 01:26:24,723 - INFO -     - accuracy: 0.3150
+2025-07-30 01:26:24,724 - INFO -   kmmlu_telecommunications_and_wireless_technology:
+2025-07-30 01:26:24,724 - INFO -     - accuracy: 0.5010
+2025-07-30 01:26:24,724 - INFO -   kmmlu_humss:
+2025-07-30 01:26:24,724 - INFO -     - accuracy: 0.3690
+2025-07-30 01:26:24,724 - INFO -   kmmlu_accounting:
+2025-07-30 01:26:24,724 - INFO -     - accuracy: 0.3200
+2025-07-30 01:26:24,724 - INFO -   kmmlu_criminal_law:
+2025-07-30 01:26:24,724 - INFO -     - accuracy: 0.3400
+2025-07-30 01:26:24,724 - INFO -   kmmlu_economics:
+2025-07-30 01:26:24,724 - INFO -     - accuracy: 0.3846
+2025-07-30 01:26:24,725 - INFO -   kmmlu_education:
+2025-07-30 01:26:24,725 - INFO -     - accuracy: 0.3700
+2025-07-30 01:26:24,725 - INFO -   kmmlu_korean_history:
+2025-07-30 01:26:24,725 - INFO -     - accuracy: 0.2800
+2025-07-30 01:26:24,725 - INFO -   kmmlu_law:
+2025-07-30 01:26:24,725 - INFO -     - accuracy: 0.3730
+2025-07-30 01:26:24,725 - INFO -   kmmlu_management:
+2025-07-30 01:26:24,725 - INFO -     - accuracy: 0.4050
+2025-07-30 01:26:24,725 - INFO -   kmmlu_political_science_and_sociology:
+2025-07-30 01:26:24,725 - INFO -     - accuracy: 0.4000
+2025-07-30 01:26:24,725 - INFO -   kmmlu_psychology:
+2025-07-30 01:26:24,726 - INFO -     - accuracy: 0.3240
+2025-07-30 01:26:24,726 - INFO -   kmmlu_social_welfare:
+2025-07-30 01:26:24,726 - INFO -     - accuracy: 0.3950
+2025-07-30 01:26:24,726 - INFO -   kmmlu_taxation:
+2025-07-30 01:26:24,726 - INFO -     - accuracy: 0.3050
+2025-07-30 01:26:24,726 - INFO -   kmmlu_other:
+2025-07-30 01:26:24,726 - INFO -     - accuracy: 0.3837
+2025-07-30 01:26:24,726 - INFO -   kmmlu_agricultural_sciences:
+2025-07-30 01:26:24,726 - INFO -     - accuracy: 0.3260
+2025-07-30 01:26:24,726 - INFO -   kmmlu_construction:
+2025-07-30 01:26:24,727 - INFO -     - accuracy: 0.3000
+2025-07-30 01:26:24,727 - INFO -   kmmlu_fashion:
+2025-07-30 01:26:24,727 - INFO -     - accuracy: 0.3940
+2025-07-30 01:26:24,727 - INFO -   kmmlu_food_processing:
+2025-07-30 01:26:24,727 - INFO -     - accuracy: 0.2980
+2025-07-30 01:26:24,727 - INFO -   kmmlu_health:
+2025-07-30 01:26:24,727 - INFO -     - accuracy: 0.4900
+2025-07-30 01:26:24,727 - INFO -   kmmlu_interior_architecture_and_design:
+2025-07-30 01:26:24,727 - INFO -     - accuracy: 0.4820
+2025-07-30 01:26:24,727 - INFO -   kmmlu_marketing:
+2025-07-30 01:26:24,728 - INFO -     - accuracy: 0.6350
+2025-07-30 01:26:24,728 - INFO -   kmmlu_patent:
+2025-07-30 01:26:24,728 - INFO -     - accuracy: 0.3500
+2025-07-30 01:26:24,728 - INFO -   kmmlu_public_safety:
+2025-07-30 01:26:24,728 - INFO -     - accuracy: 0.3230
+2025-07-30 01:26:24,728 - INFO -   kmmlu_real_estate:
+2025-07-30 01:26:24,728 - INFO -     - accuracy: 0.3400
+2025-07-30 01:26:24,728 - INFO -   kmmlu_refrigerating_machinery:
+2025-07-30 01:26:24,728 - INFO -     - accuracy: 0.3130
+2025-07-30 01:26:24,728 - INFO -   kmmlu_stem:
+2025-07-30 01:26:24,728 - INFO -     - accuracy: 0.3841
+2025-07-30 01:26:24,729 - INFO -   kmmlu_biology:
+2025-07-30 01:26:24,729 - INFO -     - accuracy: 0.2880
+2025-07-30 01:26:24,729 - INFO -   kmmlu_chemical_engineering:
+2025-07-30 01:26:24,729 - INFO -     - accuracy: 0.3220
+2025-07-30 01:26:24,729 - INFO -   kmmlu_chemistry:
+2025-07-30 01:26:24,729 - INFO -     - accuracy: 0.3467
+2025-07-30 01:26:24,729 - INFO -   kmmlu_civil_engineering:
+2025-07-30 01:26:24,729 - INFO -     - accuracy: 0.3710
+2025-07-30 01:26:24,729 - INFO -   kmmlu_computer_science:
+2025-07-30 01:26:24,729 - INFO -     - accuracy: 0.5190
+2025-07-30 01:26:24,730 - INFO -   kmmlu_ecology:
+2025-07-30 01:26:24,730 - INFO -     - accuracy: 0.3930
+2025-07-30 01:26:24,730 - INFO -   kmmlu_electrical_engineering:
+2025-07-30 01:26:24,730 - INFO -     - accuracy: 0.3300
+2025-07-30 01:26:24,730 - INFO -   kmmlu_information_technology:
+2025-07-30 01:26:24,730 - INFO -     - accuracy: 0.5620
+2025-07-30 01:26:24,730 - INFO -   kmmlu_materials_engineering:
+2025-07-30 01:26:24,730 - INFO -     - accuracy: 0.3630
+2025-07-30 01:26:24,730 - INFO -   kmmlu_math:
+2025-07-30 01:26:24,730 - INFO -     - accuracy: 0.2833
+2025-07-30 01:26:24,731 - INFO -   kmmlu_mechanical_engineering:
+2025-07-30 01:26:24,731 - INFO -     - accuracy: 0.3620
+2025-07-30 01:26:24,731 - INFO - ============================================================
+
+2025-07-30 01:26:24,737 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 2/10: kmmlu_hard
+2025-07-30 01:26:24,738 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'kmmlu_hard' will use num_fewshot=5
+2025-07-30 01:26:24,739 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'kmmlu_hard' with num_fewshot=5
+2025-07-30 01:26:24,740 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:27:35,287 - WARNING - Overwriting default num_fewshot of kmmlu_hard_electrical_engineering from None to 5
+2025-07-30 01:27:35,288 - WARNING - Overwriting default num_fewshot of kmmlu_hard_mechanical_engineering from None to 5
+2025-07-30 01:27:35,288 - WARNING - Overwriting default num_fewshot of kmmlu_hard_information_technology from None to 5
+2025-07-30 01:27:35,288 - WARNING - Overwriting default num_fewshot of kmmlu_hard_civil_engineering from None to 5
+2025-07-30 01:27:35,288 - WARNING - Overwriting default num_fewshot of kmmlu_hard_biology from None to 5
+2025-07-30 01:27:35,288 - WARNING - Overwriting default num_fewshot of kmmlu_hard_chemical_engineering from None to 5
+2025-07-30 01:27:35,288 - WARNING - Overwriting default num_fewshot of kmmlu_hard_chemistry from None to 5
+2025-07-30 01:27:35,288 - WARNING - Overwriting default num_fewshot of kmmlu_hard_computer_science from None to 5
+2025-07-30 01:27:35,288 - WARNING - Overwriting default num_fewshot of kmmlu_hard_materials_engineering from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_math from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_ecology from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_agricultural_sciences from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_health from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_construction from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_refrigerating_machinery from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_patent from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_fashion from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_real_estate from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_interior_architecture_and_design from None to 5
+2025-07-30 01:27:35,289 - WARNING - Overwriting default num_fewshot of kmmlu_hard_public_safety from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_marketing from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_food_processing from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_railway_and_automotive_engineering from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_energy_management from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_geomatics from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_aviation_engineering_and_maintenance from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_maritime_engineering from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_telecommunications_and_wireless_technology from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_gas_technology_and_engineering from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_electronics_engineering from None to 5
+2025-07-30 01:27:35,290 - WARNING - Overwriting default num_fewshot of kmmlu_hard_machine_design_and_manufacturing from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_nondestructive_testing from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_environmental_science from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_industrial_engineer from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_law from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_management from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_psychology from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_education from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_taxation from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_accounting from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_social_welfare from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_political_science_and_sociology from None to 5
+2025-07-30 01:27:35,291 - WARNING - Overwriting default num_fewshot of kmmlu_hard_criminal_law from None to 5
+2025-07-30 01:27:35,292 - WARNING - Overwriting default num_fewshot of kmmlu_hard_economics from None to 5
+2025-07-30 01:27:35,292 - WARNING - Overwriting default num_fewshot of kmmlu_hard_korean_history from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 161.88it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 162.93it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 163.82it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 164.87it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.25it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 165.98it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.17it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.08it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.00it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.22it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.84it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.99it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 23/23 [00:00<00:00, 167.03it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.97it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.94it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 51/51 [00:00<00:00, 167.82it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.29it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 89/89 [00:00<00:00, 168.08it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.60it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.99it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.64it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.39it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.79it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.26it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.82it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.49it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.08it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.68it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.31it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.09it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.32it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.79it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.73it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.05it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.66it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.32it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.97it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 23/23 [00:00<00:00, 168.43it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 96/96 [00:00<00:00, 168.00it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 46/46 [00:00<00:00, 168.53it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 168.69it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 90/90 [00:00<00:00, 168.21it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 169.13it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 168.83it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 44/44 [00:00<00:00, 169.45it/s]
+Running loglikelihood requests: 100%|████████████████████████████████████████████████████████████████████████████████████████| 16416/16416 [01:27<00:00, 188.39it/s]
+2025-07-30 01:30:27,982 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'kmmlu_hard' with 50 subtasks
+2025-07-30 01:30:27,984 - INFO -
+============================================================
+2025-07-30 01:30:27,985 - INFO - Task 'kmmlu_hard' Results:
+2025-07-30 01:30:27,985 - INFO - ============================================================
+2025-07-30 01:30:27,986 - INFO -   kmmlu_hard:
+2025-07-30 01:30:27,987 - INFO -     - accuracy: 0.2256
+2025-07-30 01:30:27,989 - INFO -   kmmlu_hard_applied_science:
+2025-07-30 01:30:27,989 - INFO -     - accuracy: 0.2333
+2025-07-30 01:30:27,989 - INFO -   kmmlu_hard_aviation_engineering_and_maintenance:
+2025-07-30 01:30:27,989 - INFO -     - accuracy: 0.1700
+2025-07-30 01:30:27,989 - INFO -   kmmlu_hard_electronics_engineering:
+2025-07-30 01:30:27,989 - INFO -     - accuracy: 0.2500
+2025-07-30 01:30:27,989 - INFO -   kmmlu_hard_energy_management:
+2025-07-30 01:30:27,989 - INFO -     - accuracy: 0.2800
+2025-07-30 01:30:27,989 - INFO -   kmmlu_hard_environmental_science:
+2025-07-30 01:30:27,990 - INFO -     - accuracy: 0.1700
+2025-07-30 01:30:27,990 - INFO -   kmmlu_hard_gas_technology_and_engineering:
+2025-07-30 01:30:27,990 - INFO -     - accuracy: 0.2300
+2025-07-30 01:30:27,990 - INFO -   kmmlu_hard_geomatics:
+2025-07-30 01:30:27,990 - INFO -     - accuracy: 0.2700
+2025-07-30 01:30:27,990 - INFO -   kmmlu_hard_industrial_engineer:
+2025-07-30 01:30:27,990 - INFO -     - accuracy: 0.1600
+2025-07-30 01:30:27,990 - INFO -   kmmlu_hard_machine_design_and_manufacturing:
+2025-07-30 01:30:27,990 - INFO -     - accuracy: 0.1800
+2025-07-30 01:30:27,990 - INFO -   kmmlu_hard_maritime_engineering:
+2025-07-30 01:30:27,991 - INFO -     - accuracy: 0.2500
+2025-07-30 01:30:27,991 - INFO -   kmmlu_hard_nondestructive_testing:
+2025-07-30 01:30:27,991 - INFO -     - accuracy: 0.3200
+2025-07-30 01:30:27,991 - INFO -   kmmlu_hard_railway_and_automotive_engineering:
+2025-07-30 01:30:27,991 - INFO -     - accuracy: 0.2500
+2025-07-30 01:30:27,991 - INFO -   kmmlu_hard_telecommunications_and_wireless_technology:
+2025-07-30 01:30:27,991 - INFO -     - accuracy: 0.2700
+2025-07-30 01:30:27,991 - INFO -   kmmlu_hard_humss:
+2025-07-30 01:30:27,991 - INFO -     - accuracy: 0.2307
+2025-07-30 01:30:27,991 - INFO -   kmmlu_hard_accounting:
+2025-07-30 01:30:27,992 - INFO -     - accuracy: 0.1304
+2025-07-30 01:30:27,992 - INFO -   kmmlu_hard_criminal_law:
+2025-07-30 01:30:27,992 - INFO -     - accuracy: 0.2600
+2025-07-30 01:30:27,992 - INFO -   kmmlu_hard_economics:
+2025-07-30 01:30:27,992 - INFO -     - accuracy: 0.1905
+2025-07-30 01:30:27,992 - INFO -   kmmlu_hard_education:
+2025-07-30 01:30:27,992 - INFO -     - accuracy: 0.0870
+2025-07-30 01:30:27,992 - INFO -   kmmlu_hard_korean_history:
+2025-07-30 01:30:27,992 - INFO -     - accuracy: 0.2500
+2025-07-30 01:30:27,992 - INFO -   kmmlu_hard_law:
+2025-07-30 01:30:27,993 - INFO -     - accuracy: 0.2700
+2025-07-30 01:30:27,993 - INFO -   kmmlu_hard_management:
+2025-07-30 01:30:27,993 - INFO -     - accuracy: 0.2500
+2025-07-30 01:30:27,993 - INFO -   kmmlu_hard_political_science_and_sociology:
+2025-07-30 01:30:27,993 - INFO -     - accuracy: 0.2444
+2025-07-30 01:30:27,993 - INFO -   kmmlu_hard_psychology:
+2025-07-30 01:30:27,993 - INFO -     - accuracy: 0.1700
+2025-07-30 01:30:27,993 - INFO -   kmmlu_hard_social_welfare:
+2025-07-30 01:30:27,993 - INFO -     - accuracy: 0.2700
+2025-07-30 01:30:27,993 - INFO -   kmmlu_hard_taxation:
+2025-07-30 01:30:27,993 - INFO -     - accuracy: 0.2396
+2025-07-30 01:30:27,994 - INFO -   kmmlu_hard_other:
+2025-07-30 01:30:27,994 - INFO -     - accuracy: 0.2129
+2025-07-30 01:30:27,994 - INFO -   kmmlu_hard_agricultural_sciences:
+2025-07-30 01:30:27,994 - INFO -     - accuracy: 0.1900
+2025-07-30 01:30:27,994 - INFO -   kmmlu_hard_construction:
+2025-07-30 01:30:27,994 - INFO -     - accuracy: 0.1300
+2025-07-30 01:30:27,994 - INFO -   kmmlu_hard_fashion:
+2025-07-30 01:30:27,994 - INFO -     - accuracy: 0.1700
+2025-07-30 01:30:27,994 - INFO -   kmmlu_hard_food_processing:
+2025-07-30 01:30:27,994 - INFO -     - accuracy: 0.1800
+2025-07-30 01:30:27,995 - INFO -   kmmlu_hard_health:
+2025-07-30 01:30:27,995 - INFO -     - accuracy: 0.2174
+2025-07-30 01:30:27,995 - INFO -   kmmlu_hard_interior_architecture_and_design:
+2025-07-30 01:30:27,995 - INFO -     - accuracy: 0.2300
+2025-07-30 01:30:27,995 - INFO -   kmmlu_hard_marketing:
+2025-07-30 01:30:27,995 - INFO -     - accuracy: 0.2900
+2025-07-30 01:30:27,995 - INFO -   kmmlu_hard_patent:
+2025-07-30 01:30:27,995 - INFO -     - accuracy: 0.3529
+2025-07-30 01:30:27,995 - INFO -   kmmlu_hard_public_safety:
+2025-07-30 01:30:27,995 - INFO -     - accuracy: 0.1900
+2025-07-30 01:30:27,996 - INFO -   kmmlu_hard_real_estate:
+2025-07-30 01:30:27,996 - INFO -     - accuracy: 0.1798
+2025-07-30 01:30:27,996 - INFO -   kmmlu_hard_refrigerating_machinery:
+2025-07-30 01:30:27,996 - INFO -     - accuracy: 0.2800
+2025-07-30 01:30:27,996 - INFO -   kmmlu_hard_stem:
+2025-07-30 01:30:27,996 - INFO -     - accuracy: 0.2245
+2025-07-30 01:30:27,996 - INFO -   kmmlu_hard_biology:
+2025-07-30 01:30:27,996 - INFO -     - accuracy: 0.1900
+2025-07-30 01:30:27,996 - INFO -   kmmlu_hard_chemical_engineering:
+2025-07-30 01:30:27,996 - INFO -     - accuracy: 0.1700
+2025-07-30 01:30:27,997 - INFO -   kmmlu_hard_chemistry:
+2025-07-30 01:30:27,997 - INFO -     - accuracy: 0.2300
+2025-07-30 01:30:27,997 - INFO -   kmmlu_hard_civil_engineering:
+2025-07-30 01:30:27,997 - INFO -     - accuracy: 0.3100
+2025-07-30 01:30:27,997 - INFO -   kmmlu_hard_computer_science:
+2025-07-30 01:30:27,997 - INFO -     - accuracy: 0.2400
+2025-07-30 01:30:27,997 - INFO -   kmmlu_hard_ecology:
+2025-07-30 01:30:27,997 - INFO -     - accuracy: 0.1700
+2025-07-30 01:30:27,997 - INFO -   kmmlu_hard_electrical_engineering:
+2025-07-30 01:30:27,997 - INFO -     - accuracy: 0.2800
+2025-07-30 01:30:27,998 - INFO -   kmmlu_hard_information_technology:
+2025-07-30 01:30:27,998 - INFO -     - accuracy: 0.1800
+2025-07-30 01:30:27,998 - INFO -   kmmlu_hard_materials_engineering:
+2025-07-30 01:30:27,998 - INFO -     - accuracy: 0.2000
+2025-07-30 01:30:27,998 - INFO -   kmmlu_hard_math:
+2025-07-30 01:30:27,998 - INFO -     - accuracy: 0.2700
+2025-07-30 01:30:27,998 - INFO -   kmmlu_hard_mechanical_engineering:
+2025-07-30 01:30:27,998 - INFO -     - accuracy: 0.2300
+2025-07-30 01:30:27,999 - INFO - ============================================================
+
+2025-07-30 01:30:28,004 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 3/10: haerae
+2025-07-30 01:30:28,005 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'haerae' will use num_fewshot=5
+2025-07-30 01:30:28,005 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'haerae' with num_fewshot=5
+2025-07-30 01:30:28,006 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:30:45,265 - WARNING - Overwriting default num_fewshot of haerae_general_knowledge from None to 5
+2025-07-30 01:30:45,265 - WARNING - Overwriting default num_fewshot of haerae_history from None to 5
+2025-07-30 01:30:45,265 - WARNING - Overwriting default num_fewshot of haerae_loan_word from None to 5
+2025-07-30 01:30:45,266 - WARNING - Overwriting default num_fewshot of haerae_rare_word from None to 5
+2025-07-30 01:30:45,266 - WARNING - Overwriting default num_fewshot of haerae_standard_nomenclature from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 176/176 [00:00<00:00, 379.03it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 188/188 [00:00<00:00, 377.33it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 169/169 [00:00<00:00, 374.26it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 405/405 [00:01<00:00, 378.01it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 153/153 [00:00<00:00, 378.89it/s]
+Running loglikelihood requests: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 5455/5455 [01:50<00:00, 49.28it/s]
+2025-07-30 01:32:56,782 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'haerae' with 6 subtasks
+2025-07-30 01:32:56,784 - INFO -
+============================================================
+2025-07-30 01:32:56,785 - INFO - Task 'haerae' Results:
+2025-07-30 01:32:56,786 - INFO - ============================================================
+2025-07-30 01:32:56,787 - INFO -   haerae:
+2025-07-30 01:32:56,788 - INFO -     - accuracy: 0.5628
+2025-07-30 01:32:56,788 - INFO -     - accuracy_norm: 0.5628
+2025-07-30 01:32:56,789 - INFO -   haerae_general_knowledge:
+2025-07-30 01:32:56,789 - INFO -     - accuracy: 0.2273
+2025-07-30 01:32:56,789 - INFO -     - accuracy_norm: 0.2273
+2025-07-30 01:32:56,789 - INFO -   haerae_history:
+2025-07-30 01:32:56,789 - INFO -     - accuracy: 0.5213
+2025-07-30 01:32:56,789 - INFO -     - accuracy_norm: 0.5213
+2025-07-30 01:32:56,789 - INFO -   haerae_loan_word:
+2025-07-30 01:32:56,789 - INFO -     - accuracy: 0.6864
+2025-07-30 01:32:56,789 - INFO -     - accuracy_norm: 0.6864
+2025-07-30 01:32:56,790 - INFO -   haerae_rare_word:
+2025-07-30 01:32:56,790 - INFO -     - accuracy: 0.6568
+2025-07-30 01:32:56,790 - INFO -     - accuracy_norm: 0.6568
+2025-07-30 01:32:56,790 - INFO -   haerae_standard_nomenclature:
+2025-07-30 01:32:56,790 - INFO -     - accuracy: 0.6144
+2025-07-30 01:32:56,790 - INFO -     - accuracy_norm: 0.6144
+2025-07-30 01:32:56,791 - INFO - ============================================================
+
+2025-07-30 01:32:56,796 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 4/10: kobest
+2025-07-30 01:32:56,796 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'kobest' will use num_fewshot=5
+2025-07-30 01:32:56,797 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'kobest' with num_fewshot=5
+2025-07-30 01:32:56,797 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:33:15,788 - WARNING - Overwriting default num_fewshot of kobest_boolq from None to 5
+2025-07-30 01:33:15,789 - WARNING - Overwriting default num_fewshot of kobest_copa from None to 5
+2025-07-30 01:33:15,789 - WARNING - Overwriting default num_fewshot of kobest_hellaswag from None to 5
+2025-07-30 01:33:15,789 - WARNING - Overwriting default num_fewshot of kobest_sentineg from None to 5
+2025-07-30 01:33:15,789 - WARNING - Overwriting default num_fewshot of kobest_wic from None to 5
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1404/1404 [00:04<00:00, 282.21it/s]
+  0%|                                                                                                                                      | 0/1000 [00:00<?, ?it/s]/home/gwlee/Benchmark/AIDE_Benchmark/code/lm-evaluation-harness/lm_eval/api/task.py:1157: Warning: Both target_delimiter and target start with a space. This may cause issues.
+  labeled_examples += self.sampler.get_context(
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00<00:00, 39177.13it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:01<00:00, 360.23it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 397/397 [00:00<00:00, 752.97it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1260/1260 [00:01<00:00, 754.99it/s]
+Running loglikelihood requests: 100%|█████████████████████████████████████████████████████████████████████████████████████████| 10122/10122 [03:18<00:00, 51.05it/s]
+2025-07-30 01:37:16,346 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'kobest' with 6 subtasks
+2025-07-30 01:37:16,348 - INFO -
+============================================================
+2025-07-30 01:37:16,348 - INFO - Task 'kobest' Results:
+2025-07-30 01:37:16,349 - INFO - ============================================================
+2025-07-30 01:37:16,349 - INFO -   kobest:
+2025-07-30 01:37:16,349 - INFO -     - accuracy: 0.6301
+2025-07-30 01:37:16,349 - INFO -     - accuracy_norm: 0.5180
+2025-07-30 01:37:16,350 - INFO -     - f1: 0.6269
+2025-07-30 01:37:16,351 - INFO -   kobest_boolq:
+2025-07-30 01:37:16,353 - INFO -     - accuracy: 0.6916
+2025-07-30 01:37:16,353 - INFO -     - f1: 0.6847
+2025-07-30 01:37:16,353 - INFO -   kobest_copa:
+2025-07-30 01:37:16,353 - INFO -     - accuracy: 0.6910
+2025-07-30 01:37:16,353 - INFO -     - f1: 0.6906
+2025-07-30 01:37:16,354 - INFO -   kobest_hellaswag:
+2025-07-30 01:37:16,354 - INFO -     - accuracy: 0.4240
+2025-07-30 01:37:16,354 - INFO -     - accuracy_norm: 0.5180
+2025-07-30 01:37:16,354 - INFO -     - f1: 0.4202
+2025-07-30 01:37:16,354 - INFO -   kobest_sentineg:
+2025-07-30 01:37:16,354 - INFO -     - accuracy: 0.8086
+2025-07-30 01:37:16,354 - INFO -     - f1: 0.8067
+2025-07-30 01:37:16,354 - INFO -   kobest_wic:
+2025-07-30 01:37:16,354 - INFO -     - accuracy: 0.5389
+2025-07-30 01:37:16,354 - INFO -     - f1: 0.5372
+2025-07-30 01:37:16,355 - INFO - ============================================================
+
+2025-07-30 01:37:16,359 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 5/10: csatqa
+2025-07-30 01:37:16,360 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'csatqa' detected as zero-shot task
+2025-07-30 01:37:16,360 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'csatqa' with num_fewshot=0
+2025-07-30 01:37:16,360 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:37:28,517 - WARNING - Overwriting default num_fewshot of csatqa_gr from None to 0
+2025-07-30 01:37:28,517 - WARNING - Overwriting default num_fewshot of csatqa_li from None to 0
+2025-07-30 01:37:28,518 - WARNING - Overwriting default num_fewshot of csatqa_rch from None to 0
+2025-07-30 01:37:28,518 - WARNING - Overwriting default num_fewshot of csatqa_rcs from None to 0
+2025-07-30 01:37:28,518 - WARNING - Overwriting default num_fewshot of csatqa_rcss from None to 0
+2025-07-30 01:37:28,518 - WARNING - Overwriting default num_fewshot of csatqa_wr from None to 0
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 25/25 [00:00<00:00, 1772.68it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 37/37 [00:00<00:00, 1725.21it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 35/35 [00:00<00:00, 1831.48it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 37/37 [00:00<00:00, 1832.18it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 1875.17it/s]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 11/11 [00:00<00:00, 1735.07it/s]
+Running loglikelihood requests: 100%|█████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [00:20<00:00, 46.52it/s]
+2025-07-30 01:37:58,547 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'csatqa' with 7 subtasks
+2025-07-30 01:37:58,549 - INFO -
+============================================================
+2025-07-30 01:37:58,549 - INFO - Task 'csatqa' Results:
+2025-07-30 01:37:58,550 - INFO - ============================================================
+2025-07-30 01:37:58,551 - INFO -   csatqa:
+2025-07-30 01:37:58,552 - INFO -     - accuracy: 0.3316
+2025-07-30 01:37:58,552 - INFO -     - accuracy_norm: 0.3316
+2025-07-30 01:37:58,553 - INFO -   csatqa_gr:
+2025-07-30 01:37:58,553 - INFO -     - accuracy: 0.2000
+2025-07-30 01:37:58,554 - INFO -     - accuracy_norm: 0.2000
+2025-07-30 01:37:58,554 - INFO -   csatqa_li:
+2025-07-30 01:37:58,554 - INFO -     - accuracy: 0.4865
+2025-07-30 01:37:58,554 - INFO -     - accuracy_norm: 0.4865
+2025-07-30 01:37:58,554 - INFO -   csatqa_rch:
+2025-07-30 01:37:58,555 - INFO -     - accuracy: 0.3429
+2025-07-30 01:37:58,555 - INFO -     - accuracy_norm: 0.3429
+2025-07-30 01:37:58,555 - INFO -   csatqa_rcs:
+2025-07-30 01:37:58,555 - INFO -     - accuracy: 0.1622
+2025-07-30 01:37:58,555 - INFO -     - accuracy_norm: 0.1622
+2025-07-30 01:37:58,555 - INFO -   csatqa_rcss:
+2025-07-30 01:37:58,555 - INFO -     - accuracy: 0.4286
+2025-07-30 01:37:58,555 - INFO -     - accuracy_norm: 0.4286
+2025-07-30 01:37:58,555 - INFO -   csatqa_wr:
+2025-07-30 01:37:58,556 - INFO -     - accuracy: 0.2727
+2025-07-30 01:37:58,556 - INFO -     - accuracy_norm: 0.2727
+2025-07-30 01:37:58,556 - INFO - ============================================================
+
+2025-07-30 01:37:58,562 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 6/10: kormedmcqa
+2025-07-30 01:37:58,563 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'kormedmcqa' will use num_fewshot=5
+2025-07-30 01:37:58,563 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'kormedmcqa' with num_fewshot=5
+2025-07-30 01:37:58,564 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:38:16,608 - WARNING - Overwriting default num_fewshot of kormedmcqa_doctor from None to 5
+2025-07-30 01:38:16,608 - WARNING - Overwriting default num_fewshot of kormedmcqa_nurse from None to 5
+2025-07-30 01:38:16,608 - WARNING - Overwriting default num_fewshot of kormedmcqa_pharm from None to 5
+2025-07-30 01:38:16,608 - WARNING - Overwriting default num_fewshot of kormedmcqa_dentist from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 435/435 [00:03<00:00, 130.28it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 878/878 [00:06<00:00, 129.72it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 885/885 [00:06<00:00, 130.66it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 811/811 [00:06<00:00, 131.27it/s]
+Running generate_until requests: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 3009/3009 [02:24<00:00, 20.85it/s]
+2025-07-30 01:41:09,933 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'kormedmcqa' with 5 subtasks
+2025-07-30 01:41:09,935 - INFO -
+============================================================
+2025-07-30 01:41:09,936 - INFO - Task 'kormedmcqa' Results:
+2025-07-30 01:41:09,936 - INFO - ============================================================
+2025-07-30 01:41:09,937 - INFO -   kormedmcqa:
+2025-07-30 01:41:09,939 - INFO -     - exact_match: 0.3383
+2025-07-30 01:41:09,939 - INFO -   kormedmcqa_dentist:
+2025-07-30 01:41:09,940 - INFO -     - exact_match: 0.3144
+2025-07-30 01:41:09,940 - INFO -   kormedmcqa_doctor:
+2025-07-30 01:41:09,940 - INFO -     - exact_match: 0.2805
+2025-07-30 01:41:09,941 - INFO -   kormedmcqa_nurse:
+2025-07-30 01:41:09,941 - INFO -     - exact_match: 0.4374
+2025-07-30 01:41:09,941 - INFO -   kormedmcqa_pharm:
+2025-07-30 01:41:09,941 - INFO -     - exact_match: 0.2904
+2025-07-30 01:41:09,941 - INFO - ============================================================
+
+2025-07-30 01:41:09,946 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 7/10: mmlu
+2025-07-30 01:41:09,946 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'mmlu' will use num_fewshot=5
+2025-07-30 01:41:09,946 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'mmlu' with num_fewshot=5
+2025-07-30 01:41:09,947 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:43:57,100 - WARNING - Overwriting default num_fewshot of mmlu_conceptual_physics from None to 5
+2025-07-30 01:43:57,100 - WARNING - Overwriting default num_fewshot of mmlu_high_school_statistics from None to 5
+2025-07-30 01:43:57,100 - WARNING - Overwriting default num_fewshot of mmlu_astronomy from None to 5
+2025-07-30 01:43:57,100 - WARNING - Overwriting default num_fewshot of mmlu_electrical_engineering from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_high_school_computer_science from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_college_mathematics from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_machine_learning from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_high_school_chemistry from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_high_school_biology from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_college_chemistry from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_college_physics from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_high_school_physics from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_computer_security from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_abstract_algebra from None to 5
+2025-07-30 01:43:57,101 - WARNING - Overwriting default num_fewshot of mmlu_high_school_mathematics from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_college_biology from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_college_computer_science from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_elementary_mathematics from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_anatomy from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_marketing from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_global_facts from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_nutrition from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_virology from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_management from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_professional_medicine from None to 5
+2025-07-30 01:43:57,102 - WARNING - Overwriting default num_fewshot of mmlu_medical_genetics from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_business_ethics from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_miscellaneous from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_college_medicine from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_human_aging from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_professional_accounting from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_clinical_knowledge from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_high_school_microeconomics from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_high_school_government_and_politics from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_high_school_macroeconomics from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_public_relations from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_human_sexuality from None to 5
+2025-07-30 01:43:57,103 - WARNING - Overwriting default num_fewshot of mmlu_sociology from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_security_studies from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_professional_psychology from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_econometrics from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_high_school_geography from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_us_foreign_policy from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_high_school_psychology from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_jurisprudence from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_formal_logic from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_moral_scenarios from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_high_school_european_history from None to 5
+2025-07-30 01:43:57,104 - WARNING - Overwriting default num_fewshot of mmlu_international_law from None to 5
+2025-07-30 01:43:57,105 - WARNING - Overwriting default num_fewshot of mmlu_professional_law from None to 5
+2025-07-30 01:43:57,105 - WARNING - Overwriting default num_fewshot of mmlu_logical_fallacies from None to 5
+2025-07-30 01:43:57,105 - WARNING - Overwriting default num_fewshot of mmlu_world_religions from None to 5
+2025-07-30 01:43:57,105 - WARNING - Overwriting default num_fewshot of mmlu_moral_disputes from None to 5
+2025-07-30 01:43:57,105 - WARNING - Overwriting default num_fewshot of mmlu_high_school_world_history from None to 5
+2025-07-30 01:43:57,105 - WARNING - Overwriting default num_fewshot of mmlu_prehistory from None to 5
+2025-07-30 01:43:57,105 - WARNING - Overwriting default num_fewshot of mmlu_philosophy from None to 5
+2025-07-30 01:43:57,105 - WARNING - Overwriting default num_fewshot of mmlu_high_school_us_history from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 235/235 [00:01<00:00, 165.55it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 216/216 [00:01<00:00, 164.94it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 152/152 [00:00<00:00, 165.12it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 145/145 [00:00<00:00, 165.72it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 165.50it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.42it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 112/112 [00:00<00:00, 166.21it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 203/203 [00:01<00:00, 166.61it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 310/310 [00:01<00:00, 166.39it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.23it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 102/102 [00:00<00:00, 165.90it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 151/151 [00:01<00:00, 128.94it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 163.22it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 165.30it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 270/270 [00:01<00:00, 165.52it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 144/144 [00:00<00:00, 164.86it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 164.68it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 378/378 [00:02<00:00, 167.42it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 135/135 [00:00<00:00, 168.01it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 234/234 [00:01<00:00, 167.23it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.33it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 306/306 [00:01<00:00, 168.50it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 166/166 [00:00<00:00, 168.54it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 103/103 [00:00<00:00, 168.28it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 272/272 [00:01<00:00, 166.80it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.96it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 166.94it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 783/783 [00:04<00:00, 165.50it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 173/173 [00:01<00:00, 166.50it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 223/223 [00:01<00:00, 166.81it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 282/282 [00:01<00:00, 166.34it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 265/265 [00:01<00:00, 167.82it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 238/238 [00:01<00:00, 166.92it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 193/193 [00:01<00:00, 166.89it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 390/390 [00:02<00:00, 168.33it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 110/110 [00:00<00:00, 167.30it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 131/131 [00:00<00:00, 168.38it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 201/201 [00:01<00:00, 167.59it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 245/245 [00:01<00:00, 166.13it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 612/612 [00:03<00:00, 167.26it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 114/114 [00:00<00:00, 168.72it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 198/198 [00:01<00:00, 168.21it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 167.19it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 545/545 [00:03<00:00, 167.54it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 108/108 [00:00<00:00, 168.06it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 126/126 [00:00<00:00, 167.14it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 895/895 [00:05<00:00, 167.88it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 165/165 [00:01<00:00, 164.00it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 121/121 [00:00<00:00, 169.23it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1534/1534 [00:09<00:00, 160.69it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 163/163 [00:00<00:00, 168.32it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 171/171 [00:01<00:00, 167.12it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 346/346 [00:02<00:00, 167.76it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 237/237 [00:01<00:00, 167.15it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 324/324 [00:01<00:00, 168.17it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 311/311 [00:01<00:00, 169.75it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 204/204 [00:01<00:00, 165.18it/s]
+Running loglikelihood requests: 100%|████████████████████████████████████████████████████████████████████████████████████████| 56168/56168 [05:07<00:00, 182.38it/s]
+2025-07-30 01:54:57,060 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'mmlu' with 62 subtasks
+2025-07-30 01:54:57,061 - INFO -
+============================================================
+2025-07-30 01:54:57,061 - INFO - Task 'mmlu' Results:
+2025-07-30 01:54:57,062 - INFO - ============================================================
+2025-07-30 01:54:57,063 - INFO -   mmlu:
+2025-07-30 01:54:57,064 - INFO -     - accuracy: 0.4418
+2025-07-30 01:54:57,065 - INFO -   mmlu_humanities:
+2025-07-30 01:54:57,066 - INFO -     - accuracy: 0.4172
+2025-07-30 01:54:57,066 - INFO -   mmlu_formal_logic:
+2025-07-30 01:54:57,066 - INFO -     - accuracy: 0.2698
+2025-07-30 01:54:57,066 - INFO -   mmlu_high_school_european_history:
+2025-07-30 01:54:57,066 - INFO -     - accuracy: 0.5697
+2025-07-30 01:54:57,066 - INFO -   mmlu_high_school_us_history:
+2025-07-30 01:54:57,066 - INFO -     - accuracy: 0.5049
+2025-07-30 01:54:57,066 - INFO -   mmlu_high_school_world_history:
+2025-07-30 01:54:57,067 - INFO -     - accuracy: 0.5865
+2025-07-30 01:54:57,067 - INFO -   mmlu_international_law:
+2025-07-30 01:54:57,067 - INFO -     - accuracy: 0.6612
+2025-07-30 01:54:57,067 - INFO -   mmlu_jurisprudence:
+2025-07-30 01:54:57,067 - INFO -     - accuracy: 0.4722
+2025-07-30 01:54:57,067 - INFO -   mmlu_logical_fallacies:
+2025-07-30 01:54:57,067 - INFO -     - accuracy: 0.5092
+2025-07-30 01:54:57,067 - INFO -   mmlu_moral_disputes:
+2025-07-30 01:54:57,067 - INFO -     - accuracy: 0.4769
+2025-07-30 01:54:57,067 - INFO -   mmlu_moral_scenarios:
+2025-07-30 01:54:57,068 - INFO -     - accuracy: 0.2682
+2025-07-30 01:54:57,068 - INFO -   mmlu_philosophy:
+2025-07-30 01:54:57,068 - INFO -     - accuracy: 0.4502
+2025-07-30 01:54:57,068 - INFO -   mmlu_prehistory:
+2025-07-30 01:54:57,068 - INFO -     - accuracy: 0.4938
+2025-07-30 01:54:57,068 - INFO -   mmlu_professional_law:
+2025-07-30 01:54:57,068 - INFO -     - accuracy: 0.3807
+2025-07-30 01:54:57,068 - INFO -   mmlu_world_religions:
+2025-07-30 01:54:57,068 - INFO -     - accuracy: 0.5263
+2025-07-30 01:54:57,068 - INFO -   mmlu_other:
+2025-07-30 01:54:57,069 - INFO -     - accuracy: 0.4818
+2025-07-30 01:54:57,069 - INFO -   mmlu_business_ethics:
+2025-07-30 01:54:57,069 - INFO -     - accuracy: 0.5100
+2025-07-30 01:54:57,069 - INFO -   mmlu_clinical_knowledge:
+2025-07-30 01:54:57,069 - INFO -     - accuracy: 0.5019
+2025-07-30 01:54:57,069 - INFO -   mmlu_college_medicine:
+2025-07-30 01:54:57,069 - INFO -     - accuracy: 0.4162
+2025-07-30 01:54:57,069 - INFO -   mmlu_global_facts:
+2025-07-30 01:54:57,069 - INFO -     - accuracy: 0.2500
+2025-07-30 01:54:57,069 - INFO -   mmlu_human_aging:
+2025-07-30 01:54:57,070 - INFO -     - accuracy: 0.4529
+2025-07-30 01:54:57,070 - INFO -   mmlu_management:
+2025-07-30 01:54:57,070 - INFO -     - accuracy: 0.5825
+2025-07-30 01:54:57,070 - INFO -   mmlu_marketing:
+2025-07-30 01:54:57,070 - INFO -     - accuracy: 0.7137
+2025-07-30 01:54:57,070 - INFO -   mmlu_medical_genetics:
+2025-07-30 01:54:57,070 - INFO -     - accuracy: 0.4600
+2025-07-30 01:54:57,070 - INFO -   mmlu_miscellaneous:
+2025-07-30 01:54:57,070 - INFO -     - accuracy: 0.5466
+2025-07-30 01:54:57,070 - INFO -   mmlu_nutrition:
+2025-07-30 01:54:57,070 - INFO -     - accuracy: 0.4902
+2025-07-30 01:54:57,071 - INFO -   mmlu_professional_accounting:
+2025-07-30 01:54:57,071 - INFO -     - accuracy: 0.3262
+2025-07-30 01:54:57,071 - INFO -   mmlu_professional_medicine:
+2025-07-30 01:54:57,071 - INFO -     - accuracy: 0.3529
+2025-07-30 01:54:57,071 - INFO -   mmlu_virology:
+2025-07-30 01:54:57,071 - INFO -     - accuracy: 0.4578
+2025-07-30 01:54:57,071 - INFO -   mmlu_social_sciences:
+2025-07-30 01:54:57,071 - INFO -     - accuracy: 0.5102
+2025-07-30 01:54:57,071 - INFO -   mmlu_econometrics:
+2025-07-30 01:54:57,071 - INFO -     - accuracy: 0.2719
+2025-07-30 01:54:57,072 - INFO -   mmlu_high_school_geography:
+2025-07-30 01:54:57,072 - INFO -     - accuracy: 0.5758
+2025-07-30 01:54:57,072 - INFO -   mmlu_high_school_government_and_politics:
+2025-07-30 01:54:57,072 - INFO -     - accuracy: 0.6010
+2025-07-30 01:54:57,072 - INFO -   mmlu_high_school_macroeconomics:
+2025-07-30 01:54:57,072 - INFO -     - accuracy: 0.3974
+2025-07-30 01:54:57,072 - INFO -   mmlu_high_school_microeconomics:
+2025-07-30 01:54:57,072 - INFO -     - accuracy: 0.4328
+2025-07-30 01:54:57,072 - INFO -   mmlu_high_school_psychology:
+2025-07-30 01:54:57,072 - INFO -     - accuracy: 0.6404
+2025-07-30 01:54:57,073 - INFO -   mmlu_human_sexuality:
+2025-07-30 01:54:57,073 - INFO -     - accuracy: 0.5267
+2025-07-30 01:54:57,073 - INFO -   mmlu_professional_psychology:
+2025-07-30 01:54:57,073 - INFO -     - accuracy: 0.4461
+2025-07-30 01:54:57,073 - INFO -   mmlu_public_relations:
+2025-07-30 01:54:57,073 - INFO -     - accuracy: 0.5455
+2025-07-30 01:54:57,073 - INFO -   mmlu_security_studies:
+2025-07-30 01:54:57,073 - INFO -     - accuracy: 0.4449
+2025-07-30 01:54:57,073 - INFO -   mmlu_sociology:
+2025-07-30 01:54:57,073 - INFO -     - accuracy: 0.6468
+2025-07-30 01:54:57,074 - INFO -   mmlu_us_foreign_policy:
+2025-07-30 01:54:57,074 - INFO -     - accuracy: 0.6100
+2025-07-30 01:54:57,074 - INFO -   mmlu_stem:
+2025-07-30 01:54:57,074 - INFO -     - accuracy: 0.3723
+2025-07-30 01:54:57,074 - INFO -   mmlu_abstract_algebra:
+2025-07-30 01:54:57,074 - INFO -     - accuracy: 0.3200
+2025-07-30 01:54:57,074 - INFO -   mmlu_anatomy:
+2025-07-30 01:54:57,074 - INFO -     - accuracy: 0.3778
+2025-07-30 01:54:57,074 - INFO -   mmlu_astronomy:
+2025-07-30 01:54:57,074 - INFO -     - accuracy: 0.4276
+2025-07-30 01:54:57,075 - INFO -   mmlu_college_biology:
+2025-07-30 01:54:57,075 - INFO -     - accuracy: 0.4722
+2025-07-30 01:54:57,075 - INFO -   mmlu_college_chemistry:
+2025-07-30 01:54:57,075 - INFO -     - accuracy: 0.3000
+2025-07-30 01:54:57,075 - INFO -   mmlu_college_computer_science:
+2025-07-30 01:54:57,075 - INFO -     - accuracy: 0.2800
+2025-07-30 01:54:57,075 - INFO -   mmlu_college_mathematics:
+2025-07-30 01:54:57,075 - INFO -     - accuracy: 0.3100
+2025-07-30 01:54:57,075 - INFO -   mmlu_college_physics:
+2025-07-30 01:54:57,075 - INFO -     - accuracy: 0.3235
+2025-07-30 01:54:57,075 - INFO -   mmlu_computer_security:
+2025-07-30 01:54:57,076 - INFO -     - accuracy: 0.5700
+2025-07-30 01:54:57,076 - INFO -   mmlu_conceptual_physics:
+2025-07-30 01:54:57,076 - INFO -     - accuracy: 0.4000
+2025-07-30 01:54:57,076 - INFO -   mmlu_electrical_engineering:
+2025-07-30 01:54:57,076 - INFO -     - accuracy: 0.4552
+2025-07-30 01:54:57,076 - INFO -   mmlu_elementary_mathematics:
+2025-07-30 01:54:57,076 - INFO -     - accuracy: 0.3280
+2025-07-30 01:54:57,076 - INFO -   mmlu_high_school_biology:
+2025-07-30 01:54:57,076 - INFO -     - accuracy: 0.5097
+2025-07-30 01:54:57,076 - INFO -   mmlu_high_school_chemistry:
+2025-07-30 01:54:57,077 - INFO -     - accuracy: 0.3744
+2025-07-30 01:54:57,077 - INFO -   mmlu_high_school_computer_science:
+2025-07-30 01:54:57,077 - INFO -     - accuracy: 0.4300
+2025-07-30 01:54:57,077 - INFO -   mmlu_high_school_mathematics:
+2025-07-30 01:54:57,077 - INFO -     - accuracy: 0.3074
+2025-07-30 01:54:57,077 - INFO -   mmlu_high_school_physics:
+2025-07-30 01:54:57,077 - INFO -     - accuracy: 0.2119
+2025-07-30 01:54:57,077 - INFO -   mmlu_high_school_statistics:
+2025-07-30 01:54:57,077 - INFO -     - accuracy: 0.2917
+2025-07-30 01:54:57,077 - INFO -   mmlu_machine_learning:
+2025-07-30 01:54:57,078 - INFO -     - accuracy: 0.3571
+2025-07-30 01:54:57,078 - INFO - ============================================================
+
+2025-07-30 01:54:57,085 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 8/10: arc_challenge
+2025-07-30 01:54:57,088 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'arc_challenge' will use num_fewshot=5
+2025-07-30 01:54:57,088 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'arc_challenge' with num_fewshot=5
+2025-07-30 01:54:57,088 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:55:05,597 - WARNING - Overwriting default num_fewshot of arc_challenge from None to 5
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1172/1172 [00:07<00:00, 164.13it/s]
+Running loglikelihood requests: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 4687/4687 [01:26<00:00, 53.93it/s]
+2025-07-30 01:56:50,296 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'arc_challenge' with 1 subtasks
+2025-07-30 01:56:50,298 - INFO -
+============================================================
+2025-07-30 01:56:50,299 - INFO - Task 'arc_challenge' Results:
+2025-07-30 01:56:50,300 - INFO - ============================================================
+2025-07-30 01:56:50,301 - INFO -   arc_challenge:
+2025-07-30 01:56:50,302 - INFO -     - accuracy: 0.3908
+2025-07-30 01:56:50,302 - INFO -     - accuracy_norm: 0.4317
+2025-07-30 01:56:50,302 - INFO - ============================================================
+
+2025-07-30 01:56:50,306 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 9/10: arc_easy
+2025-07-30 01:56:50,307 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'arc_easy' will use num_fewshot=5
+2025-07-30 01:56:50,307 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'arc_easy' with num_fewshot=5
+2025-07-30 01:56:50,307 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 01:56:58,514 - WARNING - Overwriting default num_fewshot of arc_easy from None to 5
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2376/2376 [00:15<00:00, 157.17it/s]
+Running loglikelihood requests: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 9501/9501 [02:43<00:00, 58.12it/s]
+2025-07-30 02:00:13,714 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'arc_easy' with 1 subtasks
+2025-07-30 02:00:13,715 - INFO -
+============================================================
+2025-07-30 02:00:13,715 - INFO - Task 'arc_easy' Results:
+2025-07-30 02:00:13,717 - INFO - ============================================================
+2025-07-30 02:00:13,718 - INFO -   arc_easy:
+2025-07-30 02:00:13,720 - INFO -     - accuracy: 0.7201
+2025-07-30 02:00:13,720 - INFO -     - accuracy_norm: 0.7104
+2025-07-30 02:00:13,721 - INFO - ============================================================
+
+2025-07-30 02:00:13,724 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Processing task 10/10: hellaswag
+2025-07-30 02:00:13,725 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Task 'hellaswag' will use num_fewshot=5
+2025-07-30 02:00:13,725 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Evaluating task 'hellaswag' with num_fewshot=5
+2025-07-30 02:00:13,726 - WARNING - generation_kwargs: {'max_gen_toks': 256} specified through cli, these settings will update set parameters in yaml tasks. Ensure 'do_sample=True' for non-greedy decoding!
+2025-07-30 02:00:28,484 - WARNING - Overwriting default num_fewshot of hellaswag from None to 5
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10042/10042 [00:28<00:00, 355.28it/s]
+Running loglikelihood requests: 100%|█████████████████████████████████████████████████████████████████████████████████████████| 40168/40168 [13:40<00:00, 48.97it/s]
+2025-07-30 02:17:05,027 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Successfully completed task 'hellaswag' with 1 subtasks
+2025-07-30 02:17:05,029 - INFO -
+============================================================
+2025-07-30 02:17:05,030 - INFO - Task 'hellaswag' Results:
+2025-07-30 02:17:05,032 - INFO - ============================================================
+2025-07-30 02:17:05,034 - INFO -   hellaswag:
+2025-07-30 02:17:05,034 - INFO -     - accuracy: 0.4187
+2025-07-30 02:17:05,034 - INFO -     - accuracy_norm: 0.5330
+2025-07-30 02:17:05,035 - INFO - ============================================================
+
+2025-07-30 02:17:05,039 - INFO - HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10: Completed evaluation - 189 subtasks from 10 requested tasks
+2025-07-30 02:17:05,041 - INFO - [Process 2120894] Results saved to /home/gwlee/Benchmark/AIDE_Benchmark/results/HyperCLOVAX-SEED-Text-Instruct-0.5B/HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10.json
+2025-07-30 02:17:05,315 - INFO - Results uploaded to WandB as artifact
+2025-07-30 02:17:05,325 - WARNING - lm-eval WandB logging failed, using direct logging: 'NoneType' object has no attribute 'get'
+2025-07-30 02:17:05,327 - INFO - [Process 2120894] Successfully completed HyperCLOVAX-SEED-Text-Instruct-0.5B_harness_10

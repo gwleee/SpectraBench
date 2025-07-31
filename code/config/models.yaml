@@ -1,0 +1,91 @@
+models:
+  - name: "LLaMA 3.1 8B"
+    type: "local"
+    loader: "hf"
+    id: "meta-llama/Llama-3.1-8B"
+
+
+  - name: "Gemma 3 4B"
+    type: "local"
+    loader: "hf"
+    id: "google/gemma-3-4b-it"
+    model_args:
+      dtype: float16
+
+  - name: "Gemma 3 12B"
+    type: "local"
+    loader: "hf"
+    id: "google/gemma-3-12b-it"
+    model_args:
+      dtype: float16
+
+  - name: "Mistral 7B v0.3"
+    type: "local"
+    loader: "hf"
+    id: "mistralai/Mistral-7B-v0.3"
+    model_args:
+      dtype: float16
+      device_map: "auto"
+
+  - name: "Qwen 3 8B"
+    type: "local"
+    loader: "hf"
+    id: "Qwen/Qwen3-8B"
+    model_args:
+      dtype: float16
+
+  - name: "Llama-DNA-1.0-8B-Instruct"
+    type: "local"
+    loader: "hf"
+    id: "dnotitia/Llama-DNA-1.0-8B-Instruct"
+    model_args:
+      dtype: float16
+
+  - name: "EXAONE-3.5-2.4B-Instruct"
+    type: "local"
+    loader: "hf"
+    id: "LGAI-EXAONE/EXAONE-3.5-2.4B-Instruct"
+    model_args:
+      dtype: float16
+
+  - name: "EXAONE-3.5-32B-Instruct"
+    type: "local"
+    loader: "hf"
+    id: "LGAI-EXAONE/EXAONE-3.5-32B-Instruct"
+    model_args:
+      dtype: float16
+
+  - name: "HyperCLOVAX-SEED-Text-Instruct-1.5B"
+    type: "local"
+    loader: "hf"
+    id: "naver-hyperclovax/HyperCLOVAX-SEED-Text-Instruct-1.5B"
+    model_args:
+      dtype: float16
+
+  - name: "HyperCLOVAX-SEED-Text-Instruct-0.5B"
+    type: "local"
+    loader: "hf"
+    id: "naver-hyperclovax/HyperCLOVAX-SEED-Text-Instruct-0.5B"
+    model_args:
+      dtype: float16
+
+  - name: "kanana-1.5-2.1b-instruct-2505"
+    type: "local"
+    loader: "hf"
+    id: "kakaocorp/kanana-1.5-2.1b-instruct-2505"
+    model_args:
+      dtype: float16
+
+  - name: "eagle-3b-preview"
+    type: "local"
+    loader: "hf"
+    id: "etri-lirs/eagle-3b-preview"
+    model_args:
+      dtype: float16
+
+  - name: "luxia-21.4b-alignment-v1.2"
+    type: "local"
+    loader: "hf"
+    id: "saltlux/luxia-21.4b-alignment-v1.2"
+    model_args:
+      dtype: float16

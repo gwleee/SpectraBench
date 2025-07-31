@@ -1,0 +1,50 @@
+{
+  "convergence_point": 20,
+  "convergence_threshold": 0.05,
+  "performance_data": [
+    {
+      "limit": 20,
+      "avg_accuracy": 0.5196046478809637,
+      "std_accuracy": 0.19335556750670543,
+      "num_successful_pairs": 70
+    },
+    {
+      "limit": 40,
+      "avg_accuracy": 0.5239111964381381,
+      "std_accuracy": 0.1861581047952702,
+      "num_successful_pairs": 70
+    },
+    {
+      "limit": 60,
+      "avg_accuracy": 0.5241633906516642,
+      "std_accuracy": 0.1870842495453359,
+      "num_successful_pairs": 70
+    },
+    {
+      "limit": 80,
+      "avg_accuracy": 0.5275970653099038,
+      "std_accuracy": 0.18784949651321603,
+      "num_successful_pairs": 70
+    },
+    {
+      "limit": 100,
+      "avg_accuracy": 0.5249916878500468,
+      "std_accuracy": 0.18663302123204215,
+      "num_successful_pairs": 70
+    },
+    {
+      "limit": 120,
+      "avg_accuracy": 0.5232181796527626,
+      "std_accuracy": 0.18728180565177965,
+      "num_successful_pairs": 70
+    }
+  ],
+  "recommendations": [
+    "Accuracy converges at limit=20",
+    "Recommended limit for Phase 2: 20",
+    "Convergence threshold: 5.0%",
+    "Low convergence point: Efficient execution with acceptable accuracy",
+    "Model-task combinations tested: 420",
+    "Accuracy range: 0.5196 - 0.5276"
+  ]
+}

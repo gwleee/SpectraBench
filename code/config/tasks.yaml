@@ -1,0 +1,21 @@
+harness_tasks:
+  - kmmlu
+  - kmmlu_hard
+  - haerae
+  - kobest
+  - csatqa
+  - kormedmcqa
+  - mmlu
+  - arc_challenge
+  - arc_easy
+  - hellaswag
+  
+custom_tasks:
+  - name: "komt_bench"
+    module: "tasks.komt_bench"
+    few_shot: 0
+    input_format: "text_to_text"
+  - name: "mt_bench"
+    module: "tasks.mt_bench"
+    few_shot: 0
+    input_format: "text_to_text"
