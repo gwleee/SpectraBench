@@ -2,7 +2,12 @@
 
 **Intelligent Scheduling System for Large Language Model Benchmarking**
 
-SpectraBench is an advanced benchmarking tool developed by the Large-scale AI Research Center at Korea Institute of Science and Technology Information (KISTI). It optimizes LLM evaluation through smart scheduling, using machine learning to determine the best execution order and resource allocation, dramatically reducing evaluation time and preventing out-of-memory errors.
+SpectraBench is an advanced benchmarking tool developed by the AI Platform Team at KISTI Large-scale AI Research Center. The Large-scale AI Research Center was officially launched in March 2024, building upon KISTI's generative large language model 'KONI (KISTI Open Natural Intelligence)' unveiled in December 2023. The AI Platform Team is responsible for developing AI model and Agent service technologies.
+SpectraBench optimizes LLM evaluation through smart scheduling, using machine learning to determine the best execution order and resource allocation, dramatically reducing evaluation time and preventing out-of-memory errors.
+🔗 Related Projects:
+
+KISTI-KONI Models - KISTI's large language models
+KISTI-MCP - Multi-Cloud Platform
 
 ## ✨ Why SpectraBench?
 
