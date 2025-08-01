@@ -337,7 +337,7 @@ Apache License 2.0 - see [LICENSE](license.md) for details.
 
 ```bibtex
 @software{spectrabench2025,
-  title={SpectraBench: Adaptive Scheduling System for Efficient Large Language Model Evaluation},
+  title={SpectraBench:  A Three-Stage Evolution Framework for Intelligent Large Language Model Evaluation},
   author={KISTI Large-scale AI Research Center},
   year={2025},
   url={https://github.com/gwleee/SpectraBench},
