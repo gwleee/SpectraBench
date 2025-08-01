@@ -7,8 +7,8 @@ SpectraBench is an advanced benchmarking tool developed by the **AI Platform Tea
 SpectraBench optimizes LLM evaluation through smart scheduling, using machine learning to determine the best execution order and resource allocation, dramatically reducing evaluation time and preventing out-of-memory errors.
 
 🔗 **Related Projects**: 
-- [KISTI-KONI Models](https://huggingface.co/KISTI-KONI) - KISTI's large language models
-- [KISTI-MCP](https://github.com/ansua79/kisti-mcp) - Multi-Cloud Platform
+- [KISTI-KONI Models](https://huggingface.co/KISTI-KONI) - KISTI Large Language Models
+- [KISTI-MCP](https://github.com/ansua79/kisti-mcp) - KISTI Model Context Protocol server
 
 ## ✨ Why SpectraBench?
 
