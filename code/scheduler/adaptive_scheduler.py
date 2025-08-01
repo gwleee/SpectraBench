@@ -2,6 +2,7 @@
 Adaptive Scheduler for LLM Evaluation 
 Machine Learning-based scheduler using Random Forest for optimal resource allocation
 ENHANCED: Advanced confidence calculation, uncertainty quantification, and improved features
+FIXED: DB connection compatibility with new PerformanceTracker
 """
 import numpy as np
 import pandas as pd
@@ -129,8 +130,6 @@ class AdaptiveScheduler:
         if current_resources:
             features['gpu_memory_available'] = current_resources.gpu_memory_total - current_resources.gpu_memory_used
             features['gpu_utilization'] = current_resources.gpu_utilization
-            # REMOVED: gpu_temperature (not relevant for performance prediction)
-            # REMOVED: cpu_percent, ram_available (GPU-intensive workloads)
             features['gpu_memory_utilization'] = current_resources.gpu_memory_percent
         else:
             # Default values if no resource info
@@ -149,8 +148,6 @@ class AdaptiveScheduler:
         # NEW: Context-aware features
         features['memory_pressure'] = self._calculate_memory_pressure(current_resources)
         features['batch_size_hint'] = self._get_optimal_batch_size_hint(model_id, task_name)
-        
-        # REMOVED: Time features (hour, day_of_week - not relevant for LLM performance)
         
         # System features
         features['num_gpus'] = self.num_gpus
@@ -244,18 +241,21 @@ class AdaptiveScheduler:
             return 512
     
     def _get_concurrent_task_count(self) -> int:
-        """Get number of currently running tasks"""
+        """Get number of currently running tasks - FIXED DB ACCESS"""
         try:
-            cursor = self.performance_tracker.conn.cursor()
-            cursor.execute("""
-                SELECT COUNT(*) as running_tasks
-                FROM execution_records 
-                WHERE status = 'running'
-            """)
-            
-            result = cursor.fetchone()
-            return result['running_tasks'] if result else 0
-            
+            with self.performance_tracker._db_lock:
+                conn = self.performance_tracker._get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT COUNT(*) as running_tasks
+                    FROM execution_records 
+                    WHERE status = 'running'
+                """)
+                
+                result = cursor.fetchone()
+                return result['running_tasks'] if result else 0
+                
         except Exception as e:
             logger.debug(f"Error getting concurrent task count: {e}")
             return 0
@@ -454,26 +454,29 @@ class AdaptiveScheduler:
         
         # Get model-level statistics
         try:
-            cursor = self.performance_tracker.conn.cursor()
-            cursor.execute("""
-                SELECT 
-                    AVG(execution_time) as avg_time,
-                    AVG(gpu_memory_peak) as avg_memory,
-                    COUNT(*) as total_runs
-                FROM execution_records 
-                WHERE model_id = ? AND status = 'completed'
-            """, (model_id,))
-            
-            result = cursor.fetchone()
-            if result and result['total_runs'] > 0:
-                features['model_avg_time'] = result['avg_time'] or 3600.0
-                features['model_avg_memory'] = result['avg_memory'] or 20.0
-                features['model_run_count'] = result['total_runs']
-            else:
-                features['model_avg_time'] = 3600.0
-                features['model_avg_memory'] = 20.0
-                features['model_run_count'] = 0
+            with self.performance_tracker._db_lock:
+                conn = self.performance_tracker._get_connection()
+                cursor = conn.cursor()
                 
+                cursor.execute("""
+                    SELECT 
+                        AVG(execution_time) as avg_time,
+                        AVG(gpu_memory_peak) as avg_memory,
+                        COUNT(*) as total_runs
+                    FROM execution_records 
+                    WHERE model_id = ? AND status = 'completed'
+                """, (model_id,))
+                
+                result = cursor.fetchone()
+                if result and result['total_runs'] > 0:
+                    features['model_avg_time'] = result['avg_time'] or 3600.0
+                    features['model_avg_memory'] = result['avg_memory'] or 20.0
+                    features['model_run_count'] = result['total_runs']
+                else:
+                    features['model_avg_time'] = 3600.0
+                    features['model_avg_memory'] = 20.0
+                    features['model_run_count'] = 0
+                    
         except Exception as e:
             logger.warning(f"Error getting historical features: {e}")
             features['model_avg_time'] = 3600.0
@@ -483,50 +486,53 @@ class AdaptiveScheduler:
         return features
     
     def _prepare_training_data(self) -> Optional[pd.DataFrame]:
-        """Prepare training data from performance tracker"""
+        """Prepare training data from performance tracker - FIXED DB ACCESS"""
         try:
-            cursor = self.performance_tracker.conn.cursor()
-            cursor.execute("""
-                SELECT * FROM execution_records 
-                WHERE status IN ('completed', 'failed', 'oom')
-                ORDER BY timestamp DESC
-            """)
-            
-            records = cursor.fetchall()
-            
-            if len(records) < self.min_training_samples:
-                logger.info(f"Insufficient training data: {len(records)} < {self.min_training_samples}")
-                return None
-            
-            # Convert to DataFrame
-            df = pd.DataFrame([dict(record) for record in records])
-            
-            # Add features for each record
-            feature_data = []
-            for _, row in df.iterrows():
-                # Create mock model config
-                model_config = {
-                    "id": row['model_id'],
-                    "name": row['model_name']
-                }
+            with self.performance_tracker._db_lock:
+                conn = self.performance_tracker._get_connection()
+                cursor = conn.cursor()
                 
-                features = self._extract_features(model_config, row['task_name'])
+                cursor.execute("""
+                    SELECT * FROM execution_records 
+                    WHERE status IN ('completed', 'failed', 'oom')
+                    ORDER BY timestamp DESC
+                """)
                 
-                # Add target variables
-                features['target_execution_time'] = row['execution_time'] if row['execution_time'] else 3600.0
-                features['target_memory_usage'] = row['gpu_memory_peak'] if row['gpu_memory_peak'] else 20.0
-                features['target_oom'] = 1 if row['status'] == 'oom' else 0
-                features['target_success'] = 1 if row['status'] == 'completed' else 0
-                features['target_batch_size'] = row['batch_size'] if row['batch_size'] else 1
-                features['target_num_fewshot'] = row['num_fewshot'] if row['num_fewshot'] else 0
+                records = cursor.fetchall()
                 
-                feature_data.append(features)
-            
-            training_df = pd.DataFrame(feature_data)
-            logger.info(f"Prepared training data with {len(training_df)} samples")
-            
-            return training_df
-            
+                if len(records) < self.min_training_samples:
+                    logger.info(f"Insufficient training data: {len(records)} < {self.min_training_samples}")
+                    return None
+                
+                # Convert to DataFrame
+                df = pd.DataFrame([dict(record) for record in records])
+                
+                # Add features for each record
+                feature_data = []
+                for _, row in df.iterrows():
+                    # Create mock model config
+                    model_config = {
+                        "id": row['model_id'],
+                        "name": row['model_name']
+                    }
+                    
+                    features = self._extract_features(model_config, row['task_name'])
+                    
+                    # Add target variables
+                    features['target_execution_time'] = row['execution_time'] if row['execution_time'] else 3600.0
+                    features['target_memory_usage'] = row['gpu_memory_peak'] if row['gpu_memory_peak'] else 20.0
+                    features['target_oom'] = 1 if row['status'] == 'oom' else 0
+                    features['target_success'] = 1 if row['status'] == 'completed' else 0
+                    features['target_batch_size'] = row['batch_size'] if row['batch_size'] else 1
+                    features['target_num_fewshot'] = row['num_fewshot'] if row['num_fewshot'] else 0
+                    
+                    feature_data.append(features)
+                
+                training_df = pd.DataFrame(feature_data)
+                logger.info(f"Prepared training data with {len(training_df)} samples")
+                
+                return training_df
+                
         except Exception as e:
             logger.error(f"Error preparing training data: {e}")
             return None
@@ -629,9 +635,6 @@ class AdaptiveScheduler:
         
         logger.info(f"Model training completed with improved features: {success_count}/6 models trained successfully")
         return success_count >= 4  # At least 4 models should be trained
-    
-    # NOTE: The rest of the methods remain the same as the original file
-    # Only the feature extraction and preparation methods have been improved
     
     def _train_time_predictor(self, X: pd.DataFrame, y: pd.Series) -> bool:
         """Train execution time predictor"""
@@ -938,31 +941,21 @@ class AdaptiveScheduler:
             )
     
     def _calculate_prediction_confidence(self, X: pd.DataFrame, feature_importance: Dict[str, float]) -> float:
-        """
-        Enhanced prediction confidence calculation using multiple uncertainty metrics
-        
-        Args:
-            X: Input features
-            feature_importance: Feature importance dictionary
-            
-        Returns:
-            Confidence score (0.0 to 1.0)
-        """
+        """Enhanced prediction confidence calculation using multiple uncertainty metrics"""
         try:
             confidence_scores = []
             
-            # 1. Feature importance entropy (existing method, improved)
+            # 1. Feature importance entropy
             if feature_importance:
                 importance_values = np.array(list(feature_importance.values()))
-                importance_values = importance_values / importance_values.sum()  # Normalize
+                importance_values = importance_values / importance_values.sum()
                 
-                # Calculate entropy
                 entropy = -np.sum(importance_values * np.log(importance_values + 1e-10))
                 max_entropy = np.log(len(importance_values))
                 entropy_confidence = 1.0 - (entropy / max_entropy) if max_entropy > 0 else 0.5
                 confidence_scores.append(entropy_confidence)
             
-            # 2. Ensemble agreement confidence (Random Forest specific)
+            # 2. Ensemble agreement confidence
             if hasattr(self, 'time_predictor') and self.time_predictor:
                 ensemble_confidence = self._calculate_ensemble_confidence(X)
                 if ensemble_confidence is not None:
@@ -978,7 +971,7 @@ class AdaptiveScheduler:
             if historical_confidence is not None:
                 confidence_scores.append(historical_confidence)
             
-            # 5. Out-of-bag confidence (if available)
+            # 5. Out-of-bag confidence
             oob_confidence = self._calculate_oob_confidence()
             if oob_confidence is not None:
                 confidence_scores.append(oob_confidence)
@@ -986,32 +979,23 @@ class AdaptiveScheduler:
             # Combine all confidence scores with weights
             if confidence_scores:
                 weights = [0.25, 0.25, 0.2, 0.15, 0.15][:len(confidence_scores)]
-                weights = np.array(weights) / sum(weights)  # Normalize weights
+                weights = np.array(weights) / sum(weights)
                 
                 final_confidence = np.average(confidence_scores, weights=weights)
                 return min(max(final_confidence, 0.0), 1.0)
             else:
-                return 0.5  # Default if no confidence metrics available
+                return 0.5
                 
         except Exception as e:
             logger.warning(f"Error calculating prediction confidence: {e}")
             return 0.5
 
     def _calculate_ensemble_confidence(self, X: pd.DataFrame) -> Optional[float]:
-        """
-        Calculate confidence based on Random Forest ensemble agreement
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Ensemble confidence score or None if not available
-        """
+        """Calculate confidence based on Random Forest ensemble agreement"""
         try:
             if not hasattr(self.time_predictor, 'estimators_'):
                 return None
             
-            # Get predictions from all trees
             tree_predictions = []
             for estimator in self.time_predictor.estimators_:
                 pred = estimator.predict(X)
@@ -1020,14 +1004,11 @@ class AdaptiveScheduler:
             if len(tree_predictions) < 2:
                 return None
             
-            # Calculate variance among tree predictions
             pred_mean = np.mean(tree_predictions)
             pred_std = np.std(tree_predictions)
             
-            # Convert variance to confidence (lower variance = higher confidence)
             if pred_mean > 0:
                 coefficient_of_variation = pred_std / pred_mean
-                # Use sigmoid function to map CV to confidence
                 confidence = 1 / (1 + np.exp(coefficient_of_variation - 0.5))
             else:
                 confidence = 0.5
@@ -1039,41 +1020,30 @@ class AdaptiveScheduler:
             return None
 
     def _calculate_prediction_stability(self, X: pd.DataFrame) -> Optional[float]:
-        """
-        Calculate confidence based on prediction stability with small input perturbations
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Stability confidence score or None if not available
-        """
+        """Calculate confidence based on prediction stability with small input perturbations"""
         try:
             if not self.time_predictor:
                 return None
             
             original_pred = self.time_predictor.predict(X)[0]
             
-            # Add small random perturbations to numerical features
             perturbed_predictions = []
             num_perturbations = 5
             
             for _ in range(num_perturbations):
                 X_perturbed = X.copy()
                 
-                # Identify numerical columns
                 numerical_cols = X.select_dtypes(include=[np.number]).columns
                 
                 for col in numerical_cols:
                     if X[col].std() > 0:
-                        noise_scale = X[col].std() * 0.01  # 1% of standard deviation
+                        noise_scale = X[col].std() * 0.01
                         noise = np.random.normal(0, noise_scale, size=len(X))
                         X_perturbed[col] = X[col] + noise
                 
                 perturbed_pred = self.time_predictor.predict(X_perturbed)[0]
                 perturbed_predictions.append(perturbed_pred)
             
-            # Calculate stability as inverse of prediction variance
             if len(perturbed_predictions) > 1:
                 pred_std = np.std(perturbed_predictions)
                 if original_pred > 0:
@@ -1090,30 +1060,22 @@ class AdaptiveScheduler:
             return None
 
     def _get_historical_accuracy_confidence(self) -> Optional[float]:
-        """
-        Calculate confidence based on historical prediction accuracy
-        
-        Returns:
-            Historical accuracy confidence or None if not available
-        """
+        """Calculate confidence based on historical prediction accuracy"""
         try:
             if not hasattr(self, 'model_performance') or not self.model_performance:
                 return None
             
             accuracy_scores = []
             
-            # Extract accuracy metrics from model performance
             for model_name, performance in self.model_performance.items():
                 if 'accuracy' in performance:
                     accuracy_scores.append(performance['accuracy'])
                 elif 'relative_error' in performance:
-                    # Convert relative error to accuracy-like score
                     accuracy = max(0, 1 - performance['relative_error'])
                     accuracy_scores.append(accuracy)
             
             if accuracy_scores:
                 mean_accuracy = np.mean(accuracy_scores)
-                # Apply sigmoid transformation to emphasize high accuracy
                 confidence = 1 / (1 + np.exp(-(mean_accuracy - 0.7) * 10))
                 return confidence
             
@@ -1124,21 +1086,14 @@ class AdaptiveScheduler:
             return None
 
     def _calculate_oob_confidence(self) -> Optional[float]:
-        """
-        Calculate confidence based on Out-of-Bag (OOB) error
-        
-        Returns:
-            OOB confidence score or None if not available
-        """
+        """Calculate confidence based on Out-of-Bag error"""
         try:
             if not hasattr(self.time_predictor, 'oob_score_'):
                 return None
             
             oob_score = self.time_predictor.oob_score_
             
-            # OOB score is R² for regression, convert to confidence
             if oob_score is not None:
-                # Apply sigmoid transformation
                 confidence = 1 / (1 + np.exp(-(oob_score - 0.5) * 5))
                 return confidence
             
@@ -1149,12 +1104,7 @@ class AdaptiveScheduler:
             return None
 
     def get_enhanced_model_confidence(self) -> Dict[str, float]:
-        """
-        Enhanced version of get_model_confidence with multiple confidence metrics
-        
-        Returns:
-            Dictionary containing various confidence metrics
-        """
+        """Enhanced version of get_model_confidence with multiple confidence metrics"""
         if not self.is_trained():
             return {
                 'overall_confidence': 0.0,
@@ -1178,7 +1128,6 @@ class AdaptiveScheduler:
                 if 'accuracy' in perf:
                     performance_scores.append(perf['accuracy'])
                 elif 'relative_error' in perf:
-                    # Convert error to accuracy-like score
                     accuracy = max(0, 1 - perf['relative_error'])
                     performance_scores.append(accuracy)
             
@@ -1192,24 +1141,23 @@ class AdaptiveScheduler:
         
         confidence_metrics['model_performance_confidence'] = perf_confidence
         
-        # 3. Prediction stability confidence (test with sample data)
+        # 3. Prediction stability confidence
         try:
-            # Create sample feature vector for testing
             sample_features = pd.DataFrame({
                 'model_size_numeric': [7.0],
-                'model_size_category': [1],  # Encoded value
-                'model_type': [1],           # Encoded value
-                'task_name': [1],            # Encoded value
-                'task_type': [1],            # Encoded value
+                'model_size_category': [1],
+                'model_type': [1],
+                'task_name': [1],
+                'task_type': [1],
                 'task_complexity': [0.5],
-                'quantization_type': [1],    # NEW
-                'model_architecture': [1],   # NEW
-                'estimated_sequence_length': [1024], # NEW
+                'quantization_type': [1],
+                'model_architecture': [1],
+                'estimated_sequence_length': [1024],
                 'gpu_memory_available': [30.0],
                 'gpu_utilization': [20.0],
-                'gpu_memory_utilization': [50.0], # UPDATED
-                'concurrent_tasks': [0],     # NEW
-                'system_load_factor': [0.3], # NEW
+                'gpu_memory_utilization': [50.0],
+                'concurrent_tasks': [0],
+                'system_load_factor': [0.3],
                 'historical_avg_time': [3600.0],
                 'historical_avg_memory': [15.0],
                 'historical_success_rate': [0.8],
@@ -1218,18 +1166,16 @@ class AdaptiveScheduler:
                 'model_avg_time': [3600.0],
                 'model_avg_memory': [15.0],
                 'model_run_count': [5],
-                'memory_pressure': [0.3],   # NEW
-                'batch_size_hint': [4],     # NEW
+                'memory_pressure': [0.3],
+                'batch_size_hint': [4],
                 'num_gpus': [1]
             })
             
-            # Ensure all expected feature columns are present
             if hasattr(self, 'feature_names') and self.feature_names:
                 for feature in self.feature_names:
                     if feature not in sample_features.columns:
-                        sample_features[feature] = 0  # Default value
+                        sample_features[feature] = 0
                 
-                # Reorder columns to match training
                 sample_features = sample_features[self.feature_names]
             
             stability_confidence = self._calculate_prediction_stability(sample_features)
@@ -1253,24 +1199,21 @@ class AdaptiveScheduler:
         
         confidence_metrics['ensemble_agreement_confidence'] = ensemble_confidence
         
-        # 5. Temporal stability confidence (based on retraining frequency)
+        # 5. Temporal stability confidence
         if self.last_training_time:
             time_since_training = datetime.now() - self.last_training_time
             hours_since_training = time_since_training.total_seconds() / 3600
             
-            # Confidence decreases over time (models become stale)
-            # Full confidence for first 24 hours, then decay
             if hours_since_training <= 24:
                 temporal_confidence = 1.0
             else:
-                # Exponential decay with half-life of 72 hours
                 temporal_confidence = np.exp(-0.693 * (hours_since_training - 24) / 72)
         else:
             temporal_confidence = 0.0
         
         confidence_metrics['temporal_stability_confidence'] = temporal_confidence
         
-        # 6. Overall confidence (weighted combination)
+        # 6. Overall confidence
         weights = {
             'training_data_confidence': 0.3,
             'model_performance_confidence': 0.25,
@@ -1289,138 +1232,9 @@ class AdaptiveScheduler:
         return confidence_metrics
 
     def get_model_confidence(self) -> float:
-        """
-        Get overall model confidence (enhanced version)
-        
-        Returns:
-            Overall confidence score (0.0 to 1.0)
-        """
+        """Get overall model confidence"""
         enhanced_confidence = self.get_enhanced_model_confidence()
         return enhanced_confidence.get('overall_confidence', 0.0)
-
-    def predict_with_uncertainty(self, model_config: Dict, task_name: str) -> Dict[str, Any]:
-        """
-        Make prediction with uncertainty quantification
-        
-        Args:
-            model_config: Model configuration
-            task_name: Task name
-            
-        Returns:
-            Dictionary with predictions and uncertainty estimates
-        """
-        try:
-            # Get standard prediction
-            prediction = self.predict(model_config, task_name)
-            
-            # Extract features for uncertainty calculation
-            current_resources = self.resource_monitor.get_current_snapshot()
-            features = self._extract_features(model_config, task_name, current_resources)
-            feature_df = pd.DataFrame([features])
-            feature_df = self._encode_categorical_features(feature_df, fit=False)
-            
-            if hasattr(self, 'feature_names') and self.feature_names:
-                X = feature_df[self.feature_names]
-            else:
-                X = feature_df
-            
-            # Calculate prediction intervals using quantile forests (approximation)
-            uncertainty_metrics = {}
-            
-            # Time prediction uncertainty
-            if self.time_predictor and hasattr(self.time_predictor, 'estimators_'):
-                time_predictions = []
-                for estimator in self.time_predictor.estimators_:
-                    pred = estimator.predict(X)[0]
-                    time_predictions.append(pred)
-                
-                time_predictions = np.array(time_predictions)
-                uncertainty_metrics['time_prediction_std'] = np.std(time_predictions)
-                uncertainty_metrics['time_prediction_ci_lower'] = np.percentile(time_predictions, 5)
-                uncertainty_metrics['time_prediction_ci_upper'] = np.percentile(time_predictions, 95)
-            
-            # Memory prediction uncertainty
-            if self.memory_predictor and hasattr(self.memory_predictor, 'estimators_'):
-                memory_predictions = []
-                for estimator in self.memory_predictor.estimators_:
-                    pred = estimator.predict(X)[0]
-                    memory_predictions.append(pred)
-                
-                memory_predictions = np.array(memory_predictions)
-                uncertainty_metrics['memory_prediction_std'] = np.std(memory_predictions)
-                uncertainty_metrics['memory_prediction_ci_lower'] = np.percentile(memory_predictions, 5)
-                uncertainty_metrics['memory_prediction_ci_upper'] = np.percentile(memory_predictions, 95)
-            
-            # Success probability uncertainty
-            if self.success_classifier and hasattr(self.success_classifier, 'estimators_'):
-                success_predictions = []
-                for estimator in self.success_classifier.estimators_:
-                    pred_proba = estimator.predict_proba(X)[0]
-                    prob = pred_proba[1] if len(pred_proba) > 1 else 0.5
-                    success_predictions.append(prob)
-                
-                success_predictions = np.array(success_predictions)
-                uncertainty_metrics['success_prediction_std'] = np.std(success_predictions)
-                uncertainty_metrics['success_prediction_ci_lower'] = np.percentile(success_predictions, 5)
-                uncertainty_metrics['success_prediction_ci_upper'] = np.percentile(success_predictions, 95)
-            
-            # Enhanced confidence calculation
-            enhanced_confidence = self._calculate_prediction_confidence(X, prediction.feature_importance)
-            
-            return {
-                'prediction': prediction,
-                'uncertainty_metrics': uncertainty_metrics,
-                'enhanced_confidence': enhanced_confidence,
-                'confidence_breakdown': self.get_enhanced_model_confidence()
-            }
-            
-        except Exception as e:
-            logger.error(f"Error in uncertainty prediction: {e}")
-            return {
-                'prediction': self.predict(model_config, task_name),
-                'uncertainty_metrics': {},
-                'enhanced_confidence': 0.5,
-                'confidence_breakdown': {}
-            }
-
-    def get_confidence_adjusted_thresholds(self, base_min_threshold: int = 50, 
-                                         base_stable_threshold: int = 200) -> Dict[str, Any]:
-        """
-        Get confidence-adjusted thresholds for stage transitions
-        
-        Args:
-            base_min_threshold: Base minimum learning data threshold
-            base_stable_threshold: Base stable learning data threshold
-            
-        Returns:
-            Dictionary with adjusted thresholds
-        """
-        confidence_metrics = self.get_enhanced_model_confidence()
-        overall_confidence = confidence_metrics.get('overall_confidence', 0.0)
-        
-        # Adjust thresholds based on confidence
-        # High confidence -> lower thresholds (earlier transition)
-        # Low confidence -> higher thresholds (more conservative)
-        
-        confidence_factor = 1.0 - (overall_confidence - 0.5)  # Range: 0.5 to 1.5
-        
-        adjusted_min = int(base_min_threshold * confidence_factor)
-        adjusted_stable = int(base_stable_threshold * confidence_factor)
-        
-        # Ensure reasonable bounds
-        adjusted_min = max(20, min(adjusted_min, 150))
-        adjusted_stable = max(100, min(adjusted_stable, 400))
-        
-        # Ensure min < stable
-        if adjusted_min >= adjusted_stable:
-            adjusted_stable = adjusted_min + 50
-        
-        return {
-            'min_learning_data': adjusted_min,
-            'stable_learning_data': adjusted_stable,
-            'confidence_factor': confidence_factor,
-            'overall_confidence': overall_confidence
-        }
     
     def create_optimal_schedule(self, models: List[Dict], tasks: List[str]) -> List[TaskPriority]:
         """Create optimal schedule using ML predictions"""
@@ -1473,7 +1287,7 @@ class AdaptiveScheduler:
         # Base score from success probability
         score = ml_pred.success_probability * 100
         
-        # Time efficiency (prefer shorter tasks when uncertainty is high)
+        # Time efficiency
         time_efficiency = 1 / (1 + np.log1p(ml_pred.execution_time / 3600))
         score *= time_efficiency
         
@@ -1484,7 +1298,7 @@ class AdaptiveScheduler:
         # OOM risk penalty
         score *= (1 - ml_pred.oom_probability)
         
-        # Confidence bonus (prioritize high-confidence predictions)
+        # Confidence bonus
         confidence_bonus = 1 + (ml_pred.confidence_score * 0.2)
         score *= confidence_bonus
         
@@ -1494,12 +1308,10 @@ class AdaptiveScheduler:
         """Generate rationale for ML-based scheduling decision"""
         rationale_parts = []
         
-        # Time and memory
         hours = ml_pred.execution_time / 3600
         rationale_parts.append(f"ML Est. time: {hours:.1f}h")
         rationale_parts.append(f"ML Est. memory: {ml_pred.memory_usage:.1f}GB")
         
-        # Success and OOM rates
         rationale_parts.append(f"Success: {ml_pred.success_probability*100:.1f}%")
         
         if ml_pred.oom_probability > 0.5:
@@ -1507,19 +1319,17 @@ class AdaptiveScheduler:
         elif ml_pred.oom_probability > 0.2:
             rationale_parts.append(f"Medium OOM risk ({ml_pred.oom_probability*100:.0f}%)")
         
-        # Confidence
         rationale_parts.append(f"Confidence: {ml_pred.confidence_score*100:.0f}%")
         
         return " | ".join(rationale_parts)
     
     def _optimize_gpu_assignment(self, schedule: List[TaskPriority]):
-        """Optimize GPU assignment (reuse from IntelligentScheduler)"""
+        """Optimize GPU assignment"""
         if self.num_gpus == 1:
             for task in schedule:
                 task.suggested_gpu = 0
             return
         
-        # Multi-GPU load balancing
         gpu_loads = [0.0] * self.num_gpus
         
         for task in schedule:
@@ -1530,14 +1340,16 @@ class AdaptiveScheduler:
         logger.info(f"ML-based GPU load distribution: {gpu_loads}")
     
     def should_retrain(self) -> bool:
-        """Check if models should be retrained"""
+        """Check if models should be retrained - FIXED: DB 연결 오류 수정"""
         try:
             cursor = self.performance_tracker.conn.cursor()
+            cursor.execute("PRAGMA busy_timeout = 5000")  # 5초 타임아웃
             cursor.execute("""
                 SELECT COUNT(*) as total_records
                 FROM execution_records 
                 WHERE status IN ('completed', 'failed', 'oom')
-            """)
+                AND mode = ?
+            """, (self.performance_tracker.mode,))
             
             result = cursor.fetchone()
             current_data_size = result['total_records'] if result else 0
@@ -1598,16 +1410,13 @@ class AdaptiveScheduler:
     def _load_models(self):
         """Load most recent trained models from disk"""
         try:
-            # Find most recent model files
             model_files = list(self.model_save_path.glob("time_predictor_*.pkl"))
             if not model_files:
                 logger.info("No pre-trained models found")
                 return
             
-            # Get most recent timestamp
             latest_timestamp = max(f.stem.split('_')[-1] for f in model_files)
             
-            # Load models
             model_names = ['time_predictor', 'memory_predictor', 'oom_classifier', 
                           'success_classifier', 'batch_size_predictor', 'fewshot_predictor']
             
@@ -1617,7 +1426,6 @@ class AdaptiveScheduler:
                     setattr(self, name, joblib.load(model_path))
                     logger.debug(f"Loaded {name}")
             
-            # Load metadata
             metadata_path = self.model_save_path / f"metadata_{latest_timestamp}.json"
             if metadata_path.exists():
                 with open(metadata_path, 'r') as f:
@@ -1646,17 +1454,14 @@ class AdaptiveScheduler:
         
         analysis = {}
         
-        # Time predictor feature importance
         if self.time_predictor:
             time_importance = dict(zip(self.feature_names, self.time_predictor.feature_importances_))
-            # Sort by importance
             time_importance_sorted = sorted(time_importance.items(), key=lambda x: x[1], reverse=True)
             analysis['time_prediction'] = {
                 'top_features': time_importance_sorted[:10],
                 'feature_importance': time_importance
             }
         
-        # Memory predictor feature importance
         if self.memory_predictor:
             memory_importance = dict(zip(self.feature_names, self.memory_predictor.feature_importances_))
             memory_importance_sorted = sorted(memory_importance.items(), key=lambda x: x[1], reverse=True)
@@ -1665,7 +1470,6 @@ class AdaptiveScheduler:
                 'feature_importance': memory_importance
             }
         
-        # Overall feature importance (average across models)
         if self.time_predictor and self.memory_predictor:
             overall_importance = {}
             for feature in self.feature_names:

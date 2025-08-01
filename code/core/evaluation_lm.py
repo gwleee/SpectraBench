@@ -26,6 +26,8 @@ import gc
 import wandb
 import hashlib
 import os
+import signal
+import time
 
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
@@ -60,10 +62,12 @@ scheduler_manager = None
 resource_monitor = None
 config_manager = None
 
+SCHEDULER_TIMEOUT = 30  
+TASK_TIMEOUT = 7200  
+
 # Global experiment directory (set by entrance.py)
 EXPERIMENT_DIR = None
 
-# Project root and environment variable loading - FIXED PATH
 project_root = Path(__file__).parent.parent.parent
 BASE_DIR = Path(__file__).parent
 load_dotenv(project_root / ".env")
@@ -93,6 +97,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+# FIXED: 타임아웃 핸들러 추가
+def timeout_handler(signum, frame):
+    """Timeout handler for long-running operations"""
+    raise TimeoutError("Operation timed out")
+
+# ... (기존 helper 함수들 유지: init_wandb_run, ensure_model_local 등)
 
 # WandB initialization helper
 def init_wandb_run(model_name, task_list, config_dict=None):
@@ -188,7 +199,8 @@ def ensure_model_local(repo_id: str) -> str:
 models_config = getattr(sys.modules[__name__], 'models_config', load_models())
 tasks = getattr(sys.modules[__name__], 'tasks', load_tasks().get("harness", []))
 
-# Evaluation execution helper function
+
+# Common function for running evaluation
 def run_evaluation(model, model_args, task_list, num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs):
     """Common function for running evaluation"""
     eval_params = {
@@ -269,7 +281,7 @@ def log_to_wandb(run, task_name, metrics, prefix="eval"):
         logger.warning(f"Failed to log metrics to WandB: {e}")
 
 def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, wandb_run=None, tracker_context=None):
-    """Evaluation function with automatic retry on errors - individual task execution"""
+    """Evaluation function with automatic retry on errors - FIXED: 타임아웃 처리 추가"""
     all_results = {"results": {}}
     failed_tasks = []
     
@@ -327,7 +339,22 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
         while num_fewshot >= 0 and not task_completed:
             try:
                 logger.info(f"{run_name}: Evaluating task '{task}' with num_fewshot={num_fewshot}")
-                result = run_evaluation(model, model_args, [task], num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs)
+                
+                start_time = time.time()
+                
+                # Set signal alarm for timeout
+                if hasattr(signal, 'SIGALRM'):
+                    signal.signal(signal.SIGALRM, timeout_handler)
+                    signal.alarm(TASK_TIMEOUT)
+                
+                try:
+                    result = run_evaluation(model, model_args, [task], num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs)
+                finally:
+                    # Cancel alarm
+                    if hasattr(signal, 'SIGALRM'):
+                        signal.alarm(0)
+                
+                execution_time = time.time() - start_time
                 
                 # Integrate results
                 if "results" in result:
@@ -337,7 +364,7 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                         all_results["results"].update(task_results)
                         task_completed = True
                         total_subtasks_count += len(task_results)
-                        logger.info(f"{run_name}: Successfully completed task '{task}' with {len(task_results)} subtasks")
+                        logger.info(f"{run_name}: Successfully completed task '{task}' with {len(task_results)} subtasks in {execution_time:.2f}s")
                         
                         # Record success in Performance Tracker
                         if record_key and performance_tracker:
@@ -401,6 +428,22 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                     logger.warning(f"{run_name}: No results key for task '{task}'")
                     task_completed = True  # Treat no results as completed
                     
+            except TimeoutError:
+                logger.error(f"{run_name}: Task '{task}' timed out after {TASK_TIMEOUT} seconds")
+                failed_tasks.append(task)
+                
+                # Record timeout tracking
+                if record_key and performance_tracker:
+                    try:
+                        performance_tracker.record_end(
+                            record_key=record_key,
+                            status="failed",
+                            error_message="Task timeout"
+                        )
+                    except:
+                        pass
+                break
+                
             except Exception as e:
                 error_msg = str(e).lower()
                 
@@ -492,7 +535,6 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
     
     return all_results
 
-# Environment setup helper
 def setup_process_env():
     """Set environment variables in each process"""
     env_vars = {
@@ -521,7 +563,6 @@ def setup_process_env():
     # Adjust specific logger levels
     for logger_name in ["transformers", "datasets", "huggingface_hub"]:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
-       
 
 def initialize_tracking_components():
     global performance_tracker, scheduler_manager, resource_monitor, config_manager
@@ -530,43 +571,54 @@ def initialize_tracking_components():
         return False
     
     try:
-        # ConfigManager 초기화
-        if CONFIG_MANAGER_AVAILABLE:
-            config_manager = get_config()
-            logger.info("ConfigManager initialized successfully")
+        # FIXED: 타임아웃 설정
+        if hasattr(signal, 'SIGALRM'):
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(SCHEDULER_TIMEOUT)
         
-        # PerformanceTracker 초기화
-        if performance_tracker is None:
-            performance_tracker = PerformanceTracker(mode=TRACKING_MODE)
-            logger.info(f"PerformanceTracker initialized - mode: {TRACKING_MODE}")
-        
-        # Optimized 모드일 때만 SchedulerManager 초기화
-        if TRACKING_MODE == "optimized" and SCHEDULER_MANAGER_AVAILABLE:
-            if resource_monitor is None:
-                resource_monitor = ResourceMonitor(
-                    monitoring_interval=1.0,
-                    history_size=300,
-                    gpu_index=0
-                )
-                resource_monitor.start_monitoring()
-                logger.info("ResourceMonitor initialized and started")
+        try:
+            if CONFIG_MANAGER_AVAILABLE:
+                config_manager = get_config()
+                logger.info("ConfigManager initialized successfully")
             
-            if scheduler_manager is None:
-                scheduler_manager = SchedulerManager(
-                    performance_tracker=performance_tracker,
-                    resource_monitor=resource_monitor,
-                    num_gpus=num_gpus,
-                    config_manager=config_manager  # ConfigManager 전달
-                )
-                logger.info(f"SchedulerManager initialized - mode: {scheduler_manager.get_current_mode()}")
+            if performance_tracker is None:
+                performance_tracker = PerformanceTracker(mode=TRACKING_MODE)
+                logger.info(f"PerformanceTracker initialized - mode: {TRACKING_MODE}")
+            
+            if TRACKING_MODE == "optimized" and SCHEDULER_MANAGER_AVAILABLE:
+                if resource_monitor is None:
+                    resource_monitor = ResourceMonitor(
+                        monitoring_interval=1.0,
+                        history_size=300,
+                        gpu_index=0
+                    )
+                    resource_monitor.start_monitoring()
+                    logger.info("ResourceMonitor initialized and started")
+                
+                if scheduler_manager is None:
+                    scheduler_manager = SchedulerManager(
+                        performance_tracker=performance_tracker,
+                        resource_monitor=resource_monitor,
+                        num_gpus=num_gpus,
+                        config_manager=config_manager  
+                    )
+                    logger.info(f"SchedulerManager initialized - mode: {scheduler_manager.get_current_mode()}")
+            
+            return True
+            
+        finally:
+            # Cancel alarm
+            if hasattr(signal, 'SIGALRM'):
+                signal.alarm(0)
         
-        return True
-        
+    except TimeoutError:
+        logger.error(f"Scheduler initialization timed out after {SCHEDULER_TIMEOUT} seconds")
+        return False
     except Exception as e:
         logger.error(f"Failed to initialize tracking components: {e}")
         return False
-    
-# Single model evaluation function
+
+
 def evaluate_single(idx, mconf, task_list, full_run=False):
     setup_process_env()
     
@@ -836,7 +888,6 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
         
         return run_name, e
 
-# Main evaluation function
 def main():
     # Create experiment results directory
     if EXPERIMENT_DIR:
@@ -850,11 +901,15 @@ def main():
     global models_config, tasks, FULL_RUN, TRACKING_MODE, ENABLE_TRACKING
     global performance_tracker, scheduler_manager, resource_monitor, config_manager
     
-    # Initialize tracking components
-    tracking_initialized = initialize_tracking_components()
-    
-    if not tracking_initialized and ENABLE_TRACKING:
-        logger.warning("Tracking components initialization failed, continuing without tracking")
+    # Initialize tracking components with timeout
+    try:
+        tracking_initialized = initialize_tracking_components()
+        
+        if not tracking_initialized and ENABLE_TRACKING:
+            logger.warning("Tracking components initialization failed, continuing without tracking")
+    except Exception as e:
+        logger.error(f"Failed to initialize tracking components: {e}")
+        tracking_initialized = False
     
     # Check WandB API key
     if not os.getenv("WANDB_API_KEY"):
@@ -868,25 +923,36 @@ def main():
         logger.info("="*60)
         
         try:
-            # Get current mode and statistics
-            current_mode = scheduler_manager.get_current_mode()
-            stats = scheduler_manager.get_scheduler_statistics()
+            # FIXED: 타임아웃 처리 추가
+            if hasattr(signal, 'SIGALRM'):
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(SCHEDULER_TIMEOUT)
             
-            logger.info(f"Current Scheduler Mode: {current_mode}")
-            logger.info(f"Training Records: {stats['total_training_records']}")
-            logger.info(f"Configuration: min_learning_data={stats['configuration']['min_learning_data']}, "
-                       f"stable_learning_data={stats['configuration']['stable_learning_data']}")
-            
-            if current_mode == "adaptive":
-                logger.info(f"ML Confidence: {stats['adaptive_status']['confidence']:.2f}")
-            elif current_mode == "hybrid":
-                logger.info("Using Hybrid Mode (ML + Rule-based)")
-            else:
-                logger.info("Using Intelligent Mode (Rule-based)")
-            
-            # Create optimal schedule
-            logger.info("Creating optimal schedule...")
-            schedule = scheduler_manager.create_optimal_schedule(models_config, tasks)
+            try:
+                # Get current mode and statistics
+                current_mode = scheduler_manager.get_current_mode()
+                stats = scheduler_manager.get_scheduler_statistics()
+                
+                logger.info(f"Current Scheduler Mode: {current_mode}")
+                logger.info(f"Training Records: {stats['total_training_records']}")
+                logger.info(f"Configuration: min_learning_data={stats['configuration']['min_learning_data']}, "
+                           f"stable_learning_data={stats['configuration']['stable_learning_data']}")
+                
+                if current_mode == "adaptive":
+                    logger.info(f"ML Confidence: {stats['adaptive_status']['confidence']:.2f}")
+                elif current_mode == "hybrid":
+                    logger.info("Using Hybrid Mode (ML + Rule-based)")
+                else:
+                    logger.info("Using Intelligent Mode (Rule-based)")
+                
+                # Create optimal schedule
+                logger.info("Creating optimal schedule...")
+                schedule = scheduler_manager.create_optimal_schedule(models_config, tasks)
+                
+            finally:
+                # Cancel alarm
+                if hasattr(signal, 'SIGALRM'):
+                    signal.alarm(0)
             
             # Display schedule summary
             logger.info(f"\n{'='*80}")
@@ -945,13 +1011,25 @@ def main():
                 logger.info(f"Rationale: {task_priority.rationale}")
                 logger.info(f"{'='*60}")
                 
-                # Check if we can proceed with next task
-                next_task = scheduler_manager.get_next_task(schedule, completed_tasks)
-                if next_task != task_priority:
-                    logger.warning(f"SchedulerManager suggests different task, waiting...")
-                    import time
-                    time.sleep(30)
-                    continue
+                # Check if we can proceed with next task (with timeout)
+                try:
+                    if hasattr(signal, 'SIGALRM'):
+                        signal.alarm(SCHEDULER_TIMEOUT)
+                    
+                    next_task = scheduler_manager.get_next_task(schedule, completed_tasks)
+                    
+                    if hasattr(signal, 'SIGALRM'):
+                        signal.alarm(0)
+                        
+                    if next_task != task_priority:
+                        logger.warning(f"SchedulerManager suggests different task, waiting...")
+                        time.sleep(30)
+                        continue
+                        
+                except TimeoutError:
+                    logger.warning(f"Scheduler task selection timed out, proceeding with original schedule")
+                except Exception as e:
+                    logger.warning(f"Error in scheduler task selection: {e}, proceeding with original schedule")
                 
                 # Temporarily modify configuration to apply recommended settings
                 original_models_config = models_config.copy()
@@ -974,25 +1052,31 @@ def main():
                         failed_tasks.append((task_priority.model_id, task_priority.task_name))
                         
                         # Update schedule after failure
-                        scheduler_manager.update_schedule_after_completion(
-                            schedule[task_idx+1:],  # Remaining tasks
-                            task_priority,
-                            0,  # Execution time
-                            0,  # Memory usage
-                            "failed"
-                        )
+                        try:
+                            scheduler_manager.update_schedule_after_completion(
+                                schedule[task_idx+1:],  # Remaining tasks
+                                task_priority,
+                                0,  # Execution time
+                                0,  # Memory usage
+                                "failed"
+                            )
+                        except Exception as update_error:
+                            logger.warning(f"Error updating schedule after failure: {update_error}")
                     else:
                         logger.info(f"Task completed successfully")
                         completed_tasks.append((task_priority.model_id, task_priority.task_name))
                         
                         # Update schedule after successful completion
-                        scheduler_manager.update_schedule_after_completion(
-                            schedule[task_idx+1:],  # Remaining tasks
-                            task_priority,
-                            task_priority.estimated_time,  # Use predicted time
-                            task_priority.estimated_memory,  # Use predicted memory
-                            "completed"
-                        )
+                        try:
+                            scheduler_manager.update_schedule_after_completion(
+                                schedule[task_idx+1:],  # Remaining tasks
+                                task_priority,
+                                task_priority.estimated_time,  # Use predicted time
+                                task_priority.estimated_memory,  # Use predicted memory
+                                "completed"
+                            )
+                        except Exception as update_error:
+                            logger.warning(f"Error updating schedule after completion: {update_error}")
                 
                 finally:
                     # Restore original settings
@@ -1013,12 +1097,15 @@ def main():
             logger.info(f"Failed tasks: {len(failed_tasks)}")
             
             # Final scheduler statistics
-            final_stats = scheduler_manager.get_scheduler_statistics()
-            logger.info(f"Final mode: {final_stats['current_mode']}")
-            logger.info(f"Total training records: {final_stats['total_training_records']}")
-            
-            if final_stats['adaptive_status']['is_trained']:
-                logger.info(f"ML confidence: {final_stats['adaptive_status']['confidence']:.2f}")
+            try:
+                final_stats = scheduler_manager.get_scheduler_statistics()
+                logger.info(f"Final mode: {final_stats['current_mode']}")
+                logger.info(f"Total training records: {final_stats['total_training_records']}")
+                
+                if final_stats['adaptive_status']['is_trained']:
+                    logger.info(f"ML confidence: {final_stats['adaptive_status']['confidence']:.2f}")
+            except Exception as e:
+                logger.warning(f"Error getting final statistics: {e}")
             
             if failed_tasks:
                 logger.info("\nFailed tasks:")
@@ -1027,6 +1114,9 @@ def main():
             
             logger.info(f"{'='*60}\n")
             
+        except TimeoutError:
+            logger.error("Scheduler operations timed out, falling back to baseline mode")
+            TRACKING_MODE = "baseline"
         except Exception as e:
             logger.error(f"Error in optimized mode: {e}", exc_info=True)
             logger.info("Falling back to baseline mode...")
@@ -1136,20 +1226,23 @@ def main():
             
             # Scheduler Manager summary
             if scheduler_manager:
-                scheduler_stats = scheduler_manager.get_scheduler_statistics()
-                logger.info(f"\nScheduler Statistics:")
-                logger.info(f"Final mode: {scheduler_stats['current_mode']}")
-                logger.info(f"Mode transitions: {len(scheduler_stats['mode_transitions'])}")
-                
-                if scheduler_stats['adaptive_status']['is_trained']:
-                    logger.info(f"ML model confidence: {scheduler_stats['adaptive_status']['confidence']:.2f}")
-                    if 'model_performance' in scheduler_stats:
-                        logger.info("ML model performance:")
-                        for model_name, perf in scheduler_stats['model_performance'].items():
-                            if 'accuracy' in perf:
-                                logger.info(f"  {model_name}: {perf['accuracy']:.3f} accuracy")
-                            elif 'mae' in perf:
-                                logger.info(f"  {model_name}: {perf['mae']:.2f} MAE")
+                try:
+                    scheduler_stats = scheduler_manager.get_scheduler_statistics()
+                    logger.info(f"\nScheduler Statistics:")
+                    logger.info(f"Final mode: {scheduler_stats['current_mode']}")
+                    logger.info(f"Mode transitions: {len(scheduler_stats['mode_transitions'])}")
+                    
+                    if scheduler_stats['adaptive_status']['is_trained']:
+                        logger.info(f"ML model confidence: {scheduler_stats['adaptive_status']['confidence']:.2f}")
+                        if 'model_performance' in scheduler_stats:
+                            logger.info("ML model performance:")
+                            for model_name, perf in scheduler_stats['model_performance'].items():
+                                if 'accuracy' in perf:
+                                    logger.info(f"  {model_name}: {perf['accuracy']:.3f} accuracy")
+                                elif 'mae' in perf:
+                                    logger.info(f"  {model_name}: {perf['mae']:.2f} MAE")
+                except Exception as e:
+                    logger.warning(f"Error getting scheduler statistics: {e}")
             
             logger.info(f"{'='*60}\n")
             

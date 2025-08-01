@@ -1,6 +1,6 @@
 """
 Fixed Threshold Optimization Experiment Framework
-Added support for limit parameter in ExperimentConfig
+Updated to use ConfigManager and latest scheduler_manager interface
 """
 import os
 import sys
@@ -11,11 +11,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional, Any
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
 from dataclasses import dataclass, asdict
 
-# Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -23,6 +20,7 @@ from code.scheduler.scheduler_manager import SchedulerManager
 from code.scheduler.performance_tracker import PerformanceTracker
 from code.scheduler.resource_monitor import ResourceMonitor
 from code.config.config_loader import load_models, load_tasks
+from code.config.config_manager import ConfigManager, get_config
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +41,7 @@ class ExperimentConfig:
     # Experiment settings
     num_runs_per_threshold: int = 3
     full_run: bool = False
-    limit: Optional[int] = None  # Added limit parameter
+    limit: Optional[int] = None
     
     # Output settings
     output_dir: Path = Path("experiments_results/threshold_optimization")
@@ -132,7 +130,7 @@ class ThresholdOptimizer:
         return results_df
     
     def _run_single_experiment(self, stage1_thresh: int, stage2_thresh: int, run_id: int) -> ExperimentResult:
-        """Run a single experiment with specific thresholds"""
+        """Run a single experiment with specific thresholds - UPDATED"""
         start_time = datetime.now()
         
         # Create temporary performance tracker for this experiment
@@ -144,17 +142,16 @@ class ThresholdOptimizer:
         resource_monitor.start_monitoring()
         
         try:
-            # Create scheduler manager with custom thresholds
+            # UPDATED: Use ConfigManager instead of config dict
+            config_manager = get_config()
+            config_manager.update_thresholds(stage1_thresh, stage2_thresh)
+            
+            # Create scheduler manager with ConfigManager
             scheduler_manager = SchedulerManager(
                 performance_tracker=performance_tracker,
                 resource_monitor=resource_monitor,
-                num_gpus=1,  # Simplified for experiments
-                config={
-                    'min_learning_data': stage1_thresh,
-                    'stable_learning_data': stage2_thresh,
-                    'hybrid_confidence_threshold': 0.7,
-                    'retrain_interval_hours': 24
-                }
+                num_gpus=1,
+                config_manager=config_manager  # Use ConfigManager instead of config dict
             )
             
             # Track stage transitions
@@ -178,9 +175,9 @@ class ThresholdOptimizer:
                         config={
                             "batch_size": 1,
                             "num_fewshot": 5,
-                            "limit": self.limit,  # Use instance limit
+                            "limit": self.limit,
                             "threshold_experiment": True
-                    }
+                        }
                     )
                     
                     # Simulate execution (using historical data or estimated values)
@@ -249,7 +246,8 @@ class ThresholdOptimizer:
             # Remove temporary database
             if temp_db_path.exists():
                 temp_db_path.unlink()
-    
+
+    # Rest of the methods remain the same...
     def _simulate_task_execution(self, model: Dict, task: str) -> Tuple[float, str]:
         """Simulate task execution based on model and task characteristics with limit consideration"""
         model_id = model["id"]

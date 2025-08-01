@@ -12,11 +12,9 @@ from datetime import datetime
 import yaml
 from typing import Dict, List, Tuple, Optional, Any
 
-# Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import evaluation_lm for direct execution
 from code.core import evaluation_lm
 
 import logging
@@ -65,7 +63,6 @@ def create_accuracy_experiment_dir():
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     exp_dir = project_root / "experiments_results" / f"phase1_accuracy_convergence_{timestamp}"
     
-    # Create subdirectories
     subdirs = ["config", "results", "logs", "analysis", "figures"]
     for subdir in subdirs:
         (exp_dir / subdir).mkdir(parents=True, exist_ok=True)
@@ -168,21 +165,8 @@ def extract_accuracy_from_task_result(task_result: Dict) -> Optional[float]:
     return None
 
 
-def evaluate_single_with_custom_limit(idx, mconf, task_list, full_run=False, custom_limit=None):
-    """Global function to avoid pickle issues"""
-    # Set custom limit in environment if provided
-    if custom_limit is not None:
-        os.environ["PHASE1_CUSTOM_LIMIT"] = str(custom_limit)
-    else:
-        os.environ["PHASE1_CUSTOM_LIMIT"] = "None"
-    
-    # Import here to avoid circular imports
-    from code.core.evaluation_lm import evaluate_single
-    return evaluate_single(idx, mconf, task_list, full_run)
-
-
 def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], test_limits: List[Optional[int]], exp_dir: Path) -> Dict:
-    """Run accuracy convergence experiment with different limits - SIMPLE FIX"""
+    """Run accuracy convergence experiment with different limits - FIXED VERSION"""
     logger.info("Starting Accuracy Convergence Experiment")
     
     results = {}
@@ -198,19 +182,21 @@ def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], te
         evaluation_lm.FULL_RUN = (limit is None)
         evaluation_lm.EXPERIMENT_DIR = exp_dir
         
-        # Set custom limit in environment variable instead of monkey patching
         if limit is not None:
             os.environ["PHASE1_CUSTOM_LIMIT"] = str(limit)
+            logger.info(f"Set PHASE1_CUSTOM_LIMIT = {limit}")
         else:
             os.environ["PHASE1_CUSTOM_LIMIT"] = "None"
+            logger.info("Set PHASE1_CUSTOM_LIMIT = None (full dataset)")
         
         start_time = time.time()
         
         try:
-            # Run evaluation without monkey patching
+            logger.info(f"Starting evaluation with limit = {limit}")
             evaluation_lm.main()
             
             # Extract accuracy results
+            logger.info("Extracting accuracy results...")
             accuracy_results = extract_accuracy_from_results(models, tasks, exp_dir)
             
             # Calculate statistics
@@ -228,6 +214,7 @@ def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], te
             
             logger.info(f"Limit {limit} completed in {execution_time:.1f}s")
             logger.info(f"Average accuracy: {limit_stats['avg_accuracy']:.4f}")
+            logger.info(f"Successful model-task pairs: {limit_stats['num_successful_pairs']}")
             
         except Exception as e:
             logger.error(f"Error testing limit {limit}: {e}")
@@ -241,6 +228,7 @@ def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], te
             # Clean up environment variable
             if "PHASE1_CUSTOM_LIMIT" in os.environ:
                 del os.environ["PHASE1_CUSTOM_LIMIT"]
+                logger.info("Cleaned up PHASE1_CUSTOM_LIMIT environment variable")
     
     return results
 
@@ -329,6 +317,7 @@ def analyze_accuracy_convergence(results: Dict, exp_dir: Path) -> Tuple[Dict, st
             change_rate = abs(current_acc - prev_acc) / prev_acc
             if change_rate < convergence_analysis['convergence_threshold']:
                 convergence_point = perf_data[i-1]['limit']
+                logger.info(f"Convergence found at limit {convergence_point} (change rate: {change_rate:.3f})")
                 break
     
     convergence_analysis['convergence_point'] = convergence_point
@@ -464,7 +453,7 @@ def main():
         models = load_models_from_yaml()
         tasks = load_tasks_from_yaml()
         
-        # Test limits for convergence analysis
+        # FIXED: Use reasonable test limits
         test_limits = [20, 40, 60, 80, 100, 120]
         
         # Save experiment config
@@ -483,6 +472,7 @@ def main():
             json.dump(config, f, indent=2)
         
         logger.info(f"Phase 1 config: {len(models)} models × {len(tasks)} tasks = {config['total_combinations']} combinations")
+        logger.info(f"Testing limits: {test_limits}")
         logger.info(f"Using 5% convergence threshold for analysis")
         
         # Run convergence experiment
@@ -513,7 +503,7 @@ def main():
         }
         
     except Exception as e:
-        logger.error(f"Phase 1 accuracy convergence analysis failed: {e}")
+        logger.error(f"Phase 1 accuracy convergence analysis failed: {e}", exc_info=True)
         return {
             "success": False,
             "error": str(e)
