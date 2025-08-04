@@ -244,7 +244,7 @@ class AdaptiveScheduler:
         """Get number of currently running tasks - FIXED DB ACCESS"""
         try:
             with self.performance_tracker._db_lock:
-                conn = self.performance_tracker._get_connection()
+                conn = self.performance_tracker.conn  # FIXED: Use direct connection
                 cursor = conn.cursor()
                 
                 cursor.execute("""
@@ -440,7 +440,7 @@ class AdaptiveScheduler:
         return 0.5  # Default medium complexity
     
     def _get_historical_features(self, model_id: str, task_name: str) -> Dict[str, float]:
-        """Get historical performance features"""
+        """Get historical performance features - FIXED DB ACCESS"""
         features = {}
         
         # Get past performance for this model-task combination
@@ -455,7 +455,7 @@ class AdaptiveScheduler:
         # Get model-level statistics
         try:
             with self.performance_tracker._db_lock:
-                conn = self.performance_tracker._get_connection()
+                conn = self.performance_tracker.conn  # FIXED: Use direct connection
                 cursor = conn.cursor()
                 
                 cursor.execute("""
@@ -489,7 +489,7 @@ class AdaptiveScheduler:
         """Prepare training data from performance tracker - FIXED DB ACCESS"""
         try:
             with self.performance_tracker._db_lock:
-                conn = self.performance_tracker._get_connection()
+                conn = self.performance_tracker.conn  # FIXED: Use direct connection
                 cursor = conn.cursor()
                 
                 cursor.execute("""
@@ -1342,7 +1342,7 @@ class AdaptiveScheduler:
     def should_retrain(self) -> bool:
         """Check if models should be retrained - FIXED: DB 연결 오류 수정"""
         try:
-            cursor = self.performance_tracker.conn.cursor()
+            cursor = self.performance_tracker.conn.cursor()  # FIXED: Direct access
             cursor.execute("PRAGMA busy_timeout = 5000")  # 5초 타임아웃
             cursor.execute("""
                 SELECT COUNT(*) as total_records

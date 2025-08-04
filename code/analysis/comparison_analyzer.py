@@ -1,6 +1,7 @@
 """
 Comparison Analyzer for LLM Benchmark
 Baseline vs Optimized mode comparison analysis
+WITH GPU THERMAL ANALYSIS
 """
 import sqlite3
 import json
@@ -43,6 +44,16 @@ class ComparisonResult:
     avg_memory_baseline: float
     avg_memory_optimized: float
     memory_efficiency_gain: float
+    
+    # NEW: Thermal data
+    avg_temp_baseline: float
+    avg_temp_optimized: float
+    peak_temp_baseline: float
+    peak_temp_optimized: float
+    thermal_improvement_percent: float
+    high_temp_events_baseline: int
+    high_temp_events_optimized: int
+    thermal_events_reduction_percent: float
     
     # Task-wise improvements
     task_improvements: Dict[str, float]
@@ -99,6 +110,68 @@ class ComparisonAnalyzer:
         logger.info(f"Loaded {len(df)} optimized records")
         return df
     
+    def get_thermal_analysis(self) -> Dict[str, Any]:
+        """GPU thermal management analysis"""
+        try:
+            query = """
+                SELECT 
+                    mode,
+                    model_name,
+                    model_size,
+                    AVG(gpu_temperature_avg) as avg_temp,
+                    MAX(gpu_temperature_peak) as peak_temp,
+                    MIN(gpu_temperature_start) as min_temp,
+                    COUNT(CASE WHEN gpu_temperature_peak > 85 THEN 1 END) as high_temp_count,
+                    COUNT(CASE WHEN gpu_temperature_peak > 90 THEN 1 END) as critical_temp_count,
+                    COUNT(*) as total_tasks
+                FROM execution_records
+                WHERE gpu_temperature_avg IS NOT NULL
+                GROUP BY mode, model_name, model_size
+                ORDER BY mode, model_size DESC
+            """
+            
+            df = pd.read_sql_query(query, self.conn)
+            
+            # Separate baseline and optimized data
+            baseline_thermal = df[df['mode'] == 'baseline']
+            optimized_thermal = df[df['mode'] == 'optimized']
+            
+            analysis = {
+                'baseline_thermal': baseline_thermal.to_dict('records'),
+                'optimized_thermal': optimized_thermal.to_dict('records'),
+                'thermal_comparison': {},
+                'cooling_effectiveness': {}
+            }
+            
+            # Calculate thermal improvements
+            if len(baseline_thermal) > 0 and len(optimized_thermal) > 0:
+                baseline_avg_temp = baseline_thermal['avg_temp'].mean()
+                optimized_avg_temp = optimized_thermal['avg_temp'].mean()
+                
+                analysis['thermal_comparison'] = {
+                    'baseline_avg_temp': baseline_avg_temp,
+                    'optimized_avg_temp': optimized_avg_temp,
+                    'temperature_reduction': baseline_avg_temp - optimized_avg_temp,
+                    'temperature_improvement_percent': ((baseline_avg_temp - optimized_avg_temp) / baseline_avg_temp * 100) if baseline_avg_temp > 0 else 0
+                }
+                
+                # High temperature event comparison
+                baseline_high_temp = baseline_thermal['high_temp_count'].sum()
+                optimized_high_temp = optimized_thermal['high_temp_count'].sum()
+                
+                analysis['cooling_effectiveness'] = {
+                    'baseline_high_temp_events': int(baseline_high_temp),
+                    'optimized_high_temp_events': int(optimized_high_temp),
+                    'high_temp_reduction': int(baseline_high_temp - optimized_high_temp),
+                    'high_temp_reduction_percent': ((baseline_high_temp - optimized_high_temp) / baseline_high_temp * 100) if baseline_high_temp > 0 else 0
+                }
+            
+            return analysis
+            
+        except Exception as e:
+            logger.error(f"Error in thermal analysis: {e}")
+            return {'error': str(e)}
+    
     def calculate_improvements(self, 
                              baseline_df: Optional[pd.DataFrame] = None,
                              optimized_df: Optional[pd.DataFrame] = None) -> ComparisonResult:
@@ -138,6 +211,23 @@ class ComparisonAnalyzer:
         avg_memory_optimized = optimized_completed['gpu_memory_peak'].mean() if len(optimized_completed) > 0 else 0
         memory_efficiency = ((avg_memory_baseline - avg_memory_optimized) / avg_memory_baseline * 100) if avg_memory_baseline > 0 else 0
         
+        # NEW: Thermal calculations
+        # Average temperatures (completed tasks only)
+        avg_temp_baseline = baseline_completed['gpu_temperature_avg'].mean() if len(baseline_completed) > 0 and 'gpu_temperature_avg' in baseline_completed.columns else 0
+        avg_temp_optimized = optimized_completed['gpu_temperature_avg'].mean() if len(optimized_completed) > 0 and 'gpu_temperature_avg' in optimized_completed.columns else 0
+        
+        # Peak temperatures
+        peak_temp_baseline = baseline_df['gpu_temperature_peak'].max() if len(baseline_df) > 0 and 'gpu_temperature_peak' in baseline_df.columns else 0
+        peak_temp_optimized = optimized_df['gpu_temperature_peak'].max() if len(optimized_df) > 0 and 'gpu_temperature_peak' in optimized_df.columns else 0
+        
+        # Thermal improvement
+        thermal_improvement = ((avg_temp_baseline - avg_temp_optimized) / avg_temp_baseline * 100) if avg_temp_baseline > 0 else 0
+        
+        # High temperature events (>85°C)
+        high_temp_baseline = len(baseline_df[baseline_df['gpu_temperature_peak'] > 85]) if 'gpu_temperature_peak' in baseline_df.columns else 0
+        high_temp_optimized = len(optimized_df[optimized_df['gpu_temperature_peak'] > 85]) if 'gpu_temperature_peak' in optimized_df.columns else 0
+        thermal_events_reduction = ((high_temp_baseline - high_temp_optimized) / high_temp_baseline * 100) if high_temp_baseline > 0 else 0
+        
         # Task-wise improvements
         task_improvements = self._calculate_task_improvements(baseline_df, optimized_df)
         
@@ -158,6 +248,17 @@ class ComparisonAnalyzer:
             avg_memory_baseline=avg_memory_baseline,
             avg_memory_optimized=avg_memory_optimized,
             memory_efficiency_gain=memory_efficiency,
+            
+            # NEW: Thermal fields
+            avg_temp_baseline=avg_temp_baseline,
+            avg_temp_optimized=avg_temp_optimized,
+            peak_temp_baseline=peak_temp_baseline,
+            peak_temp_optimized=peak_temp_optimized,
+            thermal_improvement_percent=thermal_improvement,
+            high_temp_events_baseline=high_temp_baseline,
+            high_temp_events_optimized=high_temp_optimized,
+            thermal_events_reduction_percent=thermal_events_reduction,
+            
             task_improvements=task_improvements,
             model_improvements=model_improvements,
             baseline_records=baseline_df.to_dict('records'),
@@ -212,6 +313,7 @@ class ComparisonAnalyzer:
                 end_time,
                 execution_time,
                 gpu_memory_peak,
+                gpu_temperature_peak,
                 status
             FROM execution_records
             WHERE mode = ?
@@ -230,6 +332,7 @@ class ComparisonAnalyzer:
                 'end': row['end_time'],
                 'duration': row['execution_time'],
                 'memory': row['gpu_memory_peak'],
+                'temperature': row['gpu_temperature_peak'],  # NEW
                 'status': row['status']
             })
         
@@ -244,6 +347,7 @@ class ComparisonAnalyzer:
                 COUNT(*) as count,
                 AVG(execution_time) as avg_time,
                 AVG(gpu_memory_peak) as avg_memory,
+                AVG(gpu_temperature_avg) as avg_temperature,
                 SUM(CASE WHEN status = 'oom' THEN 1 ELSE 0 END) as oom_count
             FROM execution_records
             WHERE batch_size IS NOT NULL
@@ -346,6 +450,23 @@ class ComparisonAnalyzer:
         report.append(f"    - Efficiency Gain: {result.memory_efficiency_gain:.1f}% ⬇️")
         report.append("")
         
+        # NEW: Thermal section
+        report.append(f"Thermal Management:")
+        report.append(f"  - Average GPU Temperature:")
+        report.append(f"    - Baseline:  {result.avg_temp_baseline:.1f}°C")
+        report.append(f"    - Optimized: {result.avg_temp_optimized:.1f}°C")
+        if result.thermal_improvement_percent > 0:
+            report.append(f"    - Temperature Reduction: {result.thermal_improvement_percent:.1f}% ⬇️")
+        report.append(f"  - Peak GPU Temperature:")
+        report.append(f"    - Baseline:  {result.peak_temp_baseline:.1f}°C")
+        report.append(f"    - Optimized: {result.peak_temp_optimized:.1f}°C")
+        report.append(f"  - High Temperature Events (>85°C):")
+        report.append(f"    - Baseline:  {result.high_temp_events_baseline}")
+        report.append(f"    - Optimized: {result.high_temp_events_optimized}")
+        if result.thermal_events_reduction_percent > 0:
+            report.append(f"    - Event Reduction: {result.thermal_events_reduction_percent:.1f}% ⬇️")
+        report.append("")
+        
         # Task-wise improvements
         if result.task_improvements:
             report.append("## TASK-WISE IMPROVEMENTS")
@@ -378,6 +499,13 @@ class ComparisonAnalyzer:
         
         if result.memory_efficiency_gain > 20:
             report.append(f"✓ Memory usage optimized by {result.memory_efficiency_gain:.1f}%")
+        
+        # NEW: Thermal findings
+        if result.thermal_improvement_percent > 5:
+            report.append(f"✓ GPU temperature reduced by {result.thermal_improvement_percent:.1f}% on average")
+        
+        if result.thermal_events_reduction_percent > 50:
+            report.append(f"✓ High temperature events reduced by {result.thermal_events_reduction_percent:.1f}%")
         
         # Best improvement task
         if result.task_improvements:
@@ -426,10 +554,25 @@ class ComparisonAnalyzer:
                     'avg_memory_baseline': result.avg_memory_baseline,
                     'avg_memory_optimized': result.avg_memory_optimized,
                     'memory_efficiency_gain': result.memory_efficiency_gain,
+                    
+                    # NEW: Thermal summary
+                    'avg_temp_baseline': result.avg_temp_baseline,
+                    'avg_temp_optimized': result.avg_temp_optimized,
+                    'peak_temp_baseline': result.peak_temp_baseline,
+                    'peak_temp_optimized': result.peak_temp_optimized,
+                    'thermal_improvement_percent': result.thermal_improvement_percent,
+                    'high_temp_events_baseline': result.high_temp_events_baseline,
+                    'high_temp_events_optimized': result.high_temp_events_optimized,
+                    'thermal_events_reduction_percent': result.thermal_events_reduction_percent,
                 },
                 'task_improvements': result.task_improvements,
                 'model_improvements': result.model_improvements,
             }, f, indent=2)
+        
+        # NEW: Save thermal analysis
+        thermal_analysis = self.get_thermal_analysis()
+        with open(output_dir / "thermal_analysis.json", 'w') as f:
+            json.dump(thermal_analysis, f, indent=2)
         
         # Save as CSV
         baseline_df = pd.DataFrame(result.baseline_records)

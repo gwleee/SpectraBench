@@ -1,12 +1,14 @@
+"""
+Complete Fixed evaluation_lm.py
+Dynamic model classification and enhanced thermal management
+"""
 import os
-# Prevent CUDA OOM fragmentation
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-# Handle temporary directory cleanup issues
 import warnings
 warnings.filterwarnings("ignore", category=ResourceWarning)
 warnings.filterwarnings("ignore", message="Exception ignored in.*TemporaryDirectory")
-warnings.filterwarnings("ignore", message="Combined length of context.*exceeds model's maximum length")  # Ignore truncation warnings
+warnings.filterwarnings("ignore", message="Combined length of context.*exceeds model's maximum length")
 
 import sys
 import json
@@ -16,11 +18,11 @@ from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 from transformers import AutoConfig, AutoTokenizer
-from huggingface_hub import snapshot_download
+from huggingface_hub import snapshot_download, HfApi
 from lm_eval.loggers import WandbLogger
 from lm_eval import evaluator
 from code.config.config_loader import load_models, load_tasks
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 import multiprocessing
 import gc
 import wandb
@@ -28,12 +30,15 @@ import hashlib
 import os
 import signal
 import time
+import copy
+import re
+from typing import Dict, Tuple, Optional
+import requests
 
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-# Performance Tracker and Scheduler imports
 try:
     from code.scheduler.performance_tracker import PerformanceTracker
     from code.scheduler.scheduler_manager import SchedulerManager
@@ -48,36 +53,29 @@ except ImportError as e:
     CONFIG_MANAGER_AVAILABLE = False
     print(f"Warning: Scheduler components not available: {e}")
 
-# Set multiprocessing to spawn mode (solves CUDA issues)
 multiprocessing.set_start_method('spawn', force=True)
 
-# Default FULL_RUN setting (can be overridden by entrance.py)
 FULL_RUN = False
-
-# Performance Tracker and Scheduler settings
-ENABLE_TRACKING = True  # Enable/disable tracking
-TRACKING_MODE = "baseline"  # baseline, optimized, or comparison
+ENABLE_TRACKING = True
+TRACKING_MODE = "baseline"
 performance_tracker = None
 scheduler_manager = None
 resource_monitor = None
 config_manager = None
 
-SCHEDULER_TIMEOUT = 30  
-TASK_TIMEOUT = 7200  
+SCHEDULER_TIMEOUT = 30
+TASK_TIMEOUT = 7200
 
-# Global experiment directory (set by entrance.py)
 EXPERIMENT_DIR = None
 
 project_root = Path(__file__).parent.parent.parent
 BASE_DIR = Path(__file__).parent
 load_dotenv(project_root / ".env")
 
-# WandB project/job type settings
 WANDB_PROJECT = os.getenv("WANDB_PROJECT", "lm-eval-harness-integration")
 WANDB_JOB_TYPE = os.getenv("WANDB_JOB_TYPE", "eval")
-WANDB_ENTITY = os.getenv("WANDB_ENTITY")  # Optional: team/organization name
+WANDB_ENTITY = os.getenv("WANDB_ENTITY")
 
-# Cache directory settings - FIXED PATHS
 os.environ.setdefault("HF_HOME", str(project_root / "data" / "models"))
 os.environ.setdefault("HF_DATASETS_CACHE", str(project_root / "data" / "datasets"))
 os.environ.setdefault("HF_HUB_OFFLINE", "0")
@@ -85,11 +83,9 @@ os.environ.setdefault("HF_DATASETS_OFFLINE", "0")
 os.environ.setdefault("HF_EVALUATE_OFFLINE", "0")
 os.environ.setdefault("HF_ALLOW_CODE_EVAL", "1")
 
-# GPU settings (multi-GPU support)
 gpu_list = [g.strip() for g in os.getenv("CUDA_VISIBLE_DEVICES", "0").split(",") if g.strip()]
 num_gpus = max(len(gpu_list), 1)
 
-# Logging settings
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -98,29 +94,236 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# FIXED: 타임아웃 핸들러 추가
+models_config = getattr(sys.modules[__name__], 'models_config', load_models())
+tasks = getattr(sys.modules[__name__], 'tasks', load_tasks().get("harness", []))
+
+
+class DynamicModelClassifier:
+    def __init__(self):
+        # Regex patterns ordered from most specific to general
+        self.size_patterns = [
+            (r'(\d+\.\d+)\s*[-_]?\s*?b(?:illion)?(?:\b|[-_])', 'B'),
+            (r'(\d+\.\d+)\s*m(?:illion)?(?:\b|[-_])', 'M'),
+            (r'(\d+)\s*[-_]?\s*?b(?:illion)?(?:\b|[-_])', 'B'),
+            (r'(\d+)[-_](\d+)b', 'SPECIAL'),  # 21-4b -> 21.4b conversion
+            (r'(\d+(?:\.\d+)?)\s*billion', 'B'),
+            (r'(\d+(?:\.\d+)?)\s*million', 'M'),
+        ]
+        
+        # Minimal special cases for patterns that regex cannot handle
+        self.special_cases = {
+            'seed-text': 1.5,
+        }
+        
+        self.size_thresholds = {
+            'small': (0, 3.0),
+            'medium': (3.0, 15.0),  
+            'large': (15.0, float('inf'))
+        }
+        
+        self.thermal_properties = {
+            'small': {'heat_factor': 1.0, 'cooling_time': 30},
+            'medium': {'heat_factor': 2.5, 'cooling_time': 90},
+            'large': {'heat_factor': 4.0, 'cooling_time': 180}
+        }
+        
+        self.model_config_cache = {}
+        self.hf_api = HfApi()
+    
+    def _fetch_model_info_from_api(self, model_id: str) -> Optional[float]:
+        """Fetch model info from Hugging Face API"""
+        try:
+            if model_id in self.model_config_cache:
+                return self.model_config_cache[model_id]
+            
+            model_info = self.hf_api.model_info(model_id, timeout=10)
+            
+            if hasattr(model_info, 'config') and model_info.config:
+                config = model_info.config
+                
+                if 'num_parameters' in config:
+                    params = config['num_parameters']
+                    size_b = params / 1e9
+                    self.model_config_cache[model_id] = size_b
+                    logger.info(f"API: {model_id} -> {size_b:.1f}B parameters")
+                    return size_b
+                
+                if 'model_type' in config:
+                    model_type = config['model_type'].lower()
+                    
+                    if 'llama' in model_type:
+                        if '70b' in model_id.lower():
+                            size_b = 70.0
+                        elif '13b' in model_id.lower():
+                            size_b = 13.0
+                        elif '7b' in model_id.lower():
+                            size_b = 7.0
+                        else:
+                            size_b = 7.0
+                        
+                        self.model_config_cache[model_id] = size_b
+                        logger.info(f"API inference: {model_id} -> {size_b:.1f}B (llama)")
+                        return size_b
+            
+            return None
+            
+        except Exception as e:
+            logger.debug(f"API fetch failed for {model_id}: {e}")
+            return None
+    
+    def _get_optimization_config(self, category: str, size_b: float) -> Dict:
+        """Get optimization configuration based on model category"""
+        if category == 'large':
+            return {
+                'use_hflm': True,
+                'load_in_8bit': True,
+                'device_map': 'auto',
+                'low_cpu_mem_usage': True,
+                'offload_folder': './offload',
+                'offload_state_dict': True,
+                'default_batch_size': 1,
+                'max_batch_size': 2,
+                'use_gradient_checkpointing': True,
+                'memory_efficient': True
+            }
+        elif category == 'medium':
+            return {
+                'use_hflm': False,
+                'load_in_8bit': False,
+                'device_map': 'auto' if size_b > 6 else None,
+                'low_cpu_mem_usage': True,
+                'default_batch_size': 2,
+                'max_batch_size': 4,
+                'memory_efficient': True
+            }
+        else:
+            return {
+                'use_hflm': False,
+                'load_in_8bit': False,
+                'device_map': None,
+                'default_batch_size': 4,
+                'max_batch_size': 16,
+                'memory_efficient': False
+            }
+    
+    def _extract_size_from_patterns(self, text: str) -> Optional[float]:
+        """Pattern matching for model size extraction"""
+        text_clean = text.lower().replace('_', '-')
+
+        logger.info(f"DEBUG: Trying to extract size from: '{text_clean}'") 
+        
+        for pattern, unit in self.size_patterns:
+            matches = re.findall(pattern, text_clean, re.IGNORECASE)
+            if matches:
+                if unit == 'SPECIAL':
+                    if len(matches[0]) == 2:
+                        first, second = matches[0]
+                        size_value = float(f"{first}.{second}")
+                    else:
+                        size_value = float(matches[0])
+                elif unit == 'M':
+                    size_value = float(matches[0]) / 1000.0
+                else:
+                    size_value = float(matches[0])
+                
+                logger.info(f"Pattern '{pattern}' matched -> {size_value}B")
+                return size_value
+            else:
+                logger.info(f"Pattern '{pattern}' did not match")
+        
+        return None
+    
+    def extract_model_size(self, model_config: Dict) -> float:
+        """Extract model size with scalable approach"""
+        model_id = model_config.get("id", "")
+        model_name = model_config.get("name", "")
+        
+        full_text = f"{model_id} {model_name}".lower()
+        
+        logger.info(f"Classifying model: {model_id}")
+        
+        # Pattern matching FIRST (more reliable for size)
+        pattern_size = self._extract_size_from_patterns(full_text)
+        if pattern_size is not None:
+            logger.info(f"Pattern match: {model_id} -> {pattern_size:.1f}B")
+            return pattern_size
+        
+        # API lookup as fallback
+        api_size = self._fetch_model_info_from_api(model_id)
+        if api_size is not None:
+            logger.info(f"API match: {model_id} -> {api_size:.1f}B")
+            return api_size
+        
+        # Special cases
+        for special_pattern, size in self.special_cases.items():
+            if special_pattern in full_text:
+                logger.info(f"Special case: {model_id} -> {size:.1f}B")
+                return size
+        
+        logger.warning(f"No size found for {model_id}, using default 7.0B")
+        return 7.0
+    
+    def classify_model(self, model_config: Dict) -> Tuple[str, float, Dict]:
+        """Model classification"""
+        size_b = self.extract_model_size(model_config)
+        
+        if size_b < 3.0:
+            category = 'small'
+        elif size_b < 15.0:
+            category = 'medium'
+        else:
+            category = 'large'
+        
+        config = self._get_optimization_config(category, size_b)
+        
+        logger.info(f"Model classified: {model_config.get('id')} -> {category} ({size_b:.1f}B)")
+        return category, size_b, config
+
+def get_model_classification_summary(models):
+    classifier = DynamicModelClassifier()
+    classification = {"large": [], "medium": [], "small": []}
+    
+    for idx, model in enumerate(models):
+        category, size_b, _ = classifier.classify_model(model)
+        classification[category].append((idx, model))
+    
+    logger.info("=" * 60)
+    logger.info("MODEL CLASSIFICATION SUMMARY")
+    logger.info("=" * 60)
+    
+    for category, models_list in classification.items():
+        logger.info(f"{category.upper()} models ({len(models_list)}):")
+        for idx, model in models_list:
+            model_name = model.get("name", model.get("id", "").split("/")[-1])
+            logger.info(f"  - {model_name}")
+        logger.info("")
+    
+    return classification
+
+
 def timeout_handler(signum, frame):
-    """Timeout handler for long-running operations"""
     raise TimeoutError("Operation timed out")
 
-# ... (기존 helper 함수들 유지: init_wandb_run, ensure_model_local 등)
 
-# WandB initialization helper
+def platform_independent_timeout(func, timeout_seconds, *args, **kwargs):
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(func, *args, **kwargs)
+        try:
+            return future.result(timeout=timeout_seconds)
+        except FutureTimeoutError:
+            logger.error(f"Operation timed out after {timeout_seconds} seconds")
+            raise TimeoutError("Operation timeout")
+
+
 def init_wandb_run(model_name, task_list, config_dict=None):
-    """Initialize WandB run"""
-    # Check WandB API key
     if not os.getenv("WANDB_API_KEY"):
         logger.warning("WANDB_API_KEY not found. WandB logging will be disabled.")
         return None
     
-    # Generate run ID (use same run for restarts)
     run_id = hashlib.md5(f"{model_name}_{sorted(task_list)}".encode()).hexdigest()[:8]
-    
-    # Run name
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_name = f"{model_name}_{timestamp}"
     
-    # Default configuration
     default_config = {
         "model": model_name,
         "tasks": task_list,
@@ -134,7 +337,6 @@ def init_wandb_run(model_name, task_list, config_dict=None):
         default_config.update(config_dict)
     
     try:
-        # Initialize WandB
         run = wandb.init(
             project=WANDB_PROJECT,
             entity=WANDB_ENTITY,
@@ -142,8 +344,8 @@ def init_wandb_run(model_name, task_list, config_dict=None):
             name=run_name,
             id=run_id,
             config=default_config,
-            resume="allow",  # Allow resuming interrupted runs
-            reinit=True,  # Allow multiple runs in same process
+            resume="allow",
+            reinit=True,
         )
         
         logger.info(f"WandB run initialized: {run_name} (ID: {run_id})")
@@ -153,40 +355,34 @@ def init_wandb_run(model_name, task_list, config_dict=None):
         logger.error(f"Failed to initialize WandB: {e}")
         return None
 
-# Model cache helper
+
 def ensure_model_local(repo_id: str) -> str:
     cache_dir = os.environ["HF_HOME"]
     os.makedirs(cache_dir, exist_ok=True)
     local_path = snapshot_download(repo_id=repo_id, cache_dir=cache_dir, local_files_only=False)
     
-    # Validate config.json for all models
     cfg_path = Path(local_path) / "config.json"
     if cfg_path.exists():
         cfg = json.loads(cfg_path.read_text())
         max_pos = cfg.get("max_position_embeddings", 0)
         
-        # Detect abnormally large values (over 1M)
         if max_pos > 1000000:
             logger.warning(f"Detected abnormal max_position_embeddings for {repo_id}: {max_pos}, resetting to default")
-            # Set model-specific defaults
             if "gemma" in repo_id.lower():
                 cfg["max_position_embeddings"] = 8192
             elif "llama" in repo_id.lower():
                 cfg["max_position_embeddings"] = 4096
             else:
-                cfg["max_position_embeddings"] = 2048  # Default value
+                cfg["max_position_embeddings"] = 2048
             cfg_path.write_text(json.dumps(cfg, indent=2))
             logger.info(f"Reset max_position_embeddings to {cfg['max_position_embeddings']}")
     
-    # Additional processing for Gemma models
     if "gemma" in repo_id.lower():
-        # Check tokenizer and set pad_token
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(local_path)
         tokenizer_config_path = Path(local_path) / "tokenizer_config.json"
         
         if tokenizer.pad_token is None:
-            # Set pad_token to eos_token
             if tokenizer_config_path.exists():
                 tk_config = json.loads(tokenizer_config_path.read_text())
                 tk_config["pad_token"] = tokenizer.eos_token
@@ -195,18 +391,12 @@ def ensure_model_local(repo_id: str) -> str:
             
     return local_path
 
-# Model and task loading
-models_config = getattr(sys.modules[__name__], 'models_config', load_models())
-tasks = getattr(sys.modules[__name__], 'tasks', load_tasks().get("harness", []))
 
-
-# Common function for running evaluation
 def run_evaluation(model, model_args, task_list, num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs):
-    """Common function for running evaluation"""
     eval_params = {
         "tasks": task_list,
         "num_fewshot": num_fewshot,
-        "log_samples": num_fewshot < 5,  # Enable log_samples when fewshot is reduced
+        "log_samples": num_fewshot < 5,
         "rewrite_requests_cache": True,
         "cache_requests": False,
         "batch_size": batch_size,
@@ -218,20 +408,17 @@ def run_evaluation(model, model_args, task_list, num_fewshot, batch_size, device
     }
     
     if isinstance(model, str):
-        # String case (regular model)
         return evaluator.simple_evaluate(model=model, model_args=model_args, **eval_params)
     else:
-        # Object case (large model)
         return evaluator.simple_evaluate(model=model, **eval_params)
 
+
 def extract_metrics_from_result(subtask_result):
-    """Helper function to extract metrics from results"""
     if not isinstance(subtask_result, dict):
         return {}
     
     metrics = {}
     
-    # Check all possible metric keys
     metric_keys = {
         'accuracy': ['acc', 'accuracy', 'acc,none', 'accuracy,none'],
         'accuracy_norm': ['acc_norm', 'accuracy_norm', 'acc_norm,none', 'accuracy_norm,none'],
@@ -242,7 +429,6 @@ def extract_metrics_from_result(subtask_result):
         'perplexity': ['perplexity', 'ppl', 'perplexity,none', 'ppl,none'],
     }
     
-    # Check possible keys for each metric type
     for metric_name, possible_keys in metric_keys.items():
         for key in possible_keys:
             if key in subtask_result:
@@ -251,54 +437,66 @@ def extract_metrics_from_result(subtask_result):
                     metrics[metric_name] = value
                     break
     
-    # If no standard metrics found, find all numeric values
     if not metrics:
         for key, value in subtask_result.items():
             if isinstance(value, (int, float)) and not key.startswith('_'):
-                # Exclude stderr and similar
                 if 'stderr' not in key and 'std' not in key:
                     metrics[key] = value
     
     return metrics
 
+
 def log_to_wandb(run, task_name, metrics, prefix="eval"):
-    """Log metrics to WandB"""
     if not run:
         return
     
     try:
-        # Convert metrics to WandB format
         wandb_metrics = {}
         for metric_name, metric_value in metrics.items():
             if isinstance(metric_value, (int, float)):
                 wandb_metrics[f"{prefix}/{task_name}/{metric_name}"] = metric_value
         
-        # Log to WandB
         if wandb_metrics:
             run.log(wandb_metrics)
             
     except Exception as e:
         logger.warning(f"Failed to log metrics to WandB: {e}")
 
+
+def clean_gpu_memory():
+    try:
+        gc.collect()
+        
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.empty_cache()
+            
+        time.sleep(2)
+        
+    except Exception as e:
+        logger.warning(f"Error during GPU memory cleanup: {e}")
+
+
+def wait_for_gpu_cooling(wait_seconds: int = 60):
+    logger.info(f"Waiting {wait_seconds} seconds for GPU cooling...")
+    time.sleep(wait_seconds)
+
+
 def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, wandb_run=None, tracker_context=None):
-    """Evaluation function with automatic retry on errors - FIXED: 타임아웃 처리 추가"""
     all_results = {"results": {}}
     failed_tasks = []
     
-    # Tasks that should start with zero-shot
-    zero_shot_tasks = ["gpqa", "hrm8k", "hrm-8k", "bbh", "agieval", "triviaqa", "nq_open", "nqopen", "humaneval", "csatqa"]
-    
-    # Track overall progress
     total_subtasks_count = 0
-    
-    # Add tracking records dictionary
     tracking_records = {}
     
-    # Execute each task individually
+    zero_shot_tasks = ["gpqa", "hrm8k", "hrm-8k", "bbh", "agieval", "triviaqa", "nq_open", "nqopen", "humaneval", "csatqa"]
+    
     for task_idx, task in enumerate(task_list):
         logger.info(f"{run_name}: Processing task {task_idx+1}/{len(task_list)}: {task}")
         
-        # Log current task to WandB
+        clean_gpu_memory()
+        
         if wandb_run:
             wandb_run.log({
                 "progress/current_task": task,
@@ -307,7 +505,6 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                 "progress/percentage": (task_idx + 1) / len(task_list) * 100
             })
         
-        # Determine num_fewshot per task
         if any(zs_task in task.lower() for zs_task in zero_shot_tasks):
             num_fewshot = 0
             logger.info(f"{run_name}: Task '{task}' detected as zero-shot task")
@@ -315,7 +512,6 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
             num_fewshot = initial_fewshot
             logger.info(f"{run_name}: Task '{task}' will use num_fewshot={num_fewshot}")
         
-        # Start Performance Tracker
         record_key = None
         if performance_tracker and tracker_context:
             try:
@@ -342,34 +538,27 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                 
                 start_time = time.time()
                 
-                # Set signal alarm for timeout
-                if hasattr(signal, 'SIGALRM'):
-                    signal.signal(signal.SIGALRM, timeout_handler)
-                    signal.alarm(TASK_TIMEOUT)
-                
                 try:
-                    result = run_evaluation(model, model_args, [task], num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs)
-                finally:
-                    # Cancel alarm
-                    if hasattr(signal, 'SIGALRM'):
-                        signal.alarm(0)
+                    result = platform_independent_timeout(
+                        run_evaluation, 
+                        TASK_TIMEOUT,
+                        model, model_args, [task], num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs
+                    )
+                except TimeoutError:
+                    raise TimeoutError(f"Task {task} timed out")
                 
                 execution_time = time.time() - start_time
                 
-                # Integrate results
                 if "results" in result:
-                    # Group tasks may have multiple subtask results
                     task_results = result["results"]
-                    if task_results:  # If results are not empty
+                    if task_results:
                         all_results["results"].update(task_results)
                         task_completed = True
                         total_subtasks_count += len(task_results)
                         logger.info(f"{run_name}: Successfully completed task '{task}' with {len(task_results)} subtasks in {execution_time:.2f}s")
                         
-                        # Record success in Performance Tracker
                         if record_key and performance_tracker:
                             try:
-                                # Extract main metrics
                                 main_metrics = {}
                                 if task in task_results:
                                     main_metrics = extract_metrics_from_result(task_results[task])
@@ -382,18 +571,15 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                             except Exception as e:
                                 logger.warning(f"Failed to record tracking end for {task}: {e}")
                         
-                        # Output task scores and log to WandB
                         logger.info(f"\n{'='*60}")
                         logger.info(f"Task '{task}' Results:")
                         logger.info(f"{'='*60}")
                         
-                        # Find main task metrics first
                         main_task_metrics = None
                         if task in task_results:
                             main_task_metrics = extract_metrics_from_result(task_results[task])
                         
                         for subtask_name, subtask_result in task_results.items():
-                            # Extract metrics
                             metrics = extract_metrics_from_result(subtask_result)
                             
                             if metrics:
@@ -404,14 +590,11 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                                     else:
                                         logger.info(f"    - {metric_name}: {metric_value}")
                                 
-                                # Log to WandB
                                 log_to_wandb(wandb_run, subtask_name, metrics)
                             else:
-                                # If no metrics found, log entire result
                                 logger.info(f"  {subtask_name}: No standard metrics found")
                                 logger.debug(f"    Raw result: {subtask_result}")
                         
-                        # Log main task summary to WandB
                         if main_task_metrics and wandb_run:
                             summary_metrics = {}
                             for metric_name, metric_value in main_task_metrics.items():
@@ -423,16 +606,15 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                         logger.info(f"{'='*60}\n")
                     else:
                         logger.warning(f"{run_name}: Empty results for task '{task}'")
-                        task_completed = True  # Treat empty results as completed
+                        task_completed = True
                 else:
                     logger.warning(f"{run_name}: No results key for task '{task}'")
-                    task_completed = True  # Treat no results as completed
+                    task_completed = True
                     
             except TimeoutError:
                 logger.error(f"{run_name}: Task '{task}' timed out after {TASK_TIMEOUT} seconds")
                 failed_tasks.append(task)
                 
-                # Record timeout tracking
                 if record_key and performance_tracker:
                     try:
                         performance_tracker.record_end(
@@ -447,12 +629,10 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
             except Exception as e:
                 error_msg = str(e).lower()
                 
-                # Handle CUDA OOM
                 if "out of memory" in error_msg:
                     logger.error(f"{run_name}: CUDA OOM for task '{task}', skipping")
                     failed_tasks.append(task)
                     
-                    # Record OOM tracking
                     if record_key and performance_tracker:
                         try:
                             performance_tracker.record_end(
@@ -463,12 +643,9 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                         except:
                             pass
                     
-                    # Clean up memory
-                    if torch.cuda.is_available():
-                        torch.cuda.empty_cache()
+                    clean_gpu_memory()
                     break
                     
-                # Handle IndexError
                 elif "index out of range" in error_msg or "list index" in error_msg:
                     logger.info(f"{run_name}: IndexError for task '{task}' - {str(e)}")
                     if num_fewshot > 3:
@@ -478,11 +655,9 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                         logger.warning(f"{run_name}: Retrying task '{task}' with num_fewshot=0")
                         num_fewshot = 0
                     else:
-                        # All attempts failed
                         logger.error(f"{run_name}: Task '{task}' failed with all num_fewshot values")
                         failed_tasks.append(task)
                         
-                        # Record failure tracking
                         if record_key and performance_tracker:
                             try:
                                 performance_tracker.record_end(
@@ -493,16 +668,13 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                             except:
                                 pass
                         break
-                # Handle other fewshot-related errors
                 elif num_fewshot > 0 and ("fewshot" in error_msg or "exceeds the" in error_msg):
                     logger.warning(f"{run_name}: Fewshot error for task '{task}', retrying with num_fewshot=3")
                     num_fewshot = 3
                 else:
-                    # Other errors are treated as task failure
                     logger.error(f"{run_name}: Task '{task}' failed with error: {e}")
                     failed_tasks.append(task)
                     
-                    # Record failure tracking
                     if record_key and performance_tracker:
                         try:
                             performance_tracker.record_end(
@@ -514,17 +686,13 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                             pass
                     break
         
-        # Clean up memory (after each task)
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        clean_gpu_memory()
     
-    # Log result summary
     successful_subtasks = list(all_results["results"].keys())
     logger.info(f"{run_name}: Completed evaluation - {len(successful_subtasks)} subtasks from {len(task_list)} requested tasks")
     if failed_tasks:
         logger.warning(f"{run_name}: Failed tasks: {failed_tasks}")
     
-    # Log final summary to WandB
     if wandb_run:
         wandb_run.log({
             "summary/total_subtasks": total_subtasks_count,
@@ -535,8 +703,8 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
     
     return all_results
 
+
 def setup_process_env():
-    """Set environment variables in each process"""
     env_vars = {
         "HF_EVALUATE_OFFLINE": "0",
         "HF_ALLOW_CODE_EVAL": "1",
@@ -548,11 +716,9 @@ def setup_process_env():
     }
     os.environ.update(env_vars)
     
-    # CUDA reinitialization
     if torch.cuda.is_available():
         torch.cuda.init()
     
-    # Logging setup
     if not logging.getLogger().hasHandlers():
         logging.basicConfig(
             level=logging.WARNING,
@@ -560,9 +726,9 @@ def setup_process_env():
             handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()]
         )
     
-    # Adjust specific logger levels
     for logger_name in ["transformers", "datasets", "huggingface_hub"]:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
+
 
 def initialize_tracking_components():
     global performance_tracker, scheduler_manager, resource_monitor, config_manager
@@ -571,15 +737,14 @@ def initialize_tracking_components():
         return False
     
     try:
-        # FIXED: 타임아웃 설정
         if hasattr(signal, 'SIGALRM'):
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(SCHEDULER_TIMEOUT)
         
         try:
             if CONFIG_MANAGER_AVAILABLE:
-                config_manager = get_config()
-                logger.info("ConfigManager initialized successfully")
+                config_manager = get_config(mode=TRACKING_MODE)
+                logger.info(f"ConfigManager initialized for mode: {TRACKING_MODE}")
             
             if performance_tracker is None:
                 performance_tracker = PerformanceTracker(mode=TRACKING_MODE)
@@ -607,7 +772,6 @@ def initialize_tracking_components():
             return True
             
         finally:
-            # Cancel alarm
             if hasattr(signal, 'SIGALRM'):
                 signal.alarm(0)
         
@@ -622,37 +786,30 @@ def initialize_tracking_components():
 def evaluate_single(idx, mconf, task_list, full_run=False):
     setup_process_env()
     
+    classifier = DynamicModelClassifier()
+    category, size_b, opt_config = classifier.classify_model(mconf)
+    
     model_id = mconf.get("id")
-    sid = model_id.split("/")[-1]
-    run_name = f"{sid}_harness_{idx+1}"
+    model_name = mconf.get("name", model_id.split("/")[-1])
+    run_name = f"{model_name}_harness_{idx+1}"
     gpu_id = gpu_list[idx % num_gpus]
     device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
-    logger.info(f"[Process {os.getpid()}] {run_name} assigned to {device}")
-
-    # Check model type
-    is_exaone = sid.startswith("EXAONE-3.5")
-    is_large_model = any(x in sid.lower() for x in ["32b-instruct", "luxia", "12b", "13b", "30b", "70b"])
-    is_medium_model = any(x in sid.lower() for x in ["7b", "8b"])
     
-    # Check scheduler recommended settings
+    logger.info(f"[Process {os.getpid()}] {run_name} assigned to {device}")
+    logger.info(f"Model: {model_name} | Size: {size_b:.1f}B | Category: {category.upper()}")
+
+    is_exaone = "exaone" in model_id.lower()
+    
     scheduler_batch_size = os.environ.get("SCHEDULER_BATCH_SIZE")
     scheduler_num_fewshot = os.environ.get("SCHEDULER_NUM_FEWSHOT")
     
-    # Determine batch size
     if scheduler_batch_size:
-        # Use scheduler recommended value
         batch_size = int(scheduler_batch_size)
         logger.info(f"Using scheduler recommended batch_size: {batch_size}")
     else:
-        # Existing logic
-        if is_large_model:
-            batch_size = 1  # Large models use batch size 1
-        elif is_medium_model:
-            batch_size = 1  # Medium models also reduced to 1
-        else:
-            batch_size = 1  # Small models also safely set to 1
+        batch_size = opt_config['default_batch_size']
+        logger.info(f"Using default batch_size for {category}: {batch_size}")
 
-    # Calculate sample limit - support custom limit from Phase 1/2
     custom_limit_env = os.environ.get("PHASE1_CUSTOM_LIMIT") or os.environ.get("PHASE2_CUSTOM_LIMIT")
     if custom_limit_env and custom_limit_env != "None":
         limit = int(custom_limit_env)
@@ -661,22 +818,21 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
         limit = None
         logger.info(f"[Process {os.getpid()}] {run_name} - full_run: {full_run}, limit: None (full dataset)")
     else:
-        limit = 2  # default for testing
+        limit = 2
         logger.info(f"[Process {os.getpid()}] {run_name} - full_run: {full_run}, limit: {limit} (test mode)")
 
-    # Initialize WandB run
     wandb_config = {
         "model_id": model_id,
-        "model_name": sid,
+        "model_name": model_name,
+        "model_size_b": size_b,
+        "model_category": category,
         "batch_size": batch_size,
-        "is_large_model": is_large_model,
-        "is_medium_model": is_medium_model,
         "device": device,
         "limit": limit,
-        "tracking_mode": TRACKING_MODE,  # Add tracking mode
-        "scheduler_optimized": scheduler_batch_size is not None,  # Whether scheduler is used
+        "tracking_mode": TRACKING_MODE,
+        "scheduler_optimized": scheduler_batch_size is not None,
     }
-    wandb_run = init_wandb_run(sid, task_list, wandb_config)
+    wandb_run = init_wandb_run(model_name, task_list, wandb_config)
 
     try:
         local_path = ensure_model_local(model_id)
@@ -684,133 +840,103 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
         max_seq = getattr(config, "max_position_embeddings", 2048)
         gen_tokens = min(max_seq - 128, 256)
         
-        # Change generation_kwargs to gen_kwargs
         gen_kwargs = {"max_gen_toks": gen_tokens}
         
-        # Additional safety measures for Gemma models
-        if "gemma" in sid.lower():
-            # More conservative generation length limit
+        if "gemma" in model_name.lower():
             gen_kwargs["max_gen_toks"] = min(gen_tokens, 256)
             logger.info(f"{run_name}: Gemma settings applied - max_gen_toks={gen_kwargs['max_gen_toks']}")
         
-        # Task-specific settings
         code_tasks = ["humaneval", "mbpp", "apps"]
-        
         has_code_task = any(task.lower() in code_tasks for task in task_list)
         
-        # Determine num_fewshot
         if scheduler_num_fewshot:
-            # Use scheduler recommended value
             num_fewshot = int(scheduler_num_fewshot)
             logger.info(f"Using scheduler recommended num_fewshot: {num_fewshot}")
-        elif not full_run:  # When limit=2 (test mode)
+        elif not full_run:
             num_fewshot = 0
             logger.info(f"{run_name}: Test mode (limit=2), setting num_fewshot=0")
         else:
-            # Default is 5 (adjusted per task in evaluate_with_retry)
             num_fewshot = 5
         
-        # Additional settings for code tasks
         extra_kwargs = {}
         if has_code_task:
             extra_kwargs = {"write_out": True, "confirm_run_unsafe_code": True}
         
-        # Tracker context information
         tracker_context = {
             "model_id": model_id,
-            "model_name": mconf.get("name", sid),
+            "model_name": model_name,
+            "model_size_b": size_b,
+            "model_category": category,
             "gpu_id": gpu_id,
             "device": device,
             "batch_size": batch_size,
             "limit": limit,
-            "is_large_model": is_large_model,
-            "is_medium_model": is_medium_model,
             "tracking_mode": TRACKING_MODE,
             "scheduler_optimized": scheduler_batch_size is not None,
         }
 
-        # Large model processing
-        if is_large_model:
+        if opt_config['use_hflm']:
             from lm_eval.models.huggingface import HFLM
-            torch.cuda.empty_cache()
             
-            # Decide 8bit quantization based on GPU memory
-            gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3  # GB
-            logger.info(f"GPU memory available: {gpu_memory:.1f}GB")
+            clean_gpu_memory()
             
-            # Large models always use 8bit quantization
-            use_8bit = True
+            model_kwargs = {
+                "pretrained": local_path,
+                "trust_remote_code": is_exaone,
+                "device_map": opt_config['device_map'],
+                "load_in_8bit": opt_config['load_in_8bit'],
+                "low_cpu_mem_usage": opt_config['low_cpu_mem_usage'],
+            }
             
-            # Data parallel processing if multiple GPUs
-            if len(gpu_list) > 1:
-                model_kwargs = {
-                    "pretrained": local_path,
-                    "trust_remote_code": is_exaone,
-                    "device_map": "auto",  # Automatically distribute across multiple GPUs
-                    "load_in_8bit": use_8bit,
-                    "low_cpu_mem_usage": True,
-                }
-                # Use default if no scheduler recommended batch size
-                if not scheduler_batch_size:
-                    batch_size = 4  # Batch size for large models
-            else:
-                model_kwargs = {
-                    "pretrained": local_path,
-                    "trust_remote_code": is_exaone,
-                    "device_map": "auto",
-                    "load_in_8bit": use_8bit,
-                    "low_cpu_mem_usage": True,
-                    "offload_folder": "./offload",
-                    "offload_state_dict": True,
-                }
+            if opt_config.get('offload_folder'):
+                model_kwargs.update({
+                    "offload_folder": opt_config['offload_folder'],
+                    "offload_state_dict": opt_config['offload_state_dict'],
+                })
             
-            logger.info(f"{run_name}: Using 8bit={use_8bit}, batch_size={batch_size}")
+            if len(gpu_list) > 1 and not scheduler_batch_size:
+                batch_size = min(batch_size * 2, opt_config['max_batch_size'])
             
-            # Special handling for Gemma models
-            if "gemma" in sid.lower():
-                # Handle cache settings directly after model loading instead of config_kwargs
+            logger.info(f"{run_name}: Loading large model with 8bit={opt_config['load_in_8bit']}, batch_size={batch_size}")
+            
+            if "gemma" in model_name.lower():
                 logger.info(f"{run_name}: Gemma model detected, will handle cache settings after loading")
             
             model = HFLM(**model_kwargs)
             results = evaluate_with_retry(model, None, task_list, num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, wandb_run, tracker_context)
         else:
-            # Regular model processing
             hf_args = f"pretrained={local_path}"
             if is_exaone:
                 hf_args += ",trust_remote_code=True"
             
-            # Use device_map for small models if multiple GPUs
-            if len(gpu_list) > 1:
+            if opt_config.get('device_map'):
+                hf_args += f",device_map={opt_config['device_map']}"
+            elif len(gpu_list) > 1:
                 hf_args += ",device_map=auto"
                 logger.info(f"{run_name}: Using device_map=auto for multi-GPU")
             
-            # Additional settings for Gemma models
-            if "gemma" in sid.lower():
+            if "gemma" in model_name.lower():
                 logger.info(f"{run_name}: Gemma model detected, adjusting settings")
             
             results = evaluate_with_retry("hf", hf_args, task_list, num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, wandb_run, tracker_context)
 
-        # Save results to experiment directory
         if EXPERIMENT_DIR:
-            model_results_dir = EXPERIMENT_DIR / "model_results" / sid
+            model_results_dir = EXPERIMENT_DIR / "model_results" / model_name
             model_results_dir.mkdir(parents=True, exist_ok=True)
             
-            # Save to experiment directory
             filename = model_results_dir / f"{run_name}.json"
             with open(filename, 'w') as f:
                 json.dump(results.get("results", {}), f, indent=2, default=str)
             logger.info(f"[Process {os.getpid()}] Results saved to {filename}")
             
-            # Also save to legacy results directory for backward compatibility
-            legacy_results_dir = project_root / "results" / sid
+            legacy_results_dir = project_root / "results" / model_name
             legacy_results_dir.mkdir(parents=True, exist_ok=True)
             legacy_filename = legacy_results_dir / f"{run_name}.json"
             with open(legacy_filename, 'w') as f:
                 json.dump(results.get("results", {}), f, indent=2, default=str)
             logger.info(f"[Process {os.getpid()}] Legacy results saved to {legacy_filename}")
         else:
-            # Fallback to legacy results directory
-            results_dir = project_root / "results" / sid
+            results_dir = project_root / "results" / model_name
             results_dir.mkdir(parents=True, exist_ok=True)
             
             filename = results_dir / f"{run_name}.json"
@@ -818,11 +944,10 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
                 json.dump(results.get("results", {}), f, indent=2, default=str)
             logger.info(f"[Process {os.getpid()}] Results saved to {filename}")
 
-        # Save results file as WandB artifact
         if wandb_run:
             try:
                 artifact = wandb.Artifact(
-                    name=f"{sid}_results",
+                    name=f"{model_name}_results",
                     type="evaluation_results",
                     description=f"Evaluation results for {model_id}"
                 )
@@ -832,13 +957,10 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
             except Exception as e:
                 logger.warning(f"Failed to upload artifact to WandB: {e}")
 
-        # WandB logging (using lm-eval's WandbLogger)
         if wandb_run:
             try:
-                # Pass current run to lm-eval's WandbLogger
                 wandb_logger = WandbLogger()
                 
-                # Set WandbLogger to use already initialized run
                 if hasattr(wandb_logger, '_run'):
                     wandb_logger._run = wandb_run
                 elif hasattr(wandb_logger, 'run'):
@@ -854,26 +976,21 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
             except Exception as wandb_err:
                 logger.warning(f"lm-eval WandB logging failed, using direct logging: {wandb_err}")
                 
-                # Try direct logging
                 if "results" in results:
                     final_metrics = {}
                     for task_name, task_result in results["results"].items():
                         metrics = extract_metrics_from_result(task_result)
                         for metric_name, metric_value in metrics.items():
                             if isinstance(metric_value, (int, float)):
-                                final_metrics[f"final/{task_name}/{metric_value}"] = metric_value
+                                final_metrics[f"final/{task_name}/{metric_name}"] = metric_value
                     
                     if final_metrics:
                         wandb_run.log(final_metrics)
 
         logger.info(f"[Process {os.getpid()}] Successfully completed {run_name}")
         
-        # Clean up memory
-        gc.collect()
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        clean_gpu_memory()
         
-        # Close WandB run
         if wandb_run:
             wandb_run.finish()
         
@@ -882,26 +999,96 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
     except Exception as e:
         logger.error(f"[Process {os.getpid()}] Error in {run_name}: {e}", exc_info=True)
         
-        # Close WandB run on error
+        clean_gpu_memory()
+        
         if wandb_run:
             wandb_run.finish(exit_code=1)
         
         return run_name, e
 
+
+def optimize_schedule_for_thermal_management(schedule):
+    if not schedule:
+        return schedule
+    
+    classifier = DynamicModelClassifier()
+    
+    large_models = []
+    medium_models = []
+    small_models = []
+    
+    for task_priority in schedule:
+        if hasattr(task_priority, 'estimated_memory'):
+            memory_estimate = task_priority.estimated_memory
+        else:
+            memory_estimate = 20.0
+        
+        if memory_estimate > 30:
+            large_models.append(task_priority)
+        elif memory_estimate > 15:
+            medium_models.append(task_priority)
+        else:
+            small_models.append(task_priority)
+    
+    optimized_schedule = []
+    large_idx = medium_idx = small_idx = 0
+    cooling_models_per_large = 2
+    
+    logger.info(f"Thermal optimization: {len(large_models)} large, {len(medium_models)} medium, {len(small_models)} small models")
+    
+    while large_idx < len(large_models) or medium_idx < len(medium_models) or small_idx < len(small_models):
+        if large_idx < len(large_models):
+            large_model = large_models[large_idx]
+            optimized_schedule.append(large_model)
+            large_idx += 1
+            
+            logger.info(f"Scheduled large model: {large_model.model_id}")
+            
+            cooling_count = 0
+            while cooling_count < cooling_models_per_large:
+                if small_idx < len(small_models):
+                    cooling_model = small_models[small_idx]
+                    optimized_schedule.append(cooling_model)
+                    small_idx += 1
+                    cooling_count += 1
+                    logger.info(f"Scheduled cooling model: {cooling_model.model_id}")
+                elif medium_idx < len(medium_models):
+                    cooling_model = medium_models[medium_idx]
+                    optimized_schedule.append(cooling_model)
+                    medium_idx += 1
+                    cooling_count += 1
+                    logger.info(f"Scheduled cooling model: {cooling_model.model_id}")
+                else:
+                    break
+        else:
+            if medium_idx < len(medium_models):
+                optimized_schedule.append(medium_models[medium_idx])
+                medium_idx += 1
+            elif small_idx < len(small_models):
+                optimized_schedule.append(small_models[small_idx])
+                small_idx += 1
+    
+    logger.info(f"Thermal optimization completed: {len(optimized_schedule)} total tasks scheduled")
+    return optimized_schedule
+
+
 def main():
-    # Create experiment results directory
     if EXPERIMENT_DIR:
         EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
         logger.info(f"Using experiment directory: {EXPERIMENT_DIR}")
     
-    # Create legacy results directory for backward compatibility
     (project_root / "results").mkdir(parents=True, exist_ok=True)
     
-    # Reference global variables
     global models_config, tasks, FULL_RUN, TRACKING_MODE, ENABLE_TRACKING
     global performance_tracker, scheduler_manager, resource_monitor, config_manager
     
-    # Initialize tracking components with timeout
+    current_models_config = copy.deepcopy(models_config)
+    current_tasks = copy.deepcopy(tasks)
+    
+    logger.info(f"Starting evaluation in {TRACKING_MODE} mode")
+    logger.info(f"Models to process: {len(current_models_config)}")
+    logger.info(f"Tasks to process: {len(current_tasks)}")
+    
     try:
         tracking_initialized = initialize_tracking_components()
         
@@ -911,25 +1098,21 @@ def main():
         logger.error(f"Failed to initialize tracking components: {e}")
         tracking_initialized = False
     
-    # Check WandB API key
     if not os.getenv("WANDB_API_KEY"):
         logger.warning("WANDB_API_KEY not set. WandB logging will be disabled.")
         logger.info("To enable WandB logging, set WANDB_API_KEY environment variable.")
     
-    # Handle Optimized mode
     if TRACKING_MODE == "optimized" and scheduler_manager:
         logger.info("="*60)
         logger.info("OPTIMIZED MODE - Using SchedulerManager")
         logger.info("="*60)
         
         try:
-            # FIXED: 타임아웃 처리 추가
             if hasattr(signal, 'SIGALRM'):
                 signal.signal(signal.SIGALRM, timeout_handler)
                 signal.alarm(SCHEDULER_TIMEOUT)
             
             try:
-                # Get current mode and statistics
                 current_mode = scheduler_manager.get_current_mode()
                 stats = scheduler_manager.get_scheduler_statistics()
                 
@@ -945,25 +1128,24 @@ def main():
                 else:
                     logger.info("Using Intelligent Mode (Rule-based)")
                 
-                # Create optimal schedule
                 logger.info("Creating optimal schedule...")
-                schedule = scheduler_manager.create_optimal_schedule(models_config, tasks)
+                schedule = scheduler_manager.create_optimal_schedule(current_models_config, current_tasks)
+                
+                schedule = optimize_schedule_for_thermal_management(schedule)
                 
             finally:
-                # Cancel alarm
                 if hasattr(signal, 'SIGALRM'):
                     signal.alarm(0)
             
-            # Display schedule summary
             logger.info(f"\n{'='*80}")
             logger.info(f"Optimal Execution Schedule ({current_mode.upper()} mode):")
             logger.info(f"{'='*80}")
             logger.info(f"{'Priority':<10} {'Model':<30} {'Task':<20} {'Est.Time':<10} {'Est.Mem':<10} {'GPU':<5}")
             logger.info(f"{'-'*80}")
             
-            for i, task_priority in enumerate(schedule[:10]):  # Show top 10 only
+            for i, task_priority in enumerate(schedule[:10]):
                 model_name = next(
-                    (m['name'] for m in models_config if m['id'] == task_priority.model_id),
+                    (m['name'] for m in current_models_config if m['id'] == task_priority.model_id),
                     task_priority.model_id.split("/")[-1]
                 )
                 logger.info(f"{task_priority.priority_score:>8.2f}   {model_name[:28]:<30} {task_priority.task_name[:18]:<20} "
@@ -974,7 +1156,6 @@ def main():
                 logger.info(f"... and {len(schedule) - 10} more tasks")
             logger.info(f"{'='*80}\n")
             
-            # Save schedule with metadata
             if EXPERIMENT_DIR:
                 schedule_path = EXPERIMENT_DIR / "config" / f"schedule_{current_mode}.json"
             else:
@@ -983,14 +1164,12 @@ def main():
             scheduler_manager.export_schedule_with_metadata(schedule, schedule_path)
             logger.info(f"Schedule exported to: {schedule_path}")
             
-            # Execute according to schedule
             completed_tasks = []
             failed_tasks = []
             
             for task_idx, task_priority in enumerate(schedule):
-                # Find corresponding model
                 model_config = next(
-                    (m for m in models_config if m['id'] == task_priority.model_id),
+                    (m for m in current_models_config if m['id'] == task_priority.model_id),
                     None
                 )
                 
@@ -999,7 +1178,7 @@ def main():
                     failed_tasks.append((task_priority.model_id, task_priority.task_name))
                     continue
                 
-                model_idx = models_config.index(model_config)
+                model_idx = current_models_config.index(model_config)
                 
                 logger.info(f"\n{'='*60}")
                 logger.info(f"Executing task {task_idx+1}/{len(schedule)}")
@@ -1011,7 +1190,6 @@ def main():
                 logger.info(f"Rationale: {task_priority.rationale}")
                 logger.info(f"{'='*60}")
                 
-                # Check if we can proceed with next task (with timeout)
                 try:
                     if hasattr(signal, 'SIGALRM'):
                         signal.alarm(SCHEDULER_TIMEOUT)
@@ -1031,33 +1209,29 @@ def main():
                 except Exception as e:
                     logger.warning(f"Error in scheduler task selection: {e}, proceeding with original schedule")
                 
-                # Temporarily modify configuration to apply recommended settings
-                original_models_config = models_config.copy()
-                original_tasks = tasks.copy()
-                
-                # Set single model and task
-                models_config = [model_config]
-                tasks = [task_priority.task_name]
-                
-                # Pass scheduler recommendations via environment variables
                 os.environ["SCHEDULER_BATCH_SIZE"] = str(task_priority.suggested_batch_size)
                 os.environ["SCHEDULER_NUM_FEWSHOT"] = str(task_priority.suggested_num_fewshot)
                 
+                if task_priority.estimated_memory > 30:
+                    logger.info("Large model detected - applying enhanced cooling strategy")
+                    wait_for_gpu_cooling(120)
+                elif task_priority.estimated_memory > 15:
+                    logger.info("Medium model detected - applying standard cooling")
+                    wait_for_gpu_cooling(60)
+                
                 try:
-                    # Execute single task
                     run_name, error = evaluate_single(model_idx, model_config, [task_priority.task_name], FULL_RUN)
                     
                     if error:
                         logger.error(f"Task failed: {error}")
                         failed_tasks.append((task_priority.model_id, task_priority.task_name))
                         
-                        # Update schedule after failure
                         try:
                             scheduler_manager.update_schedule_after_completion(
-                                schedule[task_idx+1:],  # Remaining tasks
+                                schedule[task_idx+1:],
                                 task_priority,
-                                0,  # Execution time
-                                0,  # Memory usage
+                                0,
+                                0,
                                 "failed"
                             )
                         except Exception as update_error:
@@ -1066,29 +1240,26 @@ def main():
                         logger.info(f"Task completed successfully")
                         completed_tasks.append((task_priority.model_id, task_priority.task_name))
                         
-                        # Update schedule after successful completion
                         try:
                             scheduler_manager.update_schedule_after_completion(
-                                schedule[task_idx+1:],  # Remaining tasks
+                                schedule[task_idx+1:],
                                 task_priority,
-                                task_priority.estimated_time,  # Use predicted time
-                                task_priority.estimated_memory,  # Use predicted memory
+                                task_priority.estimated_time,
+                                task_priority.estimated_memory,
                                 "completed"
                             )
                         except Exception as update_error:
                             logger.warning(f"Error updating schedule after completion: {update_error}")
                 
                 finally:
-                    # Restore original settings
-                    models_config = original_models_config
-                    tasks = original_tasks
-                    # Clean up environment variables
                     if "SCHEDULER_BATCH_SIZE" in os.environ:
                         del os.environ["SCHEDULER_BATCH_SIZE"]
                     if "SCHEDULER_NUM_FEWSHOT" in os.environ:
                         del os.environ["SCHEDULER_NUM_FEWSHOT"]
+                
+                clean_gpu_memory()
+                wait_for_gpu_cooling(30)
             
-            # Execution completion summary
             logger.info(f"\n{'='*60}")
             logger.info("Optimized Mode Execution Summary")
             logger.info(f"{'='*60}")
@@ -1096,7 +1267,6 @@ def main():
             logger.info(f"Successfully completed: {len(completed_tasks)}")
             logger.info(f"Failed tasks: {len(failed_tasks)}")
             
-            # Final scheduler statistics
             try:
                 final_stats = scheduler_manager.get_scheduler_statistics()
                 logger.info(f"Final mode: {final_stats['current_mode']}")
@@ -1120,98 +1290,53 @@ def main():
         except Exception as e:
             logger.error(f"Error in optimized mode: {e}", exc_info=True)
             logger.info("Falling back to baseline mode...")
-            # Fallback to Baseline mode
             TRACKING_MODE = "baseline"
             
     else:
-        # Baseline mode (existing code)
         logger.info("="*60)
         logger.info("BASELINE MODE - Traditional Execution")
         logger.info("="*60)
         
-        # Classify models by size
-        large_models = []
-        medium_models = []
-        small_models = []
+        model_classification = get_model_classification_summary(current_models_config)
         
-        for idx, mconf in enumerate(models_config):
-            model_id = mconf.get("id")
-            sid = model_id.split("/")[-1]
-            is_large = any(x in sid.lower() for x in ["32b-instruct", "luxia", "12b", "13b", "30b", "70b"])
-            is_medium = any(x in sid.lower() for x in ["7b", "8b"])
+        large_models = model_classification["large"]
+        medium_models = model_classification["medium"]
+        small_models = model_classification["small"]
+        
+        total_models = len(large_models) + len(medium_models) + len(small_models)
+        logger.info(f"Total models to process: {total_models}")
+        logger.info(f"Large models: {len(large_models)}, Medium models: {len(medium_models)}, Small models: {len(small_models)}")
+        
+        all_models = [(idx, model) for idx, model in enumerate(current_models_config)]
+        
+        logger.info(f"Processing all {len(all_models)} models sequentially")
+        
+        for model_idx, (idx, model_config) in enumerate(all_models):
+            model_name = model_config.get("name", model_config.get("id", "").split("/")[-1])
             
-            if is_large:
-                large_models.append((idx, mconf))
-            elif is_medium:
-                medium_models.append((idx, mconf))
-            else:
-                small_models.append((idx, mconf))
-        
-        # Strategy 1: Execute large models first (may need multiple GPUs)
-        if large_models and len(gpu_list) > 1:
-            logger.info(f"Processing {len(large_models)} large models first with all GPUs")
-            for idx, mconf in large_models:
-                # Large models execute sequentially, can use all GPUs
-                os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(gpu_list)
-                run_name, error = evaluate_single(idx, mconf, tasks, FULL_RUN)
+            classifier = DynamicModelClassifier()
+            category, size_b, _ = classifier.classify_model(model_config)
+            
+            logger.info(f"\n{'='*60}")
+            logger.info(f"Processing model {model_idx+1}/{len(all_models)}: {model_name} ({category}, {size_b:.1f}B)")
+            logger.info(f"{'='*60}")
+            
+            try:
+                run_name, error = evaluate_single(idx, model_config, current_tasks, FULL_RUN)
                 if error:
                     logger.error(f"Run {run_name} failed: {error}")
                 else:
                     logger.info(f"Run {run_name} finished successfully")
-        
-        # Strategy 2: Handle medium models (parallel if multiple GPUs, sequential otherwise)
-        if medium_models:
-            if len(gpu_list) > 1:
-                logger.info(f"Processing {len(medium_models)} medium models in parallel")
-                with ProcessPoolExecutor(max_workers=num_gpus) as executor:
-                    futures = {
-                        executor.submit(evaluate_single, idx, mconf, tasks, FULL_RUN): (idx, mconf) 
-                        for idx, mconf in medium_models
-                    }
-                    for future in as_completed(futures):
-                        run_name, error = future.result()
-                        if error:
-                            logger.error(f"Run {run_name} failed: {error}")
-                        else:
-                            logger.info(f"Run {run_name} finished successfully")
-            else:
-                logger.info(f"Processing {len(medium_models)} medium models sequentially")
-                for idx, mconf in medium_models:
-                    run_name, error = evaluate_single(idx, mconf, tasks, FULL_RUN)
-                    if error:
-                        logger.error(f"Run {run_name} failed: {error}")
-                    else:
-                        logger.info(f"Run {run_name} finished successfully")
-        
-        # Strategy 3: Small models execute in parallel
-        if small_models:
-            logger.info(f"Processing {len(small_models)} small models in parallel")
-            with ProcessPoolExecutor(max_workers=num_gpus) as executor:
-                futures = {
-                    executor.submit(evaluate_single, idx, mconf, tasks, FULL_RUN): (idx, mconf) 
-                    for idx, mconf in small_models
-                }
-                for future in as_completed(futures):
-                    run_name, error = future.result()
-                    if error:
-                        logger.error(f"Run {run_name} failed: {error}")
-                    else:
-                        logger.info(f"Run {run_name} finished successfully")
-        
-        # Large models with single GPU
-        if large_models and len(gpu_list) == 1:
-            logger.info(f"Processing {len(large_models)} large models with single GPU")
-            for idx, mconf in large_models:
-                run_name, error = evaluate_single(idx, mconf, tasks, FULL_RUN)
-                if error:
-                    logger.error(f"Run {run_name} failed: {error}")
-                else:
-                    logger.info(f"Run {run_name} finished successfully")
+                    
+            except Exception as e:
+                logger.error(f"Unexpected error processing model {model_name}: {e}")
+                continue
+            
+            clean_gpu_memory()
+            time.sleep(3)
     
-    # Performance Tracker and Scheduler summary before program exit
     if performance_tracker:
         try:
-            # Output overall statistics
             summary = performance_tracker.get_statistics_summary()
             logger.info(f"\n{'='*60}")
             logger.info("Performance Tracking Summary")
@@ -1224,7 +1349,6 @@ def main():
             total_time = summary['overall'].get('total_execution_time', 0)
             logger.info(f"Total execution time: {total_time:.2f}s ({total_time/3600:.2f} hours)")
             
-            # Scheduler Manager summary
             if scheduler_manager:
                 try:
                     scheduler_stats = scheduler_manager.get_scheduler_statistics()
@@ -1246,13 +1370,13 @@ def main():
             
             logger.info(f"{'='*60}\n")
             
-            # Close components
             performance_tracker.close()
             if resource_monitor:
                 resource_monitor.stop_monitoring()
                 
         except Exception as e:
             logger.error(f"Error closing tracking components: {e}")
+
 
 if __name__ == "__main__":
     main()

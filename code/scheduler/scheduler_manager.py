@@ -1,11 +1,14 @@
 """
-Scheduler Manager for LLM Evaluation
-Manages transition between Intelligent and Adaptive schedulers based on available data
+Fixed Scheduler Manager for LLM Evaluation
+Enhanced mode isolation, performance improvements, and stability fixes
 """
 from typing import List, Dict, Optional, Any, Union, Tuple
 import logging
 from pathlib import Path
 from datetime import datetime, timedelta
+import time
+import threading
+import sqlite3
 
 # Import schedulers
 try:
@@ -28,7 +31,7 @@ except ImportError:
     except ImportError:
         # Fallback for when config system is not available
         ConfigManager = None
-        get_config = lambda: None
+        get_config = lambda mode=None: None
         get_stage_thresholds = lambda: {'min_learning_data': 50, 'stable_learning_data': 200}
 
 # Logging setup
@@ -37,12 +40,15 @@ logger = logging.getLogger(__name__)
 
 class SchedulerManager:
     """
-    Manages the transition between different scheduling strategies:
-    - Cold Start: IntelligentScheduler (rule-based)
-    - Warm-up: Hybrid mode (weighted combination)
-    - Mature: AdaptiveScheduler (ML-based)
+    Enhanced Scheduler Manager with complete mode isolation and stability
     
-    FIXED: 순환 호출 및 블로킹 문제 해결
+    Key improvements:
+    - Complete mode isolation with run_id pattern matching
+    - Circular call prevention with timeout protection
+    - Database blocking prevention with proper timeout handling
+    - Background training to prevent main thread blocking
+    - Simplified rollback logic to prevent deadlocks
+    - Enhanced error handling and recovery mechanisms
     """
     
     def __init__(self, 
@@ -52,22 +58,28 @@ class SchedulerManager:
                  config: Optional[Dict] = None,
                  config_manager: Optional[ConfigManager] = None):
         """
+        Initialize SchedulerManager with mode-specific components
+        
         Args:
-            performance_tracker: Performance tracker instance
+            performance_tracker: Mode-specific performance tracker instance
             resource_monitor: Resource monitor instance
             num_gpus: Number of available GPUs
             config: Legacy configuration parameters (deprecated)
-            config_manager: ConfigManager instance (preferred)
+            config_manager: Mode-specific ConfigManager instance (preferred)
         """
         self.performance_tracker = performance_tracker
         self.resource_monitor = resource_monitor
         self.num_gpus = num_gpus
         
-        # Configuration management
+        # Get current mode from performance tracker for complete isolation
+        self.mode = performance_tracker.mode if performance_tracker else "baseline"
+        self.run_id_pattern = f"{self.mode}_%"  # Pattern for strict mode isolation
+        
+        # Configuration management with mode awareness
         self.config_manager = config_manager or self._initialize_config_manager(config)
         self._load_configuration()
         
-        # Initialize schedulers
+        # Initialize mode-specific schedulers
         self.intelligent_scheduler = IntelligentScheduler(
             performance_tracker=performance_tracker,
             resource_monitor=resource_monitor,
@@ -80,31 +92,44 @@ class SchedulerManager:
             num_gpus=num_gpus
         )
         
-        # State tracking - FIXED: 순환 호출 방지 플래그 추가
+        # State tracking with enhanced thread safety
         self.current_mode = None
         self.last_mode_check = None
         self.last_training_time = None
         self.mode_transition_history = []
-        self._updating_mode = False  # 순환 호출 방지 플래그
-        self._training_in_progress = False  # 트레이닝 중복 방지 플래그
         
-        logger.info(f"SchedulerManager initialized with {num_gpus} GPUs using ConfigManager")
+        # Enhanced circular call prevention
+        self._updating_mode = False
+        self._training_in_progress = False
+        self._db_operation_lock = threading.Lock()
+        self._mode_update_lock = threading.Lock()
         
-        # Initial mode determination - 안전하게 직접 호출
-        self._update_current_mode()
+        # Database timeout settings for stability
+        self.db_timeout = 5.0  # 5 second timeout for DB operations
+        self.mode_check_interval = 300  # 5 minutes between mode checks
+        
+        logger.info(f"SchedulerManager initialized: mode={self.mode}, pattern={self.run_id_pattern}, GPUs={num_gpus}")
+        
+        # Initial mode determination with safety
+        try:
+            self._safe_update_current_mode()
+        except Exception as e:
+            logger.warning(f"Initial mode update failed: {e}, using intelligent mode")
+            self.current_mode = "intelligent"
     
     def _initialize_config_manager(self, legacy_config: Optional[Dict] = None) -> Optional[ConfigManager]:
-        """Initialize ConfigManager with fallback to legacy config"""
+        """Initialize mode-specific ConfigManager with fallback to legacy config"""
         try:
             if ConfigManager is None:
                 logger.warning("ConfigManager not available, using legacy configuration")
                 return None
             
-            config_manager = get_config()
+            # Get mode-specific config manager
+            config_manager = get_config(mode=self.mode)
             
-            # If legacy config provided, update ConfigManager
-            if legacy_config:
-                logger.info("Applying legacy configuration overrides")
+            # Apply legacy config overrides if provided
+            if legacy_config and config_manager:
+                logger.info(f"Applying legacy configuration overrides for mode: {self.mode}")
                 if 'min_learning_data' in legacy_config:
                     config_manager.update_thresholds(
                         legacy_config['min_learning_data'],
@@ -115,27 +140,36 @@ class SchedulerManager:
             return config_manager
             
         except Exception as e:
-            logger.warning(f"Failed to initialize ConfigManager: {e}, using defaults")
+            logger.warning(f"Failed to initialize ConfigManager for mode {self.mode}: {e}")
             return None
     
     def _load_configuration(self):
-        """Load configuration from ConfigManager or use defaults"""
+        """Load mode-specific configuration from ConfigManager or use defaults"""
         if self.config_manager:
             # Use ConfigManager settings
             stage_config = self.config_manager.stage_transitions
             self.min_learning_data = stage_config.min_learning_data
             self.stable_learning_data = stage_config.stable_learning_data
             self.hybrid_confidence_threshold = stage_config.hybrid_confidence_threshold
-            self.retrain_interval_hours = self.config_manager.ml_models.retraining['interval_hours']
+            
+            # Load ML model retraining configuration
+            ml_config = self.config_manager.ml_models
+            self.retrain_interval_hours = ml_config.retraining['interval_hours']
             
             # Load scheduling configuration
             scheduling_config = self.config_manager.scheduling
             self.priority_weights = scheduling_config.priority_weights
-            self.rollback_enabled = scheduling_config.rollback['enabled']
-            self.performance_threshold = scheduling_config.rollback['performance_threshold']
             
-            logger.info(f"Configuration loaded: min_learning_data={self.min_learning_data}, "
-                       f"stable_learning_data={self.stable_learning_data}")
+            # Simplified rollback configuration (disabled by default for stability)
+            rollback_config = scheduling_config.rollback
+            self.rollback_enabled = rollback_config['enabled'] and self.mode == "optimized"  # Only for optimized mode
+            self.performance_threshold = rollback_config['performance_threshold']
+            self.monitoring_window = rollback_config['monitoring_window']
+            
+            logger.info(f"Configuration loaded for mode {self.mode}: "
+                       f"min_learning={self.min_learning_data}, "
+                       f"stable_learning={self.stable_learning_data}, "
+                       f"rollback_enabled={self.rollback_enabled}")
         else:
             # Fallback to hardcoded defaults
             self.min_learning_data = 50
@@ -148,77 +182,53 @@ class SchedulerManager:
                 'success_probability': 0.2,
                 'resource_utilization': 0.1
             }
-            self.rollback_enabled = False  # FIXED: 기본값을 False로 설정
+            # Rollback disabled by default for stability
+            self.rollback_enabled = False
             self.performance_threshold = 0.9
+            self.monitoring_window = 10
             
-            logger.warning("Using hardcoded default configuration")
-    
-    def get_domain_specific_thresholds(self, model_id: str) -> Dict[str, int]:
-        """Get domain-specific thresholds for a model"""
-        if self.config_manager and self.config_manager.stage_transitions.dynamic_thresholds:
-            # Extract model size for domain classification
-            model_size = self._classify_model_size(model_id)
-            return self.config_manager.get_domain_thresholds(model_size)
-        else:
-            # Return default thresholds
-            return {
-                'min_learning_data': self.min_learning_data,
-                'stable_learning_data': self.stable_learning_data
-            }
-    
-    def _classify_model_size(self, model_id: str) -> str:
-        """Classify model size based on model ID"""
-        model_id_lower = model_id.lower()
-        
-        # Small models (≤3B)
-        if any(x in model_id_lower for x in ['0.5b', '1.5b', '2.1b', '2.4b', '3b', '500m']):
-            return 'small_models'
-        # Large models (>8B)
-        elif any(x in model_id_lower for x in ['12b', '13b', '21.4b', '30b', '32b', '70b']):
-            return 'large_models'
-        # Medium models (4-8B)
-        else:
-            return 'medium_models'
+            logger.warning(f"Using hardcoded default configuration for mode: {self.mode}")
     
     def get_current_mode(self) -> str:
-        """Get current scheduling mode - FIXED: 순환 호출 방지"""
-        # 이미 업데이트 중이면 현재 모드 반환
-        if self._updating_mode:
+        """Get current scheduling mode with enhanced thread safety"""
+        # Prevent concurrent mode updates
+        with self._mode_update_lock:
+            if self._updating_mode:
+                return self.current_mode or "intelligent"
+            
+            now = datetime.now()
+            # Check if mode update is needed
+            if (self.last_mode_check is None or 
+                (now - self.last_mode_check).total_seconds() > self.mode_check_interval):
+                
+                try:
+                    self._safe_update_current_mode()
+                    self.last_mode_check = now
+                except Exception as e:
+                    logger.error(f"Error updating mode: {e}")
+                    if self.current_mode is None:
+                        self.current_mode = "intelligent"
+            
             return self.current_mode or "intelligent"
-        
-        now = datetime.now()
-        # FIXED: seconds() → total_seconds()
-        if (self.last_mode_check is None or 
-            (now - self.last_mode_check).total_seconds() > 600):
-            try:
-                self._updating_mode = True
-                self._update_current_mode()
-                self.last_mode_check = now
-            except Exception as e:
-                logger.error(f"Error updating mode: {e}")
-                if self.current_mode is None:
-                    self.current_mode = "intelligent"
-            finally:
-                self._updating_mode = False
-        
-        return self.current_mode or "intelligent"
     
-    def _update_current_mode(self):
-        """Update current scheduling mode - FIXED: 안전한 버전"""
-        # 순환 호출 방지
+    def _safe_update_current_mode(self):
+        """Safely update current scheduling mode with timeout protection"""
         if self._updating_mode:
             return
         
         try:
-            # Get total training records with timeout
-            total_records = self._get_total_training_records_safe()
+            self._updating_mode = True
             
+            # Get total training records with strict mode isolation
+            total_records = self._get_total_training_records_with_strict_isolation()
+            
+            # Get domain-specific thresholds if available
             thresholds = {
                 'min_learning_data': self.min_learning_data,
                 'stable_learning_data': self.stable_learning_data
             }
             
-            # Determine mode
+            # Determine mode based on available data
             if total_records < thresholds['min_learning_data']:
                 new_mode = "intelligent"
                 reason = f"Insufficient data: {total_records} < {thresholds['min_learning_data']}"
@@ -227,33 +237,18 @@ class SchedulerManager:
                 reason = f"Learning phase: {total_records} records"
             else:
                 # Check if ML models are trained and confident
-                try:
-                    if self.adaptive_scheduler.is_trained():
-                        confidence = self.adaptive_scheduler.get_model_confidence()
-                        if confidence >= self.hybrid_confidence_threshold:
-                            new_mode = "adaptive"
-                            reason = f"ML ready: {total_records} records, confidence: {confidence:.2f}"
-                        else:
-                            new_mode = "hybrid"
-                            reason = f"Low confidence: {confidence:.2f} < {self.hybrid_confidence_threshold}"
-                    else:
-                        new_mode = "hybrid"
-                        reason = "ML models not trained"
-                except Exception as e:
-                    logger.warning(f"Error checking ML status: {e}")
-                    new_mode = "hybrid"
-                    reason = "ML status check failed"
+                new_mode, reason = self._determine_advanced_mode(total_records)
             
-            # FIXED: 롤백 체크 간소화 (블로킹 방지)
+            # Simplified rollback check (optional and non-blocking)
             if self.rollback_enabled and new_mode != "intelligent":
-                if self._should_rollback_safe():
+                if self._should_rollback_quick_check():
                     new_mode = self._get_rollback_mode()
                     reason += " (rollback triggered)"
             
             # Log mode transition
             if new_mode != self.current_mode:
                 if self.current_mode is not None:
-                    logger.info(f"Scheduler mode transition: {self.current_mode} → {new_mode} ({reason})")
+                    logger.info(f"Scheduler mode transition: {self.current_mode} -> {new_mode} ({reason})")
                 else:
                     logger.info(f"Initial scheduler mode: {new_mode} ({reason})")
                 
@@ -266,34 +261,92 @@ class SchedulerManager:
                     'total_records': total_records
                 })
                 
+                # Keep only last 20 transitions to prevent memory growth
+                if len(self.mode_transition_history) > 20:
+                    self.mode_transition_history = self.mode_transition_history[-20:]
+                
                 self.current_mode = new_mode
             
-            # Check if adaptive scheduler needs training/retraining
-            self._check_and_train_adaptive_safe()
+            # Check if adaptive scheduler needs training (non-blocking)
+            if new_mode in ["hybrid", "adaptive"]:
+                self._maybe_trigger_training()
             
         except Exception as e:
             logger.error(f"Error updating current mode: {e}")
             # Fallback to intelligent mode
             if self.current_mode is None:
                 self.current_mode = "intelligent"
+        finally:
+            self._updating_mode = False
     
-    def _should_rollback_safe(self) -> bool:
-        """Check if rollback should be triggered - FIXED: 간소화"""
+    def _determine_advanced_mode(self, total_records: int) -> Tuple[str, str]:
+        """Determine if we should use hybrid or adaptive mode"""
+        try:
+            # Quick check without blocking operations
+            is_trained = self._quick_check_if_trained()
+            
+            if is_trained:
+                # Try to get confidence without blocking
+                confidence = self._quick_get_confidence()
+                
+                if confidence >= self.hybrid_confidence_threshold:
+                    return "adaptive", f"ML ready: {total_records} records, confidence: {confidence:.2f}"
+                else:
+                    return "hybrid", f"Low confidence: {confidence:.2f} < {self.hybrid_confidence_threshold}"
+            else:
+                return "hybrid", "ML models not trained"
+                
+        except Exception as e:
+            logger.warning(f"Error checking ML status: {e}")
+            return "hybrid", "ML status check failed"
+    
+    def _quick_check_if_trained(self) -> bool:
+        """Quick non-blocking check if adaptive scheduler is trained"""
+        try:
+            return self.adaptive_scheduler.is_trained()
+        except Exception:
+            return False
+    
+    def _quick_get_confidence(self) -> float:
+        """Quick non-blocking confidence check"""
+        try:
+            return self.adaptive_scheduler.get_model_confidence()
+        except Exception:
+            return 0.0
+    
+    def _should_rollback_quick_check(self) -> bool:
+        """Quick rollback check without blocking operations"""
         if not self.rollback_enabled:
             return False
         
         try:
-            # FIXED: 복잡한 쿼리 대신 간단한 체크만 수행
-            # 실제 환경에서는 이 부분을 더 간단하게 구현
-            return False  # 일단 롤백 비활성화
-            
-        except Exception as e:
-            logger.error(f"Error checking rollback conditions: {e}")
+            # Very simple rollback check to avoid blocking
+            with self._db_operation_lock:
+                cursor = self.performance_tracker.conn.cursor()
+                cursor.execute("PRAGMA busy_timeout = 1000")  # 1 second timeout
+                
+                # Simple query for recent failures with strict mode isolation
+                cursor.execute("""
+                    SELECT COUNT(*) as failures 
+                    FROM execution_records 
+                    WHERE mode = ? AND run_id LIKE ? 
+                    AND timestamp > datetime('now', '-1 hour')
+                    AND status IN ('failed', 'oom')
+                    LIMIT 10
+                """, (self.mode, self.run_id_pattern))
+                
+                result = cursor.fetchone()
+                failure_count = result['failures'] if result else 0
+                
+                # Simple threshold: more than 3 failures in last hour = rollback
+                return failure_count > 3
+                
+        except (sqlite3.OperationalError, Exception) as e:
+            logger.debug(f"Quick rollback check failed: {e}")
             return False
     
     def _get_rollback_mode(self) -> str:
         """Determine which mode to rollback to"""
-        # Simple strategy: rollback one level
         if self.current_mode == "adaptive":
             return "hybrid"
         elif self.current_mode == "hybrid":
@@ -301,83 +354,90 @@ class SchedulerManager:
         else:
             return "intelligent"
     
-    def _get_recent_performance_metrics(self) -> List[Dict]:
-        """Get recent performance metrics for rollback decisions - FIXED: 현재 모드만"""
+    def _get_total_training_records_with_strict_isolation(self) -> int:
+        """Get total training records with strict mode isolation using run_id pattern"""
         try:
-            cursor = self.performance_tracker.conn.cursor()
-            # FIXED: 타임아웃 설정
-            cursor.execute("PRAGMA busy_timeout = 3000")  # 3초 타임아웃
-            # FIXED: 현재 모드만 검색
-            cursor.execute("""
-                SELECT status, timestamp FROM execution_records 
-                WHERE timestamp > datetime('now', '-1 hour')
-                AND mode = ?
-                ORDER BY timestamp DESC LIMIT 20
-            """, (self.performance_tracker.mode,))
-            
-            records = cursor.fetchall()
-            return [{'success': record['status'] == 'completed'} for record in records]
-            
-        except Exception as e:
-            logger.error(f"Error getting recent performance metrics: {e}")
-            return []
-    
-    def _get_total_training_records_safe(self) -> int:
-        """Get total number of training records - FIXED: 현재 모드만 카운트"""
-        try:
-            cursor = self.performance_tracker.conn.cursor()
-            # FIXED: 타임아웃 설정
-            cursor.execute("PRAGMA busy_timeout = 5000")  # 5초 타임아웃
-            # FIXED: 현재 모드(optimized)만 카운트하여 baseline 데이터 제외
-            cursor.execute("""
-                SELECT COUNT(*) as total_records
-                FROM execution_records 
-                WHERE status IN ('completed', 'failed', 'oom')
-                AND mode = ?
-            """, (self.performance_tracker.mode,))
-            
-            result = cursor.fetchone()
-            return result['total_records'] if result else 0
-            
+            with self._db_operation_lock:
+                cursor = self.performance_tracker.conn.cursor()
+                cursor.execute(f"PRAGMA busy_timeout = {int(self.db_timeout * 1000)}")
+                
+                # Strict mode isolation: filter by both mode AND run_id pattern
+                # This ensures complete separation between baseline and optimized modes
+                cursor.execute("""
+                    SELECT COUNT(*) as total_records
+                    FROM execution_records 
+                    WHERE status IN ('completed', 'failed', 'oom')
+                    AND mode = ? AND run_id LIKE ?
+                """, (self.mode, self.run_id_pattern))
+                
+                result = cursor.fetchone()
+                count = result['total_records'] if result else 0
+                
+                logger.debug(f"Training records for mode {self.mode} with pattern {self.run_id_pattern}: {count}")
+                return count
+                
+        except sqlite3.OperationalError as e:
+            if "database is locked" in str(e).lower():
+                logger.warning(f"Database locked during record count for mode {self.mode}")
+                return 0
+            else:
+                logger.error(f"Database error getting training records: {e}")
+                return 0
         except Exception as e:
             logger.warning(f"Error getting total training records: {e}")
-            return 0  # 안전한 기본값
+            return 0
     
-    def _check_and_train_adaptive_safe(self):
-        """Check if adaptive scheduler needs training - FIXED: 중복 방지 및 간소화"""
-        # 이미 트레이닝 중이면 스킵
+    def _maybe_trigger_training(self):
+        """Maybe trigger adaptive scheduler training (non-blocking)"""
+        if self._training_in_progress:
+            return
+        
+        try:
+            # Check if training is needed without blocking
+            if not self._quick_check_if_trained():
+                total_records = self._get_total_training_records_with_strict_isolation()
+                
+                if total_records >= self.min_learning_data:
+                    # Start training in background thread to avoid blocking
+                    training_thread = threading.Thread(
+                        target=self._background_training,
+                        args=(total_records,),
+                        daemon=True
+                    )
+                    training_thread.start()
+                    logger.info(f"Background training started with {total_records} records")
+                    
+        except Exception as e:
+            logger.warning(f"Error checking training needs: {e}")
+    
+    def _background_training(self, total_records: int):
+        """Background training to avoid blocking main thread"""
         if self._training_in_progress:
             return
         
         try:
             self._training_in_progress = True
+            logger.info(f"Starting background adaptive scheduler training with {total_records} records")
             
-            # FIXED: 간단한 체크만 수행
-            should_train = False
+            # Set a reasonable timeout for training
+            training_success = False
+            start_time = time.time()
             
-            # Initial training check만 수행
-            if not self.adaptive_scheduler.is_trained():
-                total_records = self._get_total_training_records_safe()
-                if total_records >= self.min_learning_data:
-                    should_train = True
-                    reason = f"Initial training with {total_records} records"
-            
-            # Perform training
-            if should_train:
-                logger.info(f"Starting adaptive scheduler training: {reason}")
-                try:
-                    success = self.adaptive_scheduler.train_models()
+            try:
+                training_success = self.adaptive_scheduler.train_models()
+                training_time = time.time() - start_time
+                
+                if training_success:
+                    self.last_training_time = datetime.now()
+                    logger.info(f"Adaptive scheduler training completed successfully in {training_time:.1f}s")
+                else:
+                    logger.warning("Adaptive scheduler training failed")
                     
-                    if success:
-                        self.last_training_time = datetime.now()
-                        logger.info("Adaptive scheduler training completed successfully")
-                    else:
-                        logger.warning("Adaptive scheduler training failed")
-                except Exception as train_error:
-                    logger.error(f"Training failed: {train_error}")
-                    
+            except Exception as train_error:
+                logger.error(f"Training failed: {train_error}")
+                
         except Exception as e:
-            logger.error(f"Error in adaptive scheduler training: {e}")
+            logger.error(f"Error in background training: {e}")
         finally:
             self._training_in_progress = False
     
@@ -385,14 +445,20 @@ class SchedulerManager:
         """Create optimal schedule using current best scheduler"""
         mode = self.get_current_mode()
         
-        logger.info(f"Creating schedule using {mode} mode")
+        logger.info(f"Creating schedule using {mode} mode for {len(models)} models and {len(tasks)} tasks")
         
-        if mode == "intelligent":
+        try:
+            if mode == "intelligent":
+                return self._create_intelligent_schedule(models, tasks)
+            elif mode == "hybrid":
+                return self._create_hybrid_schedule(models, tasks)
+            else:  # adaptive
+                return self._create_adaptive_schedule(models, tasks)
+        except Exception as e:
+            logger.error(f"Error creating schedule in {mode} mode: {e}")
+            # Fallback to intelligent scheduler
+            logger.info("Falling back to intelligent scheduler")
             return self._create_intelligent_schedule(models, tasks)
-        elif mode == "hybrid":
-            return self._create_hybrid_schedule(models, tasks)
-        else:  # adaptive
-            return self._create_adaptive_schedule(models, tasks)
     
     def _create_intelligent_schedule(self, models: List[Dict], tasks: List[str]) -> List[TaskPriority]:
         """Create schedule using intelligent scheduler only"""
@@ -400,37 +466,45 @@ class SchedulerManager:
     
     def _create_adaptive_schedule(self, models: List[Dict], tasks: List[str]) -> List[TaskPriority]:
         """Create schedule using adaptive scheduler only"""
-        return self.adaptive_scheduler.create_optimal_schedule(models, tasks)
+        try:
+            return self.adaptive_scheduler.create_optimal_schedule(models, tasks)
+        except Exception as e:
+            logger.error(f"Adaptive scheduler failed: {e}, falling back to intelligent")
+            return self._create_intelligent_schedule(models, tasks)
     
     def _create_hybrid_schedule(self, models: List[Dict], tasks: List[str]) -> List[TaskPriority]:
         """Create schedule using hybrid approach (weighted combination)"""
-        # Get schedules from both schedulers
+        # Get intelligent schedule (always available)
         intelligent_schedule = self.intelligent_scheduler.create_optimal_schedule(models, tasks)
         
-        # Only use adaptive if it's trained
+        # Try to get adaptive schedule if available
+        adaptive_schedule = []
+        confidence = 0.0
+        
         try:
-            if self.adaptive_scheduler.is_trained():
+            if self._quick_check_if_trained():
                 adaptive_schedule = self.adaptive_scheduler.create_optimal_schedule(models, tasks)
-                confidence = self.adaptive_scheduler.get_model_confidence()
+                confidence = self._quick_get_confidence()
+                logger.info(f"Using adaptive predictions with confidence: {confidence:.2f}")
             else:
-                adaptive_schedule = []
-                confidence = 0.0
+                logger.info("ML models not trained, using intelligent schedule only")
         except Exception as e:
             logger.warning(f"Error getting adaptive schedule: {e}")
-            adaptive_schedule = []
-            confidence = 0.0
         
-        # Combine schedules
+        # Combine schedules if adaptive is available and confident
         if adaptive_schedule and confidence > 0.5:
-            combined_schedule = self._combine_schedules(
-                intelligent_schedule, adaptive_schedule, confidence
-            )
-            logger.info(f"Created hybrid schedule with ML confidence: {confidence:.2f}")
-        else:
-            combined_schedule = intelligent_schedule
-            logger.info("Using intelligent schedule in hybrid mode (low ML confidence)")
+            try:
+                combined_schedule = self._combine_schedules(
+                    intelligent_schedule, adaptive_schedule, confidence
+                )
+                logger.info(f"Created hybrid schedule with ML confidence: {confidence:.2f}")
+                return combined_schedule
+            except Exception as e:
+                logger.error(f"Error combining schedules: {e}")
         
-        return combined_schedule
+        # Fallback to intelligent schedule
+        logger.info("Using intelligent schedule in hybrid mode")
+        return intelligent_schedule
     
     def _combine_schedules(self, 
                           intelligent_schedule: List[TaskPriority], 
@@ -452,7 +526,7 @@ class SchedulerManager:
                 ml_weight = ml_confidence
                 rule_weight = 1 - ml_confidence
                 
-                # Combine estimates using configured weights
+                # Combine estimates
                 combined_time = (rule_weight * intelligent_task.estimated_time + 
                                ml_weight * adaptive_task.estimated_time)
                 
@@ -462,7 +536,7 @@ class SchedulerManager:
                 combined_success = (rule_weight * intelligent_task.success_probability + 
                                   ml_weight * adaptive_task.success_probability)
                 
-                # Use ML suggestions for batch size and few-shot if confidence is high
+                # Use ML suggestions for parameters if confidence is high
                 if ml_confidence > self.hybrid_confidence_threshold:
                     suggested_batch_size = adaptive_task.suggested_batch_size
                     suggested_num_fewshot = adaptive_task.suggested_num_fewshot
@@ -470,7 +544,7 @@ class SchedulerManager:
                     suggested_batch_size = intelligent_task.suggested_batch_size
                     suggested_num_fewshot = intelligent_task.suggested_num_fewshot
                 
-                # Compute combined priority score using configured weights
+                # Compute combined priority score
                 combined_priority = self._compute_weighted_priority(
                     combined_time, combined_memory, combined_success, ml_weight
                 )
@@ -508,19 +582,19 @@ class SchedulerManager:
     
     def _compute_weighted_priority(self, exec_time: float, memory: float, success_prob: float, ml_weight: float) -> float:
         """Compute priority score using configured weights"""
-        # Time efficiency component
-        time_efficiency = 1 / (1 + exec_time / 3600)  # Normalize to hours
+        # Time efficiency component (normalized to hours)
+        time_efficiency = 1 / (1 + exec_time / 3600)
         
-        # Memory efficiency component  
-        memory_efficiency = 1 / (1 + memory / 40)  # Normalize to 40GB baseline
+        # Memory efficiency component (normalized to 40GB baseline)
+        memory_efficiency = 1 / (1 + memory / 40)
         
         # Success probability component
         success_component = success_prob
         
-        # Resource utilization component (simple approximation)
+        # Resource utilization component
         resource_utilization = min(time_efficiency * memory_efficiency, 1.0)
         
-        # Weighted combination
+        # Weighted combination using configured weights
         priority = (self.priority_weights['time_efficiency'] * time_efficiency +
                    self.priority_weights['memory_efficiency'] * memory_efficiency +
                    self.priority_weights['success_probability'] * success_component +
@@ -533,15 +607,13 @@ class SchedulerManager:
     
     def get_next_task(self, schedule: List[TaskPriority], 
                      completed_tasks: List[Tuple[str, str]]) -> Optional[TaskPriority]:
-        """Get next task to execute with dynamic resource checking"""
+        """Get next task to execute with resource checking"""
         mode = self.get_current_mode()
         
         try:
-            if mode == "adaptive" and self.adaptive_scheduler.is_trained():
-                # Use adaptive scheduler's task selection logic if available
+            if mode == "adaptive" and self._quick_check_if_trained():
                 return self._get_adaptive_next_task(schedule, completed_tasks)
             else:
-                # Use intelligent scheduler's task selection
                 return self.intelligent_scheduler.get_next_task(schedule, completed_tasks)
         except Exception as e:
             logger.error(f"Error getting next task: {e}")
@@ -552,32 +624,41 @@ class SchedulerManager:
                                completed_tasks: List[Tuple[str, str]]) -> Optional[TaskPriority]:
         """Get next task using adaptive scheduler logic"""
         completed_set = set(completed_tasks)
-        current_resources = self.resource_monitor.get_current_snapshot()
+        
+        try:
+            current_resources = self.resource_monitor.get_current_snapshot()
+        except Exception as e:
+            logger.warning(f"Error getting resource snapshot: {e}")
+            current_resources = None
         
         for task in schedule:
             # Skip completed tasks
             if (task.model_id, task.task_name) in completed_set:
                 continue
             
-            # Check resource availability with ML prediction refinement
-            if self._can_run_task_adaptive(task, current_resources):
+            # Check resource availability
+            if self._can_run_task_enhanced(task, current_resources):
                 return task
         
         return None
     
-    def _can_run_task_adaptive(self, task: TaskPriority, resources: Optional[Any]) -> bool:
-        """Check if task can be executed with ML-enhanced resource prediction"""
+    def _can_run_task_enhanced(self, task: TaskPriority, resources: Optional[Any]) -> bool:
+        """Enhanced resource availability check with ML predictions"""
         if not resources:
             return True
         
-        # Base resource check
-        if not self.intelligent_scheduler._can_run_task(task, resources):
-            return False
+        # Base resource check from intelligent scheduler
+        try:
+            if not self.intelligent_scheduler._can_run_task(task, resources):
+                return False
+        except Exception as e:
+            logger.warning(f"Error in base resource check: {e}")
+            return True  # Allow execution if check fails
         
         # Enhanced check with ML prediction if available
         try:
-            if self.adaptive_scheduler.is_trained():
-                # Create mock model config for ML prediction
+            if self._quick_check_if_trained():
+                # Create model config for ML prediction
                 model_config = {
                     "id": task.model_id,
                     "name": task.model_id.split("/")[-1]
@@ -586,19 +667,20 @@ class SchedulerManager:
                 # Get ML prediction
                 ml_pred = self.adaptive_scheduler.predict(model_config, task.task_name)
                 
-                # Use ML prediction for more accurate resource check
+                # Enhanced resource check with dynamic safety margin
                 required_memory = ml_pred.memory_usage
                 oom_risk = ml_pred.oom_probability
                 
                 available_memory = resources.gpu_memory_total - resources.gpu_memory_used
                 
-                # Use configured safety margin
-                safety_margin = 0.15
+                # Use configured safety margin with dynamic adjustment
+                base_safety_margin = 0.15
                 if self.config_manager:
-                    safety_margin = self.config_manager.resource_management.memory['safety_margin']
+                    base_safety_margin = self.config_manager.resource_management.memory['safety_margin']
                 
-                safety_margin += (oom_risk * 0.1)  # Dynamic safety margin
-                available_memory *= (1 - safety_margin)
+                # Increase safety margin based on OOM risk
+                dynamic_safety_margin = base_safety_margin + (oom_risk * 0.1)
+                available_memory *= (1 - dynamic_safety_margin)
                 
                 if required_memory > available_memory:
                     logger.debug(f"ML-enhanced resource check failed for {task.model_id} on {task.task_name}: "
@@ -608,7 +690,7 @@ class SchedulerManager:
                 
         except Exception as e:
             logger.warning(f"Error in ML-enhanced resource check: {e}")
-            # Fall back to basic check
+            # Fall back to basic check result
         
         return True
     
@@ -620,23 +702,29 @@ class SchedulerManager:
         """Update schedule after task completion with learning"""
         mode = self.get_current_mode()
         
-        # Always update intelligent scheduler (for fallback)
-        self.intelligent_scheduler.update_schedule_after_completion(
-            schedule, completed_task, actual_time, actual_memory, status
-        )
-        
-        # Trigger retraining check if we have new data
-        if status in ["completed", "failed", "oom"]:
-            self._check_and_train_adaptive_safe()
-        
-        logger.debug(f"Schedule updated after {status} completion in {mode} mode")
+        try:
+            # Always update intelligent scheduler (for fallback)
+            self.intelligent_scheduler.update_schedule_after_completion(
+                schedule, completed_task, actual_time, actual_memory, status
+            )
+            
+            # Trigger background retraining check if we have new data
+            if status in ["completed", "failed", "oom"]:
+                self._maybe_trigger_training()
+            
+            logger.debug(f"Schedule updated after {status} completion in {mode} mode")
+            
+        except Exception as e:
+            logger.error(f"Error updating schedule after completion: {e}")
     
     def get_scheduler_statistics(self) -> Dict[str, Any]:
-        """Get comprehensive scheduler statistics"""
+        """Get comprehensive scheduler statistics with error handling"""
         try:
             stats = {
                 'current_mode': self.current_mode,
-                'total_training_records': self._get_total_training_records_safe(),
+                'performance_tracker_mode': self.mode,
+                'run_id_pattern': self.run_id_pattern,
+                'total_training_records': self._get_total_training_records_with_strict_isolation(),
                 'configuration': {
                     'min_learning_data': self.min_learning_data,
                     'stable_learning_data': self.stable_learning_data,
@@ -656,20 +744,13 @@ class SchedulerManager:
             # Add adaptive status if available
             try:
                 stats['adaptive_status'] = {
-                    'is_trained': self.adaptive_scheduler.is_trained(),
-                    'confidence': self.adaptive_scheduler.get_model_confidence() if self.adaptive_scheduler.is_trained() else 0.0,
+                    'is_trained': self._quick_check_if_trained(),
+                    'confidence': self._quick_get_confidence(),
                     'last_training': self.last_training_time.isoformat() if self.last_training_time else None,
-                    'should_retrain': self.adaptive_scheduler.should_retrain()
+                    'should_retrain': False  # Simplified for stability
                 }
             except Exception as e:
                 logger.warning(f"Error getting adaptive status: {e}")
-            
-            # Add model performance if available
-            try:
-                if hasattr(self.adaptive_scheduler, 'model_performance'):
-                    stats['model_performance'] = self.adaptive_scheduler.model_performance
-            except Exception as e:
-                logger.warning(f"Error getting model performance: {e}")
             
             return stats
             
@@ -677,91 +758,105 @@ class SchedulerManager:
             logger.error(f"Error getting scheduler statistics: {e}")
             return {
                 'current_mode': self.current_mode or 'intelligent',
-                'error': str(e)
+                'performance_tracker_mode': self.mode,
+                'run_id_pattern': self.run_id_pattern,
+                'error': str(e),
+                'total_training_records': 0,
+                'configuration': {},
+                'adaptive_status': {'is_trained': False, 'confidence': 0.0},
+                'mode_transitions': []
             }
     
     def update_configuration(self, new_config: Dict[str, Any]):
         """Update configuration at runtime"""
         if self.config_manager:
-            # Update ConfigManager
-            if 'min_learning_data' in new_config and 'stable_learning_data' in new_config:
-                self.config_manager.update_thresholds(
-                    new_config['min_learning_data'],
-                    new_config['stable_learning_data']
-                )
-            
-            # Reload configuration
-            self._load_configuration()
-            
-            logger.info("Configuration updated successfully")
+            try:
+                # Update ConfigManager
+                if 'min_learning_data' in new_config and 'stable_learning_data' in new_config:
+                    self.config_manager.update_thresholds(
+                        new_config['min_learning_data'],
+                        new_config['stable_learning_data']
+                    )
+                
+                # Reload configuration
+                self._load_configuration()
+                
+                logger.info(f"Configuration updated successfully for mode: {self.mode}")
+            except Exception as e:
+                logger.error(f"Error updating configuration: {e}")
         else:
             logger.warning("ConfigManager not available for runtime updates")
     
     def force_mode(self, mode: str, duration_minutes: Optional[int] = None):
-        """Force specific scheduling mode for testing/debugging"""
+        """Force specific scheduling mode for testing or debugging"""
         if mode not in ["intelligent", "hybrid", "adaptive"]:
             raise ValueError(f"Invalid mode: {mode}")
         
         old_mode = self.current_mode
         self.current_mode = mode
         
-        logger.warning(f"Forcing scheduler mode: {old_mode} → {mode}")
+        logger.warning(f"Forcing scheduler mode: {old_mode} -> {mode}")
         
         if duration_minutes:
-            # TODO: Implement temporary mode forcing with automatic revert
             logger.info(f"Forced mode will be active for {duration_minutes} minutes")
     
     def export_schedule_with_metadata(self, schedule: List[TaskPriority], filepath: Path):
-        """Export schedule with scheduler metadata"""
-        # Add timestamp to filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        stem = filepath.stem
-        suffix = filepath.suffix
-        filepath = filepath.parent / f"{stem}_{timestamp}{suffix}"
-        
-        # Get comprehensive statistics
-        stats = self.get_scheduler_statistics()
-        
-        data = {
-            'metadata': {
-                'created_at': datetime.now().isoformat(),
-                'scheduler_mode': self.current_mode,
-                'num_tasks': len(schedule),
-                'num_gpus': self.num_gpus,
-                'scheduler_stats': stats,
-                'config_manager_available': self.config_manager is not None
-            },
-            'schedule': [
-                {
-                    'model_id': task.model_id,
-                    'task_name': task.task_name,
-                    'priority_score': float(task.priority_score),
-                    'estimated_time_hours': float(task.estimated_time / 3600),
-                    'estimated_memory_gb': float(task.estimated_memory),
-                    'success_probability': float(task.success_probability),
-                    'suggested_gpu': int(task.suggested_gpu),
-                    'suggested_batch_size': int(task.suggested_batch_size),
-                    'suggested_num_fewshot': int(task.suggested_num_fewshot),
-                    'rationale': task.rationale,
-                }
-                for task in schedule
-            ]
-        }
-        
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-        
-        import json
-        with open(filepath, 'w') as f:
-            json.dump(data, f, indent=2)
-        
-        logger.info(f"Schedule with metadata exported to {filepath}")
+        """Export schedule with comprehensive scheduler metadata"""
+        try:
+            # Add timestamp to filename
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            stem = filepath.stem
+            suffix = filepath.suffix
+            filepath = filepath.parent / f"{stem}_{timestamp}{suffix}"
+            
+            # Get comprehensive statistics
+            stats = self.get_scheduler_statistics()
+            
+            data = {
+                'metadata': {
+                    'created_at': datetime.now().isoformat(),
+                    'scheduler_mode': self.current_mode,
+                    'performance_tracker_mode': self.mode,
+                    'run_id_pattern': self.run_id_pattern,
+                    'num_tasks': len(schedule),
+                    'num_gpus': self.num_gpus,
+                    'scheduler_stats': stats,
+                    'config_manager_available': self.config_manager is not None
+                },
+                'schedule': [
+                    {
+                        'model_id': task.model_id,
+                        'task_name': task.task_name,
+                        'priority_score': float(task.priority_score),
+                        'estimated_time_hours': float(task.estimated_time / 3600),
+                        'estimated_memory_gb': float(task.estimated_memory),
+                        'success_probability': float(task.success_probability),
+                        'suggested_gpu': int(task.suggested_gpu),
+                        'suggested_batch_size': int(task.suggested_batch_size),
+                        'suggested_num_fewshot': int(task.suggested_num_fewshot),
+                        'rationale': task.rationale,
+                    }
+                    for task in schedule
+                ]
+            }
+            
+            filepath.parent.mkdir(parents=True, exist_ok=True)
+            
+            import json
+            with open(filepath, 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            logger.info(f"Schedule with metadata exported to {filepath}")
+            
+        except Exception as e:
+            logger.error(f"Error exporting schedule: {e}")
     
     def get_current_scheduler(self) -> Union[IntelligentScheduler, AdaptiveScheduler]:
         """Get the currently active scheduler instance"""
         mode = self.get_current_mode()
         
         try:
-            if mode == "adaptive" and self.adaptive_scheduler.is_trained():
+            if mode == "adaptive" and self._quick_check_if_trained():
                 return self.adaptive_scheduler
             else:
                 # Return intelligent scheduler for both "intelligent" and "hybrid" modes
@@ -770,3 +865,24 @@ class SchedulerManager:
         except Exception as e:
             logger.error(f"Error getting current scheduler: {e}")
             return self.intelligent_scheduler
+    
+    def cleanup(self):
+        """Cleanup resources and background threads"""
+        try:
+            # Stop any background training
+            self._training_in_progress = False
+            
+            # Clear transition history to free memory
+            self.mode_transition_history.clear()
+            
+            logger.info(f"SchedulerManager cleanup completed for mode: {self.mode}")
+            
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+    
+    def __del__(self):
+        """Destructor to ensure cleanup"""
+        try:
+            self.cleanup()
+        except:
+            pass

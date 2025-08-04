@@ -1,6 +1,7 @@
 """
 Updated Academic Layout Visualization Generator - 3 Main Figures
 Publication-ready graph generation with academic compliance
+WITH GPU THERMAL ANALYSIS SUPPORT
 """
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -72,7 +73,11 @@ PAPER_COLORS = {
     'oom': '#C0392B',          # Dark red for OOM
     'success': '#2ECC71',       # Green for success
     'warning': '#F1C40F',       # Yellow for warnings
-    'info': '#3498DB'           # Blue for info
+    'info': '#3498DB',          # Blue for info
+    'thermal_hot': '#FF6B6B',   # Hot temperature
+    'thermal_warm': '#FFD93D',  # Warm temperature
+    'thermal_cool': '#6BCF7F',  # Cool temperature
+    'thermal_cold': '#4ECDC4'   # Cold temperature
 }
 
 # Academic Publication font settings
@@ -102,7 +107,7 @@ logger = logging.getLogger(__name__)
 
 
 class AcademicVisualizationGenerator:
-    """Updated Academic Layout Visualization Generator - 3 Main Figures with Full Compliance"""
+    """Updated Academic Layout Visualization Generator - 3 Main Figures with Thermal Analysis"""
     
     def __init__(self, analyzer: ComparisonAnalyzer, output_dir: Optional[Path] = None):
         """
@@ -119,7 +124,7 @@ class AcademicVisualizationGenerator:
         self.dpi_vector = 300              # For PDF/EPS (vector graphics, DPI has minimal impact)
         self.dpi_raster = 600              # For PNG (academic combined image standard: 600 DPI)
         
-        logger.info(f"AcademicVisualizationGenerator initialized with academic compliance")
+        logger.info(f"AcademicVisualizationGenerator initialized with thermal analysis support")
         logger.info(f"Figure size: {self.figsize_dashboard}, Vector DPI: {self.dpi_vector}, Raster DPI: {self.dpi_raster}")
         logger.info(f"Output directory: {self.output_dir}")
     
@@ -127,18 +132,21 @@ class AcademicVisualizationGenerator:
         """Display interactive menu for academic layout graphs"""
         print("=" * 70)
         print("Academic Compliant Visualization Generator")
-        print("3 Main Publication Figures (PDF/EPS/PNG)")
+        print("4 Publication Figures (PDF/EPS/PNG) WITH THERMAL ANALYSIS")
         print("=" * 70)
         print("0. Exit")
-        print("all: Generate all 3 figures")
+        print("all: Generate all 4 figures")
         print()
-        print("Academic Publication Figures:")
+        print("Original Academic Publication Figures:")
         print("1. Figure 1: Main Performance Comparison")
         print("2. Figure 2: Scheduler Evolution Analysis") 
         print("3. Figure 3: System Reliability and Efficiency")
         print()
+        print("NEW - Thermal Analysis:")
+        print("4. Figure 4: GPU Thermal Management Analysis")
+        print()
         print("(Enter numbers separated by space or comma)")
-        print("'all' generates all 3 figures in PDF/EPS/PNG formats")
+        print("'all' generates all 4 figures in PDF/EPS/PNG formats")
         
         while True:
             try:
@@ -149,8 +157,8 @@ class AcademicVisualizationGenerator:
                     return []
                 
                 if user_input == "all":
-                    print("Generating all academic figures in multiple formats...")
-                    return [1, 2, 3]
+                    print("Generating all academic figures (1-3 original + 4 thermal) in multiple formats...")
+                    return [1, 2, 3, 4]
                 
                 # Parse multiple selections
                 choices = user_input.replace(",", " ").split()
@@ -159,10 +167,10 @@ class AcademicVisualizationGenerator:
                 for choice in choices:
                     if choice.isdigit():
                         num = int(choice)
-                        if 1 <= num <= 3:
+                        if 1 <= num <= 4:
                             selected.append(num)
                         else:
-                            print(f"Invalid figure number: {num}. Please select 1-3.")
+                            print(f"Invalid figure number: {num}. Please select 1-4.")
                     else:
                         print(f"Invalid input: {choice}. Please enter numbers only.")
                 
@@ -183,6 +191,7 @@ class AcademicVisualizationGenerator:
             1: ("Figure 1: Main Performance Comparison", self.figure_1_main_performance),
             2: ("Figure 2: Scheduler Evolution Analysis", self.figure_2_scheduler_evolution),
             3: ("Figure 3: System Reliability and Efficiency", self.figure_3_reliability_efficiency),
+            4: ("Figure 4: GPU Thermal Management Analysis", self.figure_4_thermal_analysis),
         }
         
         print(f"\nGenerating {len(figure_numbers)} academic publication figure(s) in PDF/EPS/PNG formats...")
@@ -208,13 +217,13 @@ class AcademicVisualizationGenerator:
         print(f"   Ready for academic submission!")
     
     def generate_all_figures(self):
-        """Generate all 3 academic figures with full compliance"""
-        logger.info("Generating all academic figures with full format compliance...")
-        self.generate_selected_figures([1, 2, 3])
-        logger.info("All academic figures generated successfully in multiple formats!")
+        """Generate all 4 academic figures with full compliance"""
+        logger.info("Generating all academic figures (original 1-3 + thermal 4)...")
+        self.generate_selected_figures([1, 2, 3, 4])
+        logger.info("All academic figures generated successfully!")
     
     def figure_1_main_performance(self):
-        """Figure 1: Main Performance Comparison (4 subplots in 2x2 layout)"""
+        """Figure 1: Main Performance Comparison (4 subplots in 2x2 layout) - ORIGINAL VERSION"""
         result = self.analyzer.calculate_improvements()
         
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=self.figsize_dashboard)
@@ -264,7 +273,7 @@ class AcademicVisualizationGenerator:
         ax2.set_ylim(0, 105)
         ax2.grid(axis='y', alpha=0.3)
         
-        # 3. OOM rate comparison
+        # 3. OOM rate comparison (ORIGINAL)
         oom_rates = [result.oom_rate_baseline * 100, result.oom_rate_optimized * 100]
         
         bars = ax3.bar(modes, oom_rates, color=[PAPER_COLORS['oom'], PAPER_COLORS['success']], 
@@ -283,7 +292,7 @@ class AcademicVisualizationGenerator:
         ax3.set_title('(c) Out-of-Memory Errors', fontweight='bold', fontsize=16)
         ax3.grid(axis='y', alpha=0.3)
         
-        # 4. Resource efficiency summary
+        # 4. Resource efficiency summary (ORIGINAL)
         categories = ['GPU\nUtilization', 'Memory\nEfficiency', 'System\nThroughput']
         baseline_vals = [result.avg_gpu_util_baseline, result.avg_memory_baseline, 0.89]
         optimized_vals = [result.avg_gpu_util_optimized, result.avg_memory_optimized, 1.36]
@@ -316,7 +325,7 @@ class AcademicVisualizationGenerator:
         self._save_figure(fig, 'figure_1_main_performance_comparison')
     
     def figure_2_scheduler_evolution(self):
-        """Figure 2: Scheduler Evolution Analysis (4 subplots in 2x2 layout)"""
+        """Figure 2: Scheduler Evolution Analysis (4 subplots in 2x2 layout) - Same as original"""
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=self.figsize_dashboard)
         
         # 1. Three-stage performance progression
@@ -438,7 +447,7 @@ class AcademicVisualizationGenerator:
         self._save_figure(fig, 'figure_2_scheduler_evolution')
     
     def figure_3_reliability_efficiency(self):
-        """Figure 3: System Reliability and Efficiency (4 subplots in 2x2 layout)"""
+        """Figure 3: System Reliability and Efficiency (4 subplots in 2x2 layout) - ORIGINAL VERSION"""
         baseline_df = self.analyzer.load_baseline_data()
         optimized_df = self.analyzer.load_optimized_data()
         result = self.analyzer.calculate_improvements()
@@ -482,7 +491,7 @@ class AcademicVisualizationGenerator:
         ax1.legend(fontsize=12)
         ax1.grid(axis='y', alpha=0.3)
         
-        # 2. Memory usage safety analysis
+        # 2. Memory usage safety analysis (ORIGINAL)
         baseline_memory = baseline_df['gpu_memory_peak'].dropna()
         optimized_memory = optimized_df['gpu_memory_peak'].dropna()
         
@@ -520,7 +529,7 @@ class AcademicVisualizationGenerator:
         ax2.grid(axis='y', alpha=0.3)
         ax2.legend(fontsize=11)
         
-        # 3. GPU utilization efficiency
+        # 3. GPU utilization efficiency (ORIGINAL)
         baseline_gpu = baseline_df['gpu_utilization_avg'].dropna()
         optimized_gpu = optimized_df['gpu_utilization_avg'].dropna()
         
@@ -559,7 +568,7 @@ class AcademicVisualizationGenerator:
         ax3.legend(fontsize=11)
         ax3.grid(axis='y', alpha=0.3)
         
-        # 4. System throughput and cost-effectiveness
+        # 4. System throughput and cost-effectiveness (ORIGINAL)
         # Calculate throughput metrics
         baseline_total_time = baseline_df['execution_time'].sum() / 3600  # hours
         optimized_total_time = optimized_df['execution_time'].sum() / 3600  # hours
@@ -621,6 +630,206 @@ class AcademicVisualizationGenerator:
         plt.tight_layout()
         self._save_figure(fig, 'figure_3_reliability_efficiency')
     
+    def figure_4_thermal_analysis(self):
+        """Figure 4: NEW - Dedicated GPU Thermal Management Analysis"""
+        baseline_df = self.analyzer.load_baseline_data()
+        optimized_df = self.analyzer.load_optimized_data()
+        result = self.analyzer.calculate_improvements()
+        
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=self.figsize_dashboard)
+        
+        # 1. Temperature progression over time
+        if 'gpu_temperature_avg' in baseline_df.columns and 'gpu_temperature_avg' in optimized_df.columns:
+            baseline_temp = baseline_df['gpu_temperature_avg'].dropna()
+            optimized_temp = optimized_df['gpu_temperature_avg'].dropna()
+            
+            if not baseline_temp.empty and not optimized_temp.empty:
+                # Time series simulation (since we don't have actual timestamps)
+                baseline_x = np.arange(len(baseline_temp))
+                optimized_x = np.arange(len(optimized_temp))
+                
+                ax1.plot(baseline_x, baseline_temp, '-', alpha=0.7, linewidth=2, 
+                        color=PAPER_COLORS['baseline'], label='Sequential')
+                ax1.plot(optimized_x, optimized_temp, '-', alpha=0.7, linewidth=2, 
+                        color=PAPER_COLORS['optimized'], label='SpectraBench')
+                
+                # Add temperature zones
+                ax1.axhspan(85, 100, alpha=0.2, color=PAPER_COLORS['thermal_hot'], label='Danger Zone (>85°C)')
+                ax1.axhspan(75, 85, alpha=0.2, color=PAPER_COLORS['thermal_warm'], label='Warning Zone (75-85°C)')
+                ax1.axhspan(40, 75, alpha=0.2, color=PAPER_COLORS['thermal_cool'], label='Safe Zone (<75°C)')
+                
+                ax1.set_xlabel('Task Sequence', fontsize=14)
+                ax1.set_ylabel('GPU Temperature (°C)', fontsize=14)
+                ax1.set_title('(a) Temperature Progression', fontweight='bold', fontsize=16)
+                ax1.legend(fontsize=11)
+                ax1.grid(True, alpha=0.3)
+        
+        # 2. Temperature distribution by model size
+        if 'model_size' in baseline_df.columns and 'gpu_temperature_avg' in baseline_df.columns:
+            # Combine both datasets for model size analysis
+            combined_df = pd.concat([
+                baseline_df[['model_size', 'gpu_temperature_avg']].assign(mode='Sequential'),
+                optimized_df[['model_size', 'gpu_temperature_avg']].assign(mode='SpectraBench')
+            ])
+            
+            # Get unique model sizes
+            model_sizes = combined_df['model_size'].unique()
+            model_sizes = [ms for ms in model_sizes if pd.notna(ms)][:6]  # Top 6 model sizes
+            
+            if model_sizes:
+                x = np.arange(len(model_sizes))
+                width = 0.35
+                
+                baseline_temps = []
+                optimized_temps = []
+                
+                for ms in model_sizes:
+                    baseline_temp = combined_df[(combined_df['model_size'] == ms) & 
+                                              (combined_df['mode'] == 'Sequential')]['gpu_temperature_avg'].mean()
+                    optimized_temp = combined_df[(combined_df['model_size'] == ms) & 
+                                               (combined_df['mode'] == 'SpectraBench')]['gpu_temperature_avg'].mean()
+                    
+                    baseline_temps.append(baseline_temp if pd.notna(baseline_temp) else 0)
+                    optimized_temps.append(optimized_temp if pd.notna(optimized_temp) else 0)
+                
+                bars1 = ax2.bar(x - width/2, baseline_temps, width, label='Sequential', 
+                               color=PAPER_COLORS['baseline'], alpha=0.8, edgecolor='black')
+                bars2 = ax2.bar(x + width/2, optimized_temps, width, label='SpectraBench', 
+                               color=PAPER_COLORS['optimized'], alpha=0.8, edgecolor='black')
+                
+                # Add value labels
+                for bar, temp in zip(bars1, baseline_temps):
+                    if temp > 0:
+                        ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 1,
+                                f'{temp:.1f}°C', ha='center', va='bottom', fontsize=10)
+                
+                for bar, temp in zip(bars2, optimized_temps):
+                    if temp > 0:
+                        ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 1,
+                                f'{temp:.1f}°C', ha='center', va='bottom', fontsize=10)
+                
+                ax2.set_xlabel('Model Size', fontsize=14)
+                ax2.set_ylabel('Average Temperature (°C)', fontsize=14)
+                ax2.set_title('(b) Temperature by Model Size', fontweight='bold', fontsize=16)
+                ax2.set_xticks(x)
+                ax2.set_xticklabels([ms.replace('.', '.') for ms in model_sizes], rotation=45)
+                ax2.legend(fontsize=12)
+                ax2.grid(axis='y', alpha=0.3)
+        
+        # 3. Thermal events analysis
+        if hasattr(result, 'high_temp_events_baseline'):
+            thermal_events = ['High Temp\n(>85°C)', 'Critical Temp\n(>90°C)', 'Safe Operations']
+            
+            # Calculate critical temp events (>90°C)
+            baseline_critical = len(baseline_df[baseline_df['gpu_temperature_peak'] > 90]) if 'gpu_temperature_peak' in baseline_df.columns else 0
+            optimized_critical = len(optimized_df[optimized_df['gpu_temperature_peak'] > 90]) if 'gpu_temperature_peak' in optimized_df.columns else 0
+            
+            baseline_safe = len(baseline_df) - result.high_temp_events_baseline - baseline_critical
+            optimized_safe = len(optimized_df) - result.high_temp_events_optimized - optimized_critical
+            
+            baseline_counts = [result.high_temp_events_baseline, baseline_critical, baseline_safe]
+            optimized_counts = [result.high_temp_events_optimized, optimized_critical, optimized_safe]
+            
+            x = np.arange(len(thermal_events))
+            width = 0.35
+            
+            colors_thermal = [PAPER_COLORS['thermal_warm'], PAPER_COLORS['thermal_hot'], PAPER_COLORS['thermal_cool']]
+            
+            bars1 = ax3.bar(x - width/2, baseline_counts, width, label='Sequential', 
+                           color=colors_thermal, alpha=0.6, edgecolor='black')
+            bars2 = ax3.bar(x + width/2, optimized_counts, width, label='SpectraBench', 
+                           color=colors_thermal, alpha=0.8, edgecolor='black')
+            
+            # Add value labels
+            for bars, counts in [(bars1, baseline_counts), (bars2, optimized_counts)]:
+                for bar, count in zip(bars, counts):
+                    if count > 0:
+                        ax3.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.5,
+                                f'{count}', ha='center', va='bottom', fontsize=12, fontweight='bold')
+            
+            ax3.set_xlabel('Thermal Event Type', fontsize=14)
+            ax3.set_ylabel('Number of Events', fontsize=14)
+            ax3.set_title('(c) Thermal Event Analysis', fontweight='bold', fontsize=16)
+            ax3.set_xticks(x)
+            ax3.set_xticklabels(thermal_events)
+            ax3.legend(fontsize=12)
+            ax3.grid(axis='y', alpha=0.3)
+        
+        # 4. Thermal efficiency improvements
+        if hasattr(result, 'thermal_improvement_percent'):
+            metrics = ['Avg Temperature\nReduction', 'Peak Temperature\nReduction', 'Thermal Events\nReduction']
+            
+            temp_reduction = result.thermal_improvement_percent
+            peak_reduction = ((result.peak_temp_baseline - result.peak_temp_optimized) / result.peak_temp_baseline * 100) if result.peak_temp_baseline > 0 else 0
+            events_reduction = result.thermal_events_reduction_percent
+            
+            improvements = [temp_reduction, peak_reduction, events_reduction]
+            colors_improvement = [PAPER_COLORS['thermal_cool'], PAPER_COLORS['thermal_warm'], PAPER_COLORS['success']]
+            
+            bars = ax4.bar(metrics, improvements, color=colors_improvement, alpha=0.8, 
+                          edgecolor='black', linewidth=1.5)
+            
+            # Add value labels
+            for bar, improvement in zip(bars, improvements):
+                height = bar.get_height()
+                ax4.text(bar.get_x() + bar.get_width()/2., height + 0.5,
+                        f'{improvement:.1f}%', ha='center', va='bottom', 
+                        fontsize=14, fontweight='bold')
+            
+            # Add improvement threshold line
+            ax4.axhline(y=10, color=PAPER_COLORS['success'], linestyle='--', 
+                       linewidth=2, alpha=0.7, label='Target Improvement')
+            
+            ax4.set_ylabel('Improvement (%)', fontsize=14)
+            ax4.set_title('(d) Thermal Management Effectiveness', fontweight='bold', fontsize=16)
+            ax4.legend(fontsize=12)
+            ax4.grid(axis='y', alpha=0.3)
+            ax4.set_ylim(0, max(improvements) * 1.2)
+        
+        plt.suptitle('GPU Thermal Management Analysis', fontsize=20, fontweight='bold')
+        plt.tight_layout()
+        self._save_figure(fig, 'figure_4_gpu_thermal_analysis')
+    
+    def _plot_memory_usage_fallback(self, ax, baseline_df, optimized_df):
+        """Fallback method for memory usage plotting when thermal data is not available"""
+        baseline_memory = baseline_df['gpu_memory_peak'].dropna()
+        optimized_memory = optimized_df['gpu_memory_peak'].dropna()
+        
+        if not baseline_memory.empty and not optimized_memory.empty:
+            # Box plot for memory usage
+            data = [baseline_memory, optimized_memory]
+            categories = ['Sequential', 'SpectraBench']
+            bp = ax.boxplot(data, labels=categories, patch_artist=True, widths=0.6)
+            
+            colors = [PAPER_COLORS['baseline'], PAPER_COLORS['optimized']]
+            for patch, color in zip(bp['boxes'], colors):
+                patch.set_facecolor(color)
+                patch.set_alpha(0.7)
+                patch.set_edgecolor('black')
+                patch.set_linewidth(1.5)
+            
+            # Enhance other elements
+            for element in ['whiskers', 'fliers', 'medians', 'caps']:
+                plt.setp(bp[element], color='black', linewidth=1.5)
+            
+            # Add mean markers and statistics
+            for i, d in enumerate(data):
+                mean_val = np.mean(d)
+                std_val = np.std(d)
+                ax.scatter(i + 1, mean_val, marker='D', s=80, color='white', 
+                          edgecolor='black', linewidth=2, zorder=3)
+                ax.text(i + 1.15, mean_val, f'μ={mean_val:.1f}GB\nσ={std_val:.1f}GB', 
+                       fontsize=10, va='center')
+            
+            # Add safety threshold line
+            ax.axhline(y=70, color=PAPER_COLORS['oom'], linestyle='--', 
+                      linewidth=2, alpha=0.7, label='Safety Threshold')
+            
+            ax.set_ylabel('GPU Memory Usage (GB)', fontsize=14)
+            ax.set_title('(b) Memory Usage Safety', fontweight='bold', fontsize=16)
+            ax.grid(axis='y', alpha=0.3)
+            ax.legend(fontsize=11)
+    
     def _save_figure(self, fig, filename: str):
         """Save figures in academic publication guideline compliant formats"""
         
@@ -650,8 +859,9 @@ class AcademicVisualizationGenerator:
 
 
 def main():
-    print("Academic Compliant Visualization Generator")
+    print("Academic Compliant Visualization Generator with Thermal Analysis")
     print("Generates publication-ready figures in PDF/EPS/PNG formats")
+    print("Original Figures 1-3 + NEW Thermal Figure 4")
     print("=" * 60)
     
     # Initialize analyzer (assuming it exists)
