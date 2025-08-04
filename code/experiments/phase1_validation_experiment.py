@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 def load_models_from_yaml():
-    """Load models from models.yaml"""
     models_file = project_root / "code" / "config" / "models.yaml"
     
     if not models_file.exists():
@@ -39,7 +38,6 @@ def load_models_from_yaml():
 
 
 def load_tasks_from_yaml():
-    """Load tasks from tasks.yaml"""
     tasks_file = project_root / "code" / "config" / "tasks.yaml"
     
     if not tasks_file.exists():
@@ -49,8 +47,6 @@ def load_tasks_from_yaml():
         config = yaml.safe_load(f)
     
     harness_tasks = config.get('harness_tasks', [])
-    
-    # Remove humaneval from tasks
     harness_tasks = [task for task in harness_tasks if 'humaneval' not in task.lower()]
     
     logger.info(f"Loaded {len(harness_tasks)} harness tasks (humaneval excluded)")
@@ -59,7 +55,6 @@ def load_tasks_from_yaml():
 
 
 def create_accuracy_experiment_dir():
-    """Create experiment directory for accuracy convergence analysis"""
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     exp_dir = project_root / "experiments_results" / f"phase1_accuracy_convergence_{timestamp}"
     
@@ -72,7 +67,6 @@ def create_accuracy_experiment_dir():
 
 
 def extract_accuracy_from_results(models: List[Dict], tasks: List[str], experiment_dir: Path) -> Dict[str, Dict[str, float]]:
-    """Extract accuracy metrics from evaluation results"""
     accuracy_results = {}
     
     for model in models:
@@ -80,20 +74,17 @@ def extract_accuracy_from_results(models: List[Dict], tasks: List[str], experime
         model_name = model.get("name", model_id.split("/")[-1])
         sid = model_id.split("/")[-1]
         
-        # Look for result files in experiment directory
         model_results_dir = experiment_dir / "model_results" / sid
         
         if not model_results_dir.exists():
             logger.warning(f"No results directory found for model {sid}")
             continue
         
-        # Find result files
         result_files = list(model_results_dir.glob("*.json"))
         if not result_files:
             logger.warning(f"No result files found for model {sid}")
             continue
         
-        # Load most recent result file
         result_file = max(result_files, key=lambda x: x.stat().st_mtime)
         
         try:
@@ -102,7 +93,6 @@ def extract_accuracy_from_results(models: List[Dict], tasks: List[str], experime
             
             model_accuracy = {}
             
-            # Extract accuracy for each task
             for task in tasks:
                 task_accuracy = extract_task_accuracy(results, task)
                 if task_accuracy is not None:
@@ -121,15 +111,12 @@ def extract_accuracy_from_results(models: List[Dict], tasks: List[str], experime
 
 
 def extract_task_accuracy(results: Dict, task_name: str) -> Optional[float]:
-    """Extract accuracy metric from task results"""
     if not results:
         return None
     
-    # Look for exact task name match first
     if task_name in results:
         return extract_accuracy_from_task_result(results[task_name])
     
-    # Look for partial matches (for subtasks)
     for result_key, result_value in results.items():
         if task_name.lower() in result_key.lower():
             accuracy = extract_accuracy_from_task_result(result_value)
@@ -140,11 +127,9 @@ def extract_task_accuracy(results: Dict, task_name: str) -> Optional[float]:
 
 
 def extract_accuracy_from_task_result(task_result: Dict) -> Optional[float]:
-    """Extract accuracy value from individual task result"""
     if not isinstance(task_result, dict):
         return None
     
-    # Try different accuracy metric names
     accuracy_keys = [
         'accuracy', 'acc', 'accuracy_norm', 'acc_norm',
         'exact_match', 'em', 'f1', 'score'
@@ -156,7 +141,6 @@ def extract_accuracy_from_task_result(task_result: Dict) -> Optional[float]:
             if isinstance(value, (int, float)):
                 return float(value)
     
-    # Try with suffix patterns
     for key, value in task_result.items():
         if any(acc_key in key.lower() for acc_key in ['acc', 'accuracy', 'exact_match', 'em', 'f1']):
             if isinstance(value, (int, float)):
@@ -166,7 +150,6 @@ def extract_accuracy_from_task_result(task_result: Dict) -> Optional[float]:
 
 
 def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], test_limits: List[Optional[int]], exp_dir: Path) -> Dict:
-    """Run accuracy convergence experiment with different limits - FIXED VERSION"""
     logger.info("Starting Accuracy Convergence Experiment")
     
     results = {}
@@ -174,8 +157,7 @@ def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], te
     for limit_idx, limit in enumerate(test_limits):
         logger.info(f"Testing limit {limit_idx + 1}/{len(test_limits)}: {limit}")
         
-        # Configure evaluation_lm for this limit
-        evaluation_lm.ENABLE_TRACKING = False  # Disable all tracking
+        evaluation_lm.ENABLE_TRACKING = False
         evaluation_lm.TRACKING_MODE = "baseline"
         evaluation_lm.models_config = models
         evaluation_lm.tasks = tasks
@@ -195,11 +177,9 @@ def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], te
             logger.info(f"Starting evaluation with limit = {limit}")
             evaluation_lm.main()
             
-            # Extract accuracy results
             logger.info("Extracting accuracy results...")
             accuracy_results = extract_accuracy_from_results(models, tasks, exp_dir)
             
-            # Calculate statistics
             limit_stats = calculate_limit_statistics(accuracy_results, limit)
             
             execution_time = time.time() - start_time
@@ -225,7 +205,6 @@ def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], te
             }
         
         finally:
-            # Clean up environment variable
             if "PHASE1_CUSTOM_LIMIT" in os.environ:
                 del os.environ["PHASE1_CUSTOM_LIMIT"]
                 logger.info("Cleaned up PHASE1_CUSTOM_LIMIT environment variable")
@@ -234,7 +213,6 @@ def run_accuracy_convergence_experiment(models: List[Dict], tasks: List[str], te
 
 
 def calculate_limit_statistics(accuracy_results: Dict[str, Dict[str, float]], limit: Optional[int]) -> Dict[str, float]:
-    """Calculate statistics for a specific limit"""
     if not accuracy_results:
         return {
             'avg_accuracy': 0.0,
@@ -245,7 +223,6 @@ def calculate_limit_statistics(accuracy_results: Dict[str, Dict[str, float]], li
             'num_successful_pairs': 0
         }
     
-    # Collect all accuracy values
     all_accuracies = []
     for model_id, task_accuracies in accuracy_results.items():
         for task, accuracy in task_accuracies.items():
@@ -273,28 +250,23 @@ def calculate_limit_statistics(accuracy_results: Dict[str, Dict[str, float]], li
 
 
 def analyze_accuracy_convergence(results: Dict, exp_dir: Path) -> Tuple[Dict, str]:
-    """Analyze accuracy convergence and find optimal limit"""
     logger.info("Analyzing accuracy convergence")
     
-    # Extract valid results
     valid_results = {k: v for k, v in results.items() if 'error' not in v}
     
     if len(valid_results) < 2:
         logger.error("Insufficient valid results for convergence analysis")
         return {}, "Insufficient data for analysis"
     
-    # Sort by limit
     sorted_limits = sorted(valid_results.keys(), key=lambda x: x if x is not None else float('inf'))
     
-    # Calculate convergence analysis
     convergence_analysis = {
         'convergence_point': None,
-        'convergence_threshold': 0.05,  # 5% change threshold
+        'convergence_threshold': 0.05,
         'performance_data': [],
         'recommendations': []
     }
     
-    # Build performance data
     for limit in sorted_limits:
         if limit in valid_results:
             stats = valid_results[limit]['statistics']
@@ -305,7 +277,6 @@ def analyze_accuracy_convergence(results: Dict, exp_dir: Path) -> Tuple[Dict, st
                 'num_successful_pairs': stats['num_successful_pairs']
             })
     
-    # Find convergence point
     perf_data = convergence_analysis['performance_data']
     convergence_point = None
     
@@ -322,7 +293,6 @@ def analyze_accuracy_convergence(results: Dict, exp_dir: Path) -> Tuple[Dict, st
     
     convergence_analysis['convergence_point'] = convergence_point
     
-    # Generate recommendations
     recommendations = []
     
     if convergence_point is not None:
@@ -337,32 +307,27 @@ def analyze_accuracy_convergence(results: Dict, exp_dir: Path) -> Tuple[Dict, st
         else:
             recommendations.append("High convergence point: Better accuracy but slower execution")
     else:
-        # Find optimal limit based on highest accuracy
         best_limit = max(perf_data, key=lambda x: x['avg_accuracy'])['limit']
         recommendations.append(f"No convergence found within 5% threshold")
         recommendations.append(f"Using highest accuracy limit: {best_limit}")
         convergence_analysis['convergence_point'] = best_limit
     
-    # Add general recommendations
     recommendations.append("Model-task combinations tested: " + str(sum(p['num_successful_pairs'] for p in perf_data)))
     recommendations.append("Accuracy range: " + 
                           f"{min(p['avg_accuracy'] for p in perf_data):.4f} - {max(p['avg_accuracy'] for p in perf_data):.4f}")
     
     convergence_analysis['recommendations'] = recommendations
     
-    # Save analysis
     analysis_file = exp_dir / "analysis" / "accuracy_convergence_analysis.json"
     with open(analysis_file, 'w') as f:
         json.dump(convergence_analysis, f, indent=2, default=str)
     
-    # Generate report
     report = generate_accuracy_convergence_report(convergence_analysis, perf_data, exp_dir)
     
     return convergence_analysis, report
 
 
 def generate_accuracy_convergence_report(analysis: Dict, perf_data: List[Dict], exp_dir: Path) -> str:
-    """Generate comprehensive accuracy convergence report"""
     report_lines = []
     
     report_lines.append("=" * 80)
@@ -372,7 +337,6 @@ def generate_accuracy_convergence_report(analysis: Dict, perf_data: List[Dict], 
     report_lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     report_lines.append("")
     
-    # Experiment overview
     report_lines.append("## EXPERIMENT OVERVIEW")
     report_lines.append("-" * 40)
     report_lines.append(f"Limits tested: {len(perf_data)}")
@@ -382,7 +346,6 @@ def generate_accuracy_convergence_report(analysis: Dict, perf_data: List[Dict], 
         report_lines.append(f"Convergence threshold: {analysis['convergence_threshold']:.1%}")
     report_lines.append("")
     
-    # Performance results
     report_lines.append("## ACCURACY PERFORMANCE BY LIMIT")
     report_lines.append("-" * 40)
     
@@ -395,7 +358,6 @@ def generate_accuracy_convergence_report(analysis: Dict, perf_data: List[Dict], 
     
     report_lines.append("")
     
-    # Convergence analysis
     report_lines.append("## CONVERGENCE ANALYSIS")
     report_lines.append("-" * 40)
     
@@ -409,14 +371,12 @@ def generate_accuracy_convergence_report(analysis: Dict, perf_data: List[Dict], 
     
     report_lines.append("")
     
-    # Recommendations
     report_lines.append("## RECOMMENDATIONS")
     report_lines.append("-" * 40)
     for rec in analysis['recommendations']:
         report_lines.append(f"- {rec}")
     report_lines.append("")
     
-    # Next steps
     report_lines.append("## NEXT STEPS")
     report_lines.append("-" * 40)
     
@@ -432,7 +392,6 @@ def generate_accuracy_convergence_report(analysis: Dict, perf_data: List[Dict], 
     report_lines.append("")
     report_lines.append("=" * 80)
     
-    # Save report
     report_text = "\n".join(report_lines)
     report_file = exp_dir / "analysis" / "accuracy_convergence_report.txt"
     with open(report_file, 'w') as f:
@@ -444,19 +403,15 @@ def generate_accuracy_convergence_report(analysis: Dict, perf_data: List[Dict], 
 
 
 def main():
-    """Main Phase 1 function for accuracy convergence analysis"""
     logger.info("Starting Phase 1: Accuracy Convergence Analysis")
     
     try:
-        # Setup
         exp_dir = create_accuracy_experiment_dir()
         models = load_models_from_yaml()
         tasks = load_tasks_from_yaml()
         
-        # FIXED: Use reasonable test limits
         test_limits = [20, 40, 60, 80, 100, 120]
         
-        # Save experiment config
         config = {
             "experiment_type": "phase1_accuracy_convergence",
             "timestamp": datetime.now().isoformat(),
@@ -475,24 +430,19 @@ def main():
         logger.info(f"Testing limits: {test_limits}")
         logger.info(f"Using 5% convergence threshold for analysis")
         
-        # Run convergence experiment
         results = run_accuracy_convergence_experiment(models, tasks, test_limits, exp_dir)
         
-        # Save raw results
         results_file = exp_dir / "results" / "accuracy_convergence_results.json"
         with open(results_file, 'w') as f:
             json.dump(results, f, indent=2, default=str)
         
-        # Analyze convergence
         analysis, report = analyze_accuracy_convergence(results, exp_dir)
         
-        # Print summary
         print("\n" + "=" * 80)
         print("PHASE 1 ACCURACY CONVERGENCE ANALYSIS COMPLETED")
         print("=" * 80)
         print(report)
         
-        # Return results
         return {
             "success": True,
             "experiment_dir": exp_dir,
