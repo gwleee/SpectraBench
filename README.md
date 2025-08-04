@@ -74,20 +74,59 @@ SpectraBench optimizes LLM evaluation through smart scheduling, using machine le
 
 ## 🚀 Quick Start
 
-### Installation
+### Automated Installation & Execution
+
+For users who want to quickly run experiments:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/gwleee/SpectraBench.git
+cd SpectraBench
+
+# 2. Automated installation (recommended)
+chmod +x install.sh
+./install.sh
+
+# 3. Run experiments
+chmod +x run_experiments.sh
+
+# Quick test (15-30 minutes)
+./run_experiments.sh --quick
+
+# Full comparison (4-8 hours)
+./run_experiments.sh --comparison
+```
+
+### Manual Installation
+
+If you prefer manual setup:
 
 ```bash
 git clone https://github.com/gwleee/SpectraBench.git
 cd SpectraBench
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install --upgrade pip
 pip install -r requirements.txt
+
+# Configure environment variables (optional)
+cp .env.example .env
+# Edit .env with your API keys
 ```
 
 ### Basic Usage
 
-#### Quick Start (Standard Configuration)
+#### Interactive Mode (Standard Approach)
 ```bash
-# Interactive mode - select models and tasks
-python code/experiments/entrance.py
+# Activate environment
+source venv/bin/activate
+
+# Run interactive benchmark
+python entrance.py
 
 # Choose execution mode:
 # 1. Baseline mode (Traditional sequential)
@@ -98,6 +137,17 @@ python code/experiments/entrance.py
 # - Test mode (limit=2): Quick validation for new models/tasks
 # - Full mode (limit=None): Complete benchmark evaluation
 ```
+
+#### Automated Execution Scripts
+
+The repository includes automated scripts for easy experiment execution:
+
+| Script | Purpose | Duration | Best For |
+|--------|---------|----------|----------|
+| `install.sh` | Complete environment setup | 5-15 min | First-time setup |
+| `run_experiments.sh` | Basic test run | 15-30 min | Quick validation |
+| `run_experiments.sh --quick` | Fast test (limit=2) | 15-30 min | Development/testing |
+| `run_experiments.sh --comparison` | Full comparison | 4-8 hours | Comprehensive evaluation |
 
 #### Dataset Limit Configuration
 
@@ -125,7 +175,7 @@ limit = None # Full dataset (production)
 # Use extended configuration (rename files first)
 mv "code/config/models copy.yaml" code/config/models.yaml
 mv "code/config/tasks copy.yaml" code/config/tasks.yaml
-python code/experiments/entrance.py
+python entrance.py
 
 # Run experimental validation
 python code/experiments/phase1_validation_experiment.py  # Limit optimization
@@ -272,31 +322,46 @@ SpectraBench's intelligent scheduling provides significant improvements over tra
 | ✅ **Higher Success Rate** | Adaptive batch sizing reduces failure rates |
 | 🧠 **Learning System** | Gets smarter with each evaluation run |
 
-## 🔬 Experimental Tools
+## 🔬 Research Pipeline
 
-### Phase 1: Limit Convergence Analysis
+SpectraBench development follows a systematic 3-phase research approach:
+
+### Phase 1: Limit Convergence Analysis (Completed)
 ```bash
 python code/experiments/phase1_validation_experiment.py
 ```
-Finds optimal data limit for accuracy convergence.
+**Purpose**: Determines optimal data limits for accuracy convergence analysis.
+**Results**: Integrated into system configurations for efficient testing.
 
-### Phase 2: Threshold Optimization
+### Phase 2: Threshold Optimization (Completed)  
 ```bash
 python code/experiments/phase2_threshold_optimization.py
 ```
-Optimizes stage transition thresholds using Phase 1 results.
+**Purpose**: Optimizes stage transition thresholds based on Phase 1 results.
+**Results**: Applied to `code/config/scheduler_config.yaml` for intelligent scheduling.
 
-### Advanced Threshold Testing
+### Main Experiments (Ready to Use)
 ```bash
-python code/experiments/threshold_optimization.py
+./run_experiments.sh --comparison
 ```
-Comprehensive threshold combination testing with simulation.
+**Purpose**: Executes comprehensive benchmarking using optimized configurations.
+**Results**: Generates performance comparisons and evaluation metrics.
+
+*Note: Phase 1 and Phase 2 optimizations have been completed and their results are integrated into the system. Users can directly run main experiments.*
+
+## 🔬 Additional Analysis Tools
 
 ### Performance Comparison
 ```bash
 python code/experiments/comparison_analyzer.py
 ```
 Detailed baseline vs optimized analysis with visualizations.
+
+### Advanced Threshold Testing (Experimental)
+```bash
+python code/experiments/threshold_optimization.py
+```
+Comprehensive threshold combination testing with simulation.
 
 ## 🛠️ System Requirements
 
@@ -329,11 +394,24 @@ This system has been successfully deployed and tested on the following environme
 
 See `requirements.txt` for complete dependency list.
 
+## 🚀 Quick Start Guide
 
+To quickly run experiments and validate results:
 
+### Quick Validation (15-30 minutes)
+```bash
+git clone https://github.com/gwleee/SpectraBench.git
+cd SpectraBench
+./install.sh
+./run_experiments.sh --quick
+```
 
+### Full Evaluation (4-8 hours)
+```bash
+./run_experiments.sh --comparison
+```
 
-
+The automated scripts handle all configuration and provide detailed logs for analysis. Results are saved in `experiments_results/` with performance tracking in `data/performanceDB/performance_history.db`.
 
 ## 📄 License
 
@@ -351,10 +429,6 @@ Apache License 2.0 - see [LICENSE](license.md) for details.
   note={Supports 22+ models and 21+ benchmarks with intelligent scheduling}
 }
 ```
-
-
-
-
 
 ---
 
