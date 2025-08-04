@@ -1,5 +1,7 @@
 # SpectraBench
 
+[![DOI](https://zenodo.org/badge/1029385925.svg)](https://doi.org/10.5281/zenodo.16735469)
+
 **Intelligent Scheduling System for Large Language Model Benchmarking**
 
 SpectraBench is an advanced benchmarking tool developed by the **AI Platform Team** at **KISTI Large-scale AI Research Center** ([Korea Institute of Science and Technology Information](https://www.kisti.re.kr/)). The Large-scale AI Research Center was officially launched in March 2024, building upon KISTI's generative large language model 'KONI (KISTI Open Natural Intelligence)' unveiled in December 2023. The **AI Platform Team is responsible for developing AI model and Agent service technologies**.
@@ -424,6 +426,7 @@ Apache License 2.0 - see [LICENSE](license.md) for details.
   title={SpectraBench:  A Three-Stage Evolution Framework for Intelligent Large Language Model Evaluation},
   author={KISTI Large-scale AI Research Center},
   year={2025},
+  doi={10.5281/zenodo.16735469},
   url={https://github.com/gwleee/SpectraBench},
   license={Apache-2.0},
   note={Supports 22+ models and 21+ benchmarks with intelligent scheduling}
