@@ -1,6 +1,6 @@
 # SpectraBench
 
-[![DOI](https://zenodo.org/badge/1029385925.svg)](https://doi.org/10.5281/zenodo.16735469)
+[![DOI](https://zenodo.org/badge/1029385925.svg)](https://doi.org/10.5281/zenodo.16741725)
 
 **Intelligent Scheduling System for Large Language Model Benchmarking**
 
@@ -426,7 +426,7 @@ Apache License 2.0 - see [LICENSE](license.md) for details.
   title={SpectraBench:  A Three-Stage Evolution Framework for Intelligent Large Language Model Evaluation},
   author={KISTI Large-scale AI Research Center},
   year={2025},
-  doi={10.5281/zenodo.16735469},
+  doi={10.5281/zenodo.16741725},
   url={https://github.com/gwleee/SpectraBench},
   license={Apache-2.0},
   note={Supports 22+ models and 21+ benchmarks with intelligent scheduling}
