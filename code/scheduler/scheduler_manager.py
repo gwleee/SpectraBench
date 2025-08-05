@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 import time
 import threading
 import sqlite3
-import signal
 
 # Import schedulers
 try:
@@ -48,30 +47,16 @@ class SafeTimeoutHandler:
         self.timed_out = False
     
     def __enter__(self):
-        if hasattr(signal, 'SIGALRM'):
-            def timeout_handler(signum, frame):
-                self.timed_out = True
-                raise TimeoutError(f"Operation timed out after {self.timeout_seconds} seconds")
-            
-            self.old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(self.timeout_seconds)
-        else:
-            def timeout_callback():
-                self.timed_out = True
-            
-            self.timer = threading.Timer(float(self.timeout_seconds), timeout_callback)
-            self.timer.start()
+        def timeout_callback():
+            self.timed_out = True
         
+        self.timer = threading.Timer(float(self.timeout_seconds), timeout_callback)
+        self.timer.start()
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if hasattr(signal, 'SIGALRM'):
-            signal.alarm(0)
-            if hasattr(self, 'old_handler'):
-                signal.signal(signal.SIGALRM, self.old_handler)
-        else:
-            if self.timer:
-                self.timer.cancel()
+        if self.timer:
+            self.timer.cancel()
         
         if self.timed_out and exc_type is None:
             raise TimeoutError(f"Operation timed out after {self.timeout_seconds} seconds")

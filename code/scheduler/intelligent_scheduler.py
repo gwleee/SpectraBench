@@ -1,6 +1,7 @@
 """
 Intelligent Scheduler for LLM Evaluation
 Optimal execution order and resource allocation decisions based on learned data
+FIXED: Added proper caching to prevent infinite logging loops
 FIXED: Added quantization-aware memory estimation
 FIXED: Integrated with DynamicModelClassifier for consistent model analysis
 """
@@ -90,7 +91,7 @@ class TaskPriority:
 
 
 class IntelligentScheduler:
-    """Intelligent scheduler class with quantization-aware memory estimation and DynamicModelClassifier integration"""
+    """Intelligent scheduler class with proper caching, quantization-aware memory estimation and DynamicModelClassifier integration"""
     
     def __init__(self, 
                  performance_tracker: PerformanceTracker,
@@ -109,55 +110,197 @@ class IntelligentScheduler:
         # Initialize DynamicModelClassifier for consistent model analysis
         self.model_classifier = DynamicModelClassifier()
         
+        # FIXED: Add comprehensive caching to prevent repeated computations
+        self.model_classification_cache = {}  # Cache for model classifications
+        self.time_estimation_cache = {}       # Cache for time estimations
+        self.memory_estimation_cache = {}     # Cache for memory estimations
+        self.quantization_type_cache = {}     # Cache for quantization types
+        
+        # Quantization memory reduction factors
+        self.quantization_memory_factors = {
+            '4bit': 0.25,  # 4-bit quantization uses ~25% of original memory
+            '8bit': 0.5,   # 8-bit quantization uses ~50% of original memory
+            'fp16': 0.6,   # FP16 uses ~60% of original memory (some overhead)
+            'fp32': 1.0    # Full precision
+        }
+        
         # Scheduling policies
         self.memory_safety_margin = 0.15  # 15% margin
         self.prefer_small_models_first = True  # Prioritize small models
         self.balance_gpu_load = True  # Balance GPU load distribution
         
-        logger.info(f"IntelligentScheduler initialized with {num_gpus} GPUs (integrated with DynamicModelClassifier)")
+        logger.info(f"IntelligentScheduler initialized with {num_gpus} GPUs (with comprehensive caching)")
     
-    def _extract_model_size(self, model_id: str) -> str:
-        """Extract model size from model ID (deprecated - use DynamicModelClassifier instead)"""
-        logger.warning("Using deprecated _extract_model_size, consider using DynamicModelClassifier")
-        return self._extract_model_size_legacy(model_id)
-    
-    def _estimate_time_by_size(self, model_size: str, task: str) -> float:
-        """Estimate execution time by model size and task (deprecated - use dynamic estimation)"""
-        logger.warning("Using deprecated _estimate_time_by_size, consider using dynamic estimation")
-        # Create a mock model dict for the new method
-        mock_model = {"id": f"mock/{model_size.lower()}-model", "name": f"{model_size} Model"}
-        return self._estimate_time_using_dynamic_classifier(mock_model, task)
-    
-    def _estimate_memory_by_size_quantization_aware(self, model: Dict, task: str) -> float:
-        """Estimate memory usage by model size and task with quantization awareness (deprecated)"""
-        logger.warning("Using deprecated _estimate_memory_by_size_quantization_aware, using dynamic estimation instead")
-        return self._estimate_memory_using_dynamic_classifier(model, task)
-    
-    def _extract_model_size_numeric(self, model_id: str) -> float:
-        """Extract numeric model size in billions (now using DynamicModelClassifier)"""
+    def _estimate_time_using_dynamic_classifier(self, model: Dict, task: str) -> float:
+        """Estimate execution time using DynamicModelClassifier with caching"""
+        model_id = model.get("id", "")
+        cache_key = f"time_{model_id}_{task}"
+        
+        if cache_key in self.time_estimation_cache:
+            return self.time_estimation_cache[cache_key]
+        
         try:
-            mock_model = {"id": model_id, "name": model_id.split("/")[-1]}
-            return self.model_classifier.extract_model_size(mock_model)
-        except:
-            # Fallback to legacy method
-            model_id_lower = model_id.lower()
-            size_patterns = {
-                '0.5b': 0.5, '1.5b': 1.5, '2.1b': 2.1, '2.4b': 2.4,
-                '3b': 3.0, '4b': 4.0, '7b': 7.0, '7.8b': 7.8, '8b': 8.0,
-                '12b': 12.0, '13b': 13.0, '21.4b': 21.4, '30b': 30.0,
-                '32b': 32.0, '70b': 70.0
+            # Get model classification from cache or compute
+            if model_id in self.model_classification_cache:
+                category, size_b, opt_config = self.model_classification_cache[model_id]
+            else:
+                category, size_b, opt_config = self.model_classifier.classify_model(model)
+                self.model_classification_cache[model_id] = (category, size_b, opt_config)
+            
+            # Base time estimation based on model size
+            if size_b <= 1.0:
+                base_time = 300  # 5 minutes
+            elif size_b <= 3.0:
+                base_time = 600  # 10 minutes
+            elif size_b <= 7.0:
+                base_time = 1800  # 30 minutes
+            elif size_b <= 13.0:
+                base_time = 3600  # 1 hour
+            elif size_b <= 30.0:
+                base_time = 7200  # 2 hours
+            else:
+                base_time = 14400  # 4 hours
+            
+            # Task-specific multipliers
+            task_multipliers = {
+                "mmlu": 2.0, "mmlu_pro": 2.5, "bbh": 3.0, "gsm8k": 1.5,
+                "humaneval": 1.2, "hellaswag": 1.0, "winogrande": 1.0,
+                "piqa": 1.0, "arc": 1.3, "haerae": 1.8, "kobest": 1.6, "kmmlu": 2.0
             }
             
-            for pattern, size in size_patterns.items():
-                if pattern in model_id_lower:
-                    return size
+            # Apply task multiplier
+            multiplier = 1.0
+            for task_pattern, mult in task_multipliers.items():
+                if task_pattern in task.lower():
+                    multiplier = mult
+                    break
             
-            return 7.0  # Default
+            estimated_time = base_time * multiplier
+            
+            # Cache the result
+            self.time_estimation_cache[cache_key] = estimated_time
+            logger.debug(f"Time estimation cached: {model_id} on {task}: {estimated_time/3600:.1f}h")
+            
+            return estimated_time
+            
+        except Exception as e:
+            logger.warning(f"Error in dynamic time estimation: {e}")
+            return self._estimate_time_by_size_legacy(model.get("id", ""), task)
     
-    def _apply_quantization_adjustment_old(self, raw_memory: float, model: Dict) -> float:
-        """Old quantization adjustment method (deprecated)"""
-        quantization_type = self._extract_quantization_type(model)
-        return self._apply_quantization_adjustment(raw_memory, quantization_type)
+    def _estimate_memory_using_dynamic_classifier(self, model: Dict, task: str) -> float:
+        """Estimate memory usage using DynamicModelClassifier with caching"""
+        model_id = model.get("id", "")
+        cache_key = f"memory_{model_id}_{task}"
+        
+        if cache_key in self.memory_estimation_cache:
+            return self.memory_estimation_cache[cache_key]
+        
+        try:
+            # Get model classification from cache or compute
+            if model_id in self.model_classification_cache:
+                category, size_b, opt_config = self.model_classification_cache[model_id]
+            else:
+                category, size_b, opt_config = self.model_classifier.classify_model(model)
+                self.model_classification_cache[model_id] = (category, size_b, opt_config)
+            
+            # Base memory estimation (GB) - these are for full precision
+            base_memory = size_b * 2.5  # Rough estimation: 2.5GB per billion parameters
+            
+            # Task-specific adjustment (longer sequences need more memory)
+            if any(t in task.lower() for t in ["mmlu_pro", "bbh", "humaneval", "haerae"]):
+                base_memory *= 1.2
+            
+            # Apply quantization adjustment
+            quantization_type = self._extract_quantization_type(model)
+            adjusted_memory = self._apply_quantization_adjustment(base_memory, quantization_type)
+            
+            # Cache the result
+            self.memory_estimation_cache[cache_key] = adjusted_memory
+            logger.debug(f"Memory estimation cached: {model_id} on {task}: {adjusted_memory:.1f}GB")
+            
+            return adjusted_memory
+            
+        except Exception as e:
+            logger.warning(f"Error in dynamic memory estimation: {e}")
+            return self._estimate_memory_by_size_legacy(model.get("id", ""), task)
+    
+    def _estimate_time_by_size_legacy(self, model_id: str, task: str) -> float:
+        """Legacy time estimation method (fallback)"""
+        model_size = self._extract_model_size_legacy(model_id)
+        
+        # Base times (seconds)
+        base_times = {
+            "0.5B": 300, "1.5B": 600, "2.1B": 900, "2.4B": 1000,
+            "3B": 1200, "4B": 1800, "7B": 3600, "7.8B": 3900, "8B": 4200,
+            "12B": 7200, "13B": 7800, "21.4B": 14400, "30B": 21600,
+            "32B": 23400, "70B": 43200,
+        }
+        
+        # Task-specific multipliers
+        task_multipliers = {
+            "mmlu": 2.0, "mmlu_pro": 2.5, "bbh": 3.0, "gsm8k": 1.5,
+            "humaneval": 1.2, "hellaswag": 1.0,
+        }
+        
+        base_time = 3600  # Default 1 hour
+        for size, time in base_times.items():
+            if size in model_size.upper():
+                base_time = time
+                break
+        
+        # Apply task multiplier
+        multiplier = 1.0
+        for task_pattern, mult in task_multipliers.items():
+            if task_pattern in task.lower():
+                multiplier = mult
+                break
+        
+        return base_time * multiplier
+    
+    def _estimate_memory_by_size_legacy(self, model_id: str, task: str) -> float:
+        """Legacy memory estimation method (fallback)"""
+        model_size = self._extract_model_size_legacy(model_id)
+        
+        # Base memory (GB) - these are for full precision
+        base_memory = {
+            "0.5B": 2, "1.5B": 4, "2.1B": 6, "2.4B": 7, "3B": 8, "4B": 12,
+            "7B": 20, "7.8B": 22, "8B": 24, "12B": 35, "13B": 38,
+            "21.4B": 55, "30B": 75, "32B": 80, "70B": 140,
+        }
+        
+        raw_memory = 20  # Default 20GB
+        for size, mem in base_memory.items():
+            if size in model_size.upper():
+                raw_memory = mem
+                break
+        
+        # Task-specific adjustment (longer sequences need more memory)
+        if any(t in task.lower() for t in ["mmlu_pro", "bbh", "humaneval"]):
+            raw_memory *= 1.2
+        
+        # Apply quantization adjustment
+        mock_model = {"id": model_id, "name": model_id.split("/")[-1]}
+        quantization_type = self._extract_quantization_type(mock_model)
+        adjusted_memory = self._apply_quantization_adjustment(raw_memory, quantization_type)
+        
+        return adjusted_memory
+    
+    def _extract_model_size_legacy(self, model_id: str) -> str:
+        """Extract model size from model ID (legacy method)"""
+        model_id_lower = model_id.lower()
+        
+        size_patterns = [
+            "70b", "32b", "30b", "21.4b", "21-4b",
+            "13b", "12b", "8b", "7.8b", "7-8b", "7b",
+            "4b", "3b", "2.4b", "2-4b", "2.1b", "2-1b",
+            "1.5b", "1-5b", "0.5b", "0-5b", "500m"
+        ]
+        
+        for pattern in size_patterns:
+            if pattern in model_id_lower:
+                return pattern.upper().replace("-", ".")
+        
+        return "7B"  # Default
     
     def create_optimal_schedule(self, 
                               models: List[Dict], 
@@ -173,12 +316,37 @@ class IntelligentScheduler:
         """
         schedule = []
         
-        # Calculate priority for all model-task combinations
+        logger.info(f"Creating schedule for {len(models)} models and {len(tasks)} tasks")
+        
+        # Pre-populate caches to avoid repeated computations
+        logger.info("Pre-populating model classification cache...")
         for model in models:
-            for task in tasks:
-                priority = self._calculate_priority(model, task)
-                if priority:
-                    schedule.append(priority)
+            model_id = model.get("id", "")
+            if model_id not in self.model_classification_cache:
+                try:
+                    category, size_b, opt_config = self.model_classifier.classify_model(model)
+                    self.model_classification_cache[model_id] = (category, size_b, opt_config)
+                    logger.debug(f"Pre-cached classification: {model_id} -> {category} ({size_b:.1f}B)")
+                except Exception as e:
+                    logger.warning(f"Failed to classify {model_id}: {e}")
+                    self.model_classification_cache[model_id] = ("medium", 7.0, {})
+        
+        # Calculate priority for all model-task combinations
+        logger.info("Computing task priorities...")
+        for i, model in enumerate(models):
+            for j, task in enumerate(tasks):
+                try:
+                    priority = self._calculate_priority(model, task)
+                    if priority:
+                        schedule.append(priority)
+                    
+                    # Progress logging (reduced frequency)
+                    if (i * len(tasks) + j + 1) % 20 == 0:
+                        logger.info(f"Processed {i * len(tasks) + j + 1}/{len(models) * len(tasks)} combinations")
+                        
+                except Exception as e:
+                    logger.error(f"Error calculating priority for {model.get('id', '')} on {task}: {e}")
+                    continue
         
         # Sort by priority
         schedule.sort(key=lambda x: x.priority_score, reverse=True)
@@ -190,14 +358,14 @@ class IntelligentScheduler:
         return schedule
     
     def _calculate_priority(self, model: Dict, task: str) -> Optional[TaskPriority]:
-        """Calculate priority for individual task using DynamicModelClassifier"""
+        """Calculate priority for individual task using comprehensive caching"""
         model_id = model.get("id", "")
         model_name = model.get("name", model_id.split("/")[-1])
         
         # Performance prediction
         prediction = self.performance_tracker.predict_execution(model_id, task)
         
-        # Use dynamic estimation with DynamicModelClassifier
+        # Use cached estimations
         if prediction['predicted_time'] is None:
             estimated_time = self._estimate_time_using_dynamic_classifier(model, task)
             estimated_memory = self._estimate_memory_using_dynamic_classifier(model, task)
@@ -211,20 +379,16 @@ class IntelligentScheduler:
             success_probability = prediction['success_rate'] or 0.8
         
         # Calculate OOM risk with quantization consideration
-        oom_risk = prediction.get('oom_rate', 0.0)
-        if oom_risk is None:
-            oom_risk = 0.0
-        
-        # Adjust OOM risk based on quantization
+        oom_risk = prediction.get('oom_rate', 0.0) or 0.0
         quantization_type = self._extract_quantization_type(model)
         if quantization_type in ['4bit', '8bit']:
             oom_risk *= (0.7 if quantization_type == '4bit' else 0.8)
         
-        # Get model classification for priority calculation
-        try:
-            category, size_b, opt_config = self.model_classifier.classify_model(model)
+        # Get model classification for priority calculation (from cache)
+        if model_id in self.model_classification_cache:
+            category, size_b, opt_config = self.model_classification_cache[model_id]
             model_size_str = f"{size_b:.1f}B"
-        except:
+        else:
             model_size_str = self._extract_model_size_legacy(model_id)
         
         # Calculate priority score
@@ -260,27 +424,36 @@ class IntelligentScheduler:
         )
     
     def _extract_quantization_type(self, model: Dict) -> str:
-        """Extract quantization type from model configuration"""
-        model_id = model.get("id", "").lower()
+        """Extract quantization type from model configuration with caching"""
+        model_id = model.get("id", "")
+        
+        if model_id in self.quantization_type_cache:
+            return self.quantization_type_cache[model_id]
+        
+        model_id_lower = model_id.lower()
         model_name = model.get("name", "").lower()
         
-        if any(q in model_id for q in ['4bit', '4-bit', 'bnb-4bit']):
-            return '4bit'
-        elif any(q in model_id for q in ['8bit', '8-bit', 'int8']):
-            return '8bit'
-        elif any(q in model_id for q in ['fp16', 'half']):
-            return 'fp16'
-        elif any(q in model_id for q in ['fp32', 'float32']):
-            return 'fp32'
+        if any(q in model_id_lower for q in ['4bit', '4-bit', 'bnb-4bit']):
+            quantization_type = '4bit'
+        elif any(q in model_id_lower for q in ['8bit', '8-bit', 'int8']):
+            quantization_type = '8bit'
+        elif any(q in model_id_lower for q in ['fp16', 'half']):
+            quantization_type = 'fp16'
+        elif any(q in model_id_lower for q in ['fp32', 'float32']):
+            quantization_type = 'fp32'
         else:
             # Infer quantization based on model size (large models likely use quantization)
             model_size_numeric = self._extract_model_size_numeric(model_id)
             if model_size_numeric >= 30:
-                return '8bit'  # Large models likely use 8bit quantization
+                quantization_type = '8bit'  # Large models likely use 8bit quantization
             elif model_size_numeric >= 10:
-                return 'fp16'
+                quantization_type = 'fp16'
             else:
-                return 'fp16'
+                quantization_type = 'fp16'
+        
+        # Cache the result
+        self.quantization_type_cache[model_id] = quantization_type
+        return quantization_type
     
     def _extract_model_size_numeric(self, model_id: str) -> float:
         """Extract numeric model size in billions"""
@@ -301,9 +474,8 @@ class IntelligentScheduler:
         
         return 7.0  # Default
     
-    def _apply_quantization_adjustment(self, raw_memory: float, model: Dict) -> float:
+    def _apply_quantization_adjustment(self, raw_memory: float, quantization_type: str) -> float:
         """Apply quantization adjustment to memory prediction"""
-        quantization_type = self._extract_quantization_type(model)
         adjustment_factor = self.quantization_memory_factors.get(quantization_type, 1.0)
         adjusted_memory = raw_memory * adjustment_factor
         
@@ -312,49 +484,7 @@ class IntelligentScheduler:
             overhead_factor = 1.1  # 10% overhead for quantization
             adjusted_memory *= overhead_factor
         
-        logger.debug(f"Memory adjustment: {raw_memory:.1f}GB -> {adjusted_memory:.1f}GB "
-                    f"(quantization: {quantization_type}, factor: {adjustment_factor:.2f})")
-        
         return max(adjusted_memory, 1.0)  # Minimum 1GB
-    
-    def _estimate_memory_by_size_quantization_aware(self, model: Dict, task: str) -> float:
-        """Estimate memory usage by model size and task with quantization awareness (GB)"""
-        model_id = model.get("id", "")
-        model_size = self._extract_model_size(model_id)
-        
-        # Base memory (GB) - these are for full precision
-        base_memory = {
-            "0.5B": 2,
-            "1.5B": 4,
-            "2.1B": 6,
-            "2.4B": 7,
-            "3B": 8,
-            "4B": 12,
-            "7B": 20,
-            "7.8B": 22,
-            "8B": 24,
-            "12B": 35,
-            "13B": 38,
-            "21.4B": 55,
-            "30B": 75,
-            "32B": 80,  # Base full precision memory
-            "70B": 140,
-        }
-        
-        raw_memory = 20  # Default 20GB
-        for size, mem in base_memory.items():
-            if size in model_size.upper():
-                raw_memory = mem
-                break
-        
-        # Task-specific adjustment (longer sequences need more memory)
-        if any(t in task.lower() for t in ["mmlu_pro", "bbh", "humaneval"]):
-            raw_memory *= 1.2
-        
-        # Apply quantization adjustment
-        adjusted_memory = self._apply_quantization_adjustment(raw_memory, model)
-        
-        return adjusted_memory
     
     def _compute_priority_score(self, 
                               estimated_time: float,
@@ -362,10 +492,7 @@ class IntelligentScheduler:
                               success_probability: float,
                               oom_risk: float,
                               model_size: str) -> float:
-        """Calculate priority score
-        
-        Higher score = Higher priority
-        """
+        """Calculate priority score - Higher score = Higher priority"""
         # Base score (success probability)
         score = success_probability * 100
         
@@ -430,86 +557,26 @@ class IntelligentScheduler:
             
             return 1.0  # Default value
     
-    def _extract_model_size(self, model_id: str) -> str:
-        """Extract model size from model ID"""
-        model_id_lower = model_id.lower()
-        
-        size_patterns = [
-            "70b", "32b", "30b", "21.4b", "21-4b",
-            "13b", "12b", "8b", "7.8b", "7-8b", "7b",
-            "4b", "3b", "2.4b", "2-4b", "2.1b", "2-1b",
-            "1.5b", "1-5b", "0.5b", "0-5b", "500m"
-        ]
-        
-        for pattern in size_patterns:
-            if pattern in model_id_lower:
-                return pattern.upper().replace("-", ".")
-        
-        return "unknown"
-    
-    def _estimate_time_by_size(self, model_size: str, task: str) -> float:
-        """Estimate execution time by model size and task (seconds)"""
-        # Base times (seconds)
-        base_times = {
-            "0.5B": 300,
-            "1.5B": 600,
-            "2.1B": 900,
-            "2.4B": 1000,
-            "3B": 1200,
-            "4B": 1800,
-            "7B": 3600,
-            "7.8B": 3900,
-            "8B": 4200,
-            "12B": 7200,
-            "13B": 7800,
-            "21.4B": 14400,
-            "30B": 21600,
-            "32B": 23400,
-            "70B": 43200,
-        }
-        
-        # Task-specific multipliers
-        task_multipliers = {
-            "mmlu": 2.0,
-            "mmlu_pro": 2.5,
-            "bbh": 3.0,
-            "gsm8k": 1.5,
-            "humaneval": 1.2,
-            "hellaswag": 1.0,
-        }
-        
-        base_time = 3600  # Default 1 hour
-        for size, time in base_times.items():
-            if size in model_size.upper():
-                base_time = time
-                break
-        
-        # Apply task multiplier
-        multiplier = 1.0
-        for task_pattern, mult in task_multipliers.items():
-            if task_pattern in task.lower():
-                multiplier = mult
-                break
-        
-        return base_time * multiplier
-    
     def _suggest_batch_size(self, estimated_memory: float) -> int:
         """Suggest batch size based on estimated memory usage"""
         # Check currently available memory
-        current_snapshot = self.resource_monitor.get_current_snapshot()
-        if current_snapshot:
-            available_memory = current_snapshot.gpu_memory_total * (1 - self.memory_safety_margin)
-            available_memory -= current_snapshot.gpu_memory_used
-            
-            if available_memory <= 0:
-                return 1
-            
-            # Estimate memory per batch
-            memory_per_batch = estimated_memory
-            
-            # Calculate safe batch size
-            safe_batch_size = int(available_memory / memory_per_batch)
-            return max(1, min(safe_batch_size, 8))  # Max 8
+        try:
+            current_snapshot = self.resource_monitor.get_current_snapshot()
+            if current_snapshot:
+                available_memory = current_snapshot.gpu_memory_total * (1 - self.memory_safety_margin)
+                available_memory -= current_snapshot.gpu_memory_used
+                
+                if available_memory <= 0:
+                    return 1
+                
+                # Estimate memory per batch
+                memory_per_batch = estimated_memory
+                
+                # Calculate safe batch size
+                safe_batch_size = int(available_memory / memory_per_batch)
+                return max(1, min(safe_batch_size, 8))  # Max 8
+        except Exception as e:
+            logger.debug(f"Error getting resource snapshot: {e}")
         
         # Default values based on adjusted memory
         if estimated_memory < 10:
@@ -588,20 +655,16 @@ class IntelligentScheduler:
     
     def get_next_task(self, schedule: List[TaskPriority], 
                      completed_tasks: List[Tuple[str, str]]) -> Optional[TaskPriority]:
-        """Select next task to execute
-        
-        Args:
-            schedule: Complete schedule
-            completed_tasks: List of completed (model_id, task_name) tuples
-            
-        Returns:
-            Next task to execute or None
-        """
+        """Select next task to execute"""
         # Set of completed tasks
         completed_set = set(completed_tasks)
         
         # Check current resource status
-        current_resources = self.resource_monitor.get_current_snapshot()
+        try:
+            current_resources = self.resource_monitor.get_current_snapshot()
+        except Exception as e:
+            logger.debug(f"Error getting resource snapshot: {e}")
+            current_resources = None
         
         for task in schedule:
             # Skip already completed tasks
@@ -620,32 +683,33 @@ class IntelligentScheduler:
         if not resources:
             return True  # Assume executable if no resource info
         
-        # Check GPU memory
-        required_memory = task.estimated_memory
-        available_memory = resources.gpu_memory_total - resources.gpu_memory_used
-        available_memory *= (1 - self.memory_safety_margin)  # Safety margin
-        
-        if required_memory > available_memory:
-            logger.warning(f"Not enough memory for {task.model_id} on {task.task_name}: "
-                         f"required={required_memory:.1f}GB, available={available_memory:.1f}GB")
-            return False
-        
-        # Check GPU temperature (optional)
-        if resources.gpu_temperature > 85:  # Above 85°C
-            logger.warning(f"GPU too hot ({resources.gpu_temperature}°C), waiting...")
-            return False
-        
-        return True
+        try:
+            # Check GPU memory
+            required_memory = task.estimated_memory
+            available_memory = resources.gpu_memory_total - resources.gpu_memory_used
+            available_memory *= (1 - self.memory_safety_margin)  # Safety margin
+            
+            if required_memory > available_memory:
+                logger.warning(f"Not enough memory for {task.model_id} on {task.task_name}: "
+                             f"required={required_memory:.1f}GB, available={available_memory:.1f}GB")
+                return False
+            
+            # Check GPU temperature (optional)
+            if resources.gpu_temperature > 85:  # Above 85°C
+                logger.warning(f"GPU too hot ({resources.gpu_temperature}°C), waiting...")
+                return False
+            
+            return True
+        except Exception as e:
+            logger.debug(f"Error in resource check: {e}")
+            return True  # If check fails, assume it's runnable
     
     def update_schedule_after_completion(self, schedule: List[TaskPriority],
                                        completed_task: TaskPriority,
                                        actual_time: float,
                                        actual_memory: float,
                                        status: str):
-        """Update schedule after task completion
-        
-        Adjust predictions for remaining tasks based on actual execution results
-        """
+        """Update schedule after task completion"""
         if status != "completed":
             # Lower priority for similar tasks if failed
             for task in schedule:
@@ -654,26 +718,28 @@ class IntelligentScheduler:
                     task.priority_score *= 0.8  # 20% penalty
         
         # Calculate prediction accuracy
-        time_error = abs(actual_time - completed_task.estimated_time) / completed_task.estimated_time
-        memory_error = abs(actual_memory - completed_task.estimated_memory) / completed_task.estimated_memory
-        
-        # Re-estimate similar tasks if large error
-        if time_error > 0.5 or memory_error > 0.5:
-            logger.info(f"Large prediction error for {completed_task.model_id} on {completed_task.task_name}")
-            logger.info(f"Time error: {time_error*100:.1f}%, Memory error: {memory_error*100:.1f}%")
+        try:
+            time_error = abs(actual_time - completed_task.estimated_time) / completed_task.estimated_time
+            memory_error = abs(actual_memory - completed_task.estimated_memory) / completed_task.estimated_memory
             
-            # Adjust other tasks from same model
-            adjustment_factor = actual_time / completed_task.estimated_time
-            for task in schedule:
-                if task.model_id == completed_task.model_id:
-                    task.estimated_time *= adjustment_factor
-                    task.estimated_memory = (task.estimated_memory + actual_memory) / 2
-        
-        # Re-sort schedule
-        schedule.sort(key=lambda x: x.priority_score, reverse=True)
+            # Re-estimate similar tasks if large error
+            if time_error > 0.5 or memory_error > 0.5:
+                logger.info(f"Large prediction error for {completed_task.model_id} on {completed_task.task_name}")
+                logger.info(f"Time error: {time_error*100:.1f}%, Memory error: {memory_error*100:.1f}%")
+                
+                # Adjust other tasks from same model
+                adjustment_factor = actual_time / completed_task.estimated_time
+                for task in schedule:
+                    if task.model_id == completed_task.model_id:
+                        task.estimated_time *= adjustment_factor
+                        task.estimated_memory = (task.estimated_memory + actual_memory) / 2
+            
+            # Re-sort schedule
+            schedule.sort(key=lambda x: x.priority_score, reverse=True)
+        except Exception as e:
+            logger.debug(f"Error updating schedule: {e}")
     
-    def export_schedule(self, schedule: List[TaskPriority], 
-                       filepath: Path):
+    def export_schedule(self, schedule: List[TaskPriority], filepath: Path):
         """Export schedule to file"""
         # Add timestamp to filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -688,6 +754,7 @@ class IntelligentScheduler:
                 'num_gpus': self.num_gpus,
                 'integrated_with_dynamic_classifier': True,
                 'quantization_aware': True,
+                'comprehensive_caching': True,
             },
             'schedule': [
                 {
@@ -711,3 +778,20 @@ class IntelligentScheduler:
             json.dump(data, f, indent=2)
         
         logger.info(f"Schedule exported to {filepath}")
+    
+    def get_cache_statistics(self) -> Dict[str, int]:
+        """Get cache statistics for debugging"""
+        return {
+            'model_classifications': len(self.model_classification_cache),
+            'time_estimations': len(self.time_estimation_cache),
+            'memory_estimations': len(self.memory_estimation_cache),
+            'quantization_types': len(self.quantization_type_cache)
+        }
+    
+    def clear_caches(self):
+        """Clear all caches (useful for testing)"""
+        self.model_classification_cache.clear()
+        self.time_estimation_cache.clear()
+        self.memory_estimation_cache.clear()
+        self.quantization_type_cache.clear()
+        logger.info("All caches cleared")

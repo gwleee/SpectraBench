@@ -1,24 +1,22 @@
 """
 Configuration Manager for SpectraBench
-Centralized configuration management with environment-specific overrides
+Enhanced with complete mode independence and dynamic configuration
 """
 import os
 import yaml
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional, Union, List
+from typing import Dict, List, Optional, Union, Any
 from dataclasses import dataclass
 import logging
 from datetime import datetime
-from typing import Optional, Dict
+import threading
 
-# Logging setup
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class StageTransitionConfig:
-    """Configuration for stage transitions"""
     min_learning_data: int
     stable_learning_data: int
     hybrid_confidence_threshold: float
@@ -28,7 +26,6 @@ class StageTransitionConfig:
 
 @dataclass
 class MLModelConfig:
-    """Configuration for ML models"""
     random_forest: Dict[str, Any]
     training: Dict[str, Any]
     retraining: Dict[str, Any]
@@ -36,7 +33,6 @@ class MLModelConfig:
 
 @dataclass
 class ResourceConfig:
-    """Configuration for resource management"""
     memory: Dict[str, Any]
     gpu: Dict[str, Any]
     multi_gpu: Dict[str, Any]
@@ -44,7 +40,6 @@ class ResourceConfig:
 
 @dataclass
 class SchedulingConfig:
-    """Configuration for scheduling algorithms"""
     priority_weights: Dict[str, float]
     optimization: Dict[str, Any]
     rollback: Dict[str, Any]
@@ -52,7 +47,6 @@ class SchedulingConfig:
 
 @dataclass
 class MonitoringConfig:
-    """Configuration for monitoring and logging"""
     performance: Dict[str, Any]
     resource: Dict[str, Any]
     alerts: Dict[str, Any]
@@ -60,7 +54,6 @@ class MonitoringConfig:
 
 @dataclass
 class ExperimentConfig:
-    """Configuration for experiments"""
     threshold_optimization: Dict[str, Any]
     validation: Dict[str, Any]
     ab_testing: Dict[str, Any]
@@ -68,33 +61,32 @@ class ExperimentConfig:
 
 @dataclass
 class SystemConfig:
-    """Configuration for system settings"""
     database: Dict[str, Any]
     model_persistence: Dict[str, Any]
     logging: Dict[str, Any]
 
 
 class ConfigManager:
-    """Centralized configuration management"""
-    
     def __init__(self, config_path: Optional[Union[str, Path]] = None, 
-                 environment: str = "development"):
-        """
-        Initialize configuration manager
+                 environment: str = "development", mode: str = None):
         
-        Args:
-            config_path: Path to configuration file
-            environment: Environment name (development, testing, production)
-        """
+        if mode is None:
+            raise ValueError("Mode must be explicitly specified for proper isolation")
+        
         self.environment = environment
+        self.mode = mode
         
-        # Default config path
+        process_id = os.getpid()
+        thread_id = threading.current_thread().ident
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
+        
+        self.instance_id = f"{environment}_{mode}_{timestamp}_{process_id}_{thread_id}"
+        
         if config_path is None:
-            # Look for config file in the correct location
             possible_paths = [
-                Path(__file__).parent / "scheduler_config.yaml",  # Same directory as config_manager.py
-                Path.cwd() / "code" / "config" / "scheduler_config.yaml",  # From project root
-                Path(__file__).parent.parent.parent / "code" / "config" / "scheduler_config.yaml"  # Relative path
+                Path(__file__).parent / "scheduler_config.yaml",
+                Path.cwd() / "code" / "config" / "scheduler_config.yaml",
+                Path(__file__).parent.parent.parent / "code" / "config" / "scheduler_config.yaml"
             ]
             
             config_path = None
@@ -108,11 +100,9 @@ class ConfigManager:
         
         self.config_path = Path(config_path)
         
-        # Load configuration
         self._raw_config = self._load_config()
         self._apply_environment_overrides()
         
-        # Parse configuration sections
         self.stage_transitions = self._parse_stage_transitions()
         self.ml_models = self._parse_ml_models()
         self.resource_management = self._parse_resource_management()
@@ -121,10 +111,9 @@ class ConfigManager:
         self.experiments = self._parse_experiments()
         self.system = self._parse_system()
         
-        logger.info(f"Configuration loaded for environment: {environment}")
+        logger.info(f"ConfigManager initialized: environment={environment}, mode={mode}, instance={self.instance_id}")
     
     def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from file"""
         try:
             with open(self.config_path, 'r') as f:
                 config = yaml.safe_load(f)
@@ -137,14 +126,12 @@ class ConfigManager:
             raise
     
     def _apply_environment_overrides(self):
-        """Apply environment-specific configuration overrides"""
         if 'environments' in self._raw_config and self.environment in self._raw_config['environments']:
             env_config = self._raw_config['environments'][self.environment]
             self._deep_merge(self._raw_config, env_config)
             logger.info(f"Applied environment overrides for: {self.environment}")
     
     def _deep_merge(self, base: Dict, override: Dict):
-        """Deep merge two dictionaries"""
         for key, value in override.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
                 self._deep_merge(base[key], value)
@@ -152,7 +139,6 @@ class ConfigManager:
                 base[key] = value
     
     def _parse_stage_transitions(self) -> StageTransitionConfig:
-        """Parse stage transition configuration"""
         config = self._raw_config.get('stage_transitions', {})
         
         return StageTransitionConfig(
@@ -164,7 +150,6 @@ class ConfigManager:
         )
     
     def _parse_ml_models(self) -> MLModelConfig:
-        """Parse ML model configuration"""
         config = self._raw_config.get('ml_models', {})
         
         return MLModelConfig(
@@ -187,7 +172,6 @@ class ConfigManager:
         )
     
     def _parse_resource_management(self) -> ResourceConfig:
-        """Parse resource management configuration"""
         config = self._raw_config.get('resource_management', {})
         
         return ResourceConfig(
@@ -209,7 +193,6 @@ class ConfigManager:
         )
     
     def _parse_scheduling(self) -> SchedulingConfig:
-        """Parse scheduling configuration"""
         config = self._raw_config.get('scheduling', {})
         
         return SchedulingConfig(
@@ -233,7 +216,6 @@ class ConfigManager:
         )
     
     def _parse_monitoring(self) -> MonitoringConfig:
-        """Parse monitoring configuration"""
         config = self._raw_config.get('monitoring', {})
         
         return MonitoringConfig(
@@ -259,7 +241,6 @@ class ConfigManager:
         )
     
     def _parse_experiments(self) -> ExperimentConfig:
-        """Parse experiment configuration"""
         config = self._raw_config.get('experiments', {})
         
         return ExperimentConfig(
@@ -281,7 +262,6 @@ class ConfigManager:
         )
     
     def _parse_system(self) -> SystemConfig:
-        """Parse system configuration"""
         config = self._raw_config.get('system', {})
         
         return SystemConfig(
@@ -304,7 +284,6 @@ class ConfigManager:
         )
     
     def get_domain_thresholds(self, model_size: str) -> Dict[str, int]:
-        """Get domain-specific thresholds for model size"""
         if not self.stage_transitions.dynamic_thresholds:
             return {
                 'min_learning_data': self.stage_transitions.min_learning_data,
@@ -317,11 +296,9 @@ class ConfigManager:
                 'stable_learning_data': self.stage_transitions.stable_learning_data
             }
         
-        # Determine domain based on model size
         if model_size in ['small_models', 'medium_models', 'large_models']:
             domain = model_size
         else:
-            # Infer domain from model characteristics
             size_lower = model_size.lower()
             if any(x in size_lower for x in ['0.5b', '1.5b', '2.1b', '3b']):
                 domain = 'small_models'
@@ -340,10 +317,8 @@ class ConfigManager:
         }
     
     def get_model_config_for_size(self, model_size: str) -> Dict[str, Any]:
-        """Get model-specific configuration"""
         base_config = self.ml_models.random_forest.copy()
         
-        # Adjust parameters based on model size
         if 'large' in model_size.lower():
             base_config['n_estimators'] = min(base_config.get('n_estimators', 100), 50)
             base_config['max_depth'] = min(base_config.get('max_depth', 10), 8)
@@ -353,23 +328,18 @@ class ConfigManager:
         return base_config
     
     def validate_config(self) -> List[str]:
-        """Validate configuration and return list of warnings/errors"""
         warnings = []
         
-        # Validate stage transitions
         if self.stage_transitions.min_learning_data >= self.stage_transitions.stable_learning_data:
             warnings.append("min_learning_data should be less than stable_learning_data")
         
-        # Validate priority weights
         weight_sum = sum(self.scheduling.priority_weights.values())
         if abs(weight_sum - 1.0) > 0.01:
             warnings.append(f"Priority weights sum to {weight_sum:.3f}, should be 1.0")
         
-        # Validate resource thresholds
         if self.resource_management.memory['safety_margin'] > 0.5:
             warnings.append("Memory safety margin seems too high (>50%)")
         
-        # Validate paths
         db_path = Path(self.system.database['path'])
         if not db_path.parent.exists():
             warnings.append(f"Database directory does not exist: {db_path.parent}")
@@ -377,7 +347,6 @@ class ConfigManager:
         return warnings
     
     def save_config(self, output_path: Optional[Union[str, Path]] = None):
-        """Save current configuration to file"""
         if output_path is None:
             output_path = self.config_path
         
@@ -390,19 +359,19 @@ class ConfigManager:
         logger.info(f"Configuration saved to: {output_path}")
     
     def update_thresholds(self, min_learning_data: int, stable_learning_data: int):
-        """Update stage transition thresholds"""
         self._raw_config['stage_transitions']['min_learning_data'] = min_learning_data
         self._raw_config['stage_transitions']['stable_learning_data'] = stable_learning_data
         
-        # Refresh parsed configuration
         self.stage_transitions = self._parse_stage_transitions()
         
         logger.info(f"Updated thresholds: min_learning_data={min_learning_data}, "
                    f"stable_learning_data={stable_learning_data}")
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert configuration to dictionary"""
         return {
+            'instance_id': self.instance_id,
+            'mode': self.mode,
+            'environment': self.environment,
             'stage_transitions': self.stage_transitions.__dict__,
             'ml_models': self.ml_models.__dict__,
             'resource_management': self.resource_management.__dict__,
@@ -413,30 +382,26 @@ class ConfigManager:
         }
     
     def __str__(self) -> str:
-        """String representation of configuration"""
-        return f"ConfigManager(environment={self.environment}, " \
+        return f"ConfigManager(environment={self.environment}, mode={self.mode}, " \
+               f"instance={self.instance_id}, " \
                f"min_learning_data={self.stage_transitions.min_learning_data}, " \
                f"stable_learning_data={self.stage_transitions.stable_learning_data})"
                
     def apply_phase_results(self, phase1_result: Optional[Dict] = None, phase2_result: Optional[Dict] = None):
-        """Apply Phase 1 and Phase 2 experimental results"""
         if phase1_result:
-            # Apply Phase 1 limit convergence results
             recommended_limit = phase1_result.get('recommended_limit')
             if recommended_limit:
-                # Update experiment configuration for future use
                 if 'experiments' not in self._raw_config:
                     self._raw_config['experiments'] = {}
                 if 'validation' not in self._raw_config['experiments']:
                     self._raw_config['experiments']['validation'] = {}
                 
                 self._raw_config['experiments']['validation']['recommended_limit'] = recommended_limit
-                self.experiments = self._parse_experiments()  # Refresh parsed config
+                self.experiments = self._parse_experiments()
                 
                 logger.info(f"Applied Phase 1 result: recommended_limit={recommended_limit}")
     
         if phase2_result:
-            # Apply Phase 2 threshold optimization results
             optimal_config = phase2_result.get('optimal_configuration', {})
             
             if 'stage1_threshold' in optimal_config:
@@ -464,88 +429,114 @@ class ConfigManager:
                     self._raw_config['experiments']['validation'] = {}
                 
                 self._raw_config['experiments']['validation']['optimal_limit'] = optimal_config['limit']
-                self.experiments = self._parse_experiments()  # Refresh parsed config
+                self.experiments = self._parse_experiments()
             
             logger.info(f"Applied Phase 2 results: "
                     f"min_learning_data={self.stage_transitions.min_learning_data}, "
                     f"stable_learning_data={self.stage_transitions.stable_learning_data}")
 
-def save_config_with_backup(self, output_path: Optional[Union[str, Path]] = None):
-    """Save configuration with backup"""
-    if output_path is None:
-        output_path = self.config_path
-    
-    output_path = Path(output_path)
-    
-    # Create backup if original exists
-    if output_path.exists():
-        backup_path = output_path.with_suffix(f'.backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.yaml')
-        import shutil
-        shutil.copy2(output_path, backup_path)
-        logger.info(f"Created backup: {backup_path}")
-    
-    # Save current config
-    self.save_config(output_path)
+    def save_config_with_backup(self, output_path: Optional[Union[str, Path]] = None):
+        if output_path is None:
+            output_path = self.config_path
+        
+        output_path = Path(output_path)
+        
+        if output_path.exists():
+            backup_path = output_path.with_suffix(f'.backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.yaml')
+            import shutil
+            shutil.copy2(output_path, backup_path)
+            logger.info(f"Created backup: {backup_path}")
+        
+        self.save_config(output_path)
 
-def export_config_for_experiments(self, filepath: Path):
-    """Export configuration optimized for experiments"""
-    # Create experiment-friendly config
-    experiment_config = {
-        'stage_transitions': {
-            'min_learning_data': self.stage_transitions.min_learning_data,
-            'stable_learning_data': self.stage_transitions.stable_learning_data,
-            'hybrid_confidence_threshold': self.stage_transitions.hybrid_confidence_threshold
-        },
-        'experiments': {
-            'threshold_optimization': self.experiments.threshold_optimization,
-            'validation': self.experiments.validation
-        },
-        'ml_models': {
-            'random_forest': self.ml_models.random_forest,
-            'retraining': self.ml_models.retraining
-        },
-        'resource_management': {
-            'memory': self.resource_management.memory,
-            'gpu': self.resource_management.gpu
+    def export_config_for_experiments(self, filepath: Path):
+        experiment_config = {
+            'instance_info': {
+                'instance_id': self.instance_id,
+                'mode': self.mode,
+                'environment': self.environment,
+                'created_at': datetime.now().isoformat()
+            },
+            'stage_transitions': {
+                'min_learning_data': self.stage_transitions.min_learning_data,
+                'stable_learning_data': self.stage_transitions.stable_learning_data,
+                'hybrid_confidence_threshold': self.stage_transitions.hybrid_confidence_threshold
+            },
+            'experiments': {
+                'threshold_optimization': self.experiments.threshold_optimization,
+                'validation': self.experiments.validation
+            },
+            'ml_models': {
+                'random_forest': self.ml_models.random_forest,
+                'retraining': self.ml_models.retraining
+            },
+            'resource_management': {
+                'memory': self.resource_management.memory,
+                'gpu': self.resource_management.gpu
+            }
         }
-    }
+        
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(filepath, 'w') as f:
+            yaml.dump(experiment_config, f, default_flow_style=False, indent=2)
+        
+        logger.info(f"Experiment configuration exported to: {filepath}")
+
+
+_config_instances = {}
+_config_lock = threading.Lock()
+
+
+def get_config(environment: str = None, mode: str = None) -> ConfigManager:
+    if mode is None:
+        raise ValueError("Mode must be explicitly specified for proper isolation")
     
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-    with open(filepath, 'w') as f:
-        yaml.dump(experiment_config, f, default_flow_style=False, indent=2)
+    env = environment or "development"
+    process_id = os.getpid()
+    thread_id = threading.current_thread().ident
+    instance_key = f"{env}_{mode}_{process_id}_{thread_id}"
     
-    logger.info(f"Experiment configuration exported to: {filepath}")
-
-
-
-
-# Global configuration instance
-_config_instance = None
-
-
-def get_config(environment: str = None) -> ConfigManager:
-    """Get global configuration instance"""
-    global _config_instance
+    with _config_lock:
+        if instance_key not in _config_instances:
+            _config_instances[instance_key] = ConfigManager(environment=env, mode=mode)
+            logger.info(f"Created new ConfigManager instance for {instance_key}")
     
-    if _config_instance is None or (environment and _config_instance.environment != environment):
-        env = environment or os.getenv('SPECTRABENCH_ENV', 'development')
-        _config_instance = ConfigManager(environment=env)
+    return _config_instances[instance_key]
+
+
+def reload_config(environment: str = None, mode: str = None):
+    if mode is None:
+        raise ValueError("Mode must be explicitly specified for proper isolation")
     
-    return _config_instance
+    env = environment or "development"
+    process_id = os.getpid()
+    thread_id = threading.current_thread().ident
+    instance_key = f"{env}_{mode}_{process_id}_{thread_id}"
+    
+    with _config_lock:
+        _config_instances[instance_key] = ConfigManager(environment=env, mode=mode)
+        logger.info(f"Reloaded ConfigManager instance for {instance_key}")
+    
+    return _config_instances[instance_key]
 
 
-def reload_config(environment: str = None):
-    """Reload configuration"""
-    global _config_instance
-    env = environment or os.getenv('SPECTRABENCH_ENV', 'development')
-    _config_instance = ConfigManager(environment=env)
-    return _config_instance
+def cleanup_config_instances(mode: str = None):
+    with _config_lock:
+        if mode:
+            keys_to_remove = [k for k in _config_instances.keys() if f"_{mode}_" in k]
+            for key in keys_to_remove:
+                del _config_instances[key]
+                logger.info(f"Cleaned up config instance: {key}")
+        else:
+            _config_instances.clear()
+            logger.info("Cleared all ConfigManager instances")
 
 
-# Convenience functions
-def get_stage_thresholds(model_size: str = None) -> Dict[str, int]:
-    """Get stage transition thresholds"""
-    config = get_config()
+def get_stage_thresholds(model_size: str = None, mode: str = None) -> Dict[str, int]:
+    if mode is None:
+        raise ValueError("Mode must be explicitly specified")
+    
+    config = get_config(mode=mode)
     if model_size:
         return config.get_domain_thresholds(model_size)
     return {
@@ -554,57 +545,89 @@ def get_stage_thresholds(model_size: str = None) -> Dict[str, int]:
     }
 
 
-def get_ml_config(model_size: str = None) -> Dict[str, Any]:
-    """Get ML model configuration"""
-    config = get_config()
+def get_ml_config(model_size: str = None, mode: str = None) -> Dict[str, Any]:
+    if mode is None:
+        raise ValueError("Mode must be explicitly specified")
+    
+    config = get_config(mode=mode)
     if model_size:
         return config.get_model_config_for_size(model_size)
     return config.ml_models.random_forest
 
 
-def get_resource_config() -> ResourceConfig:
-    """Get resource management configuration"""
-    return get_config().resource_management
+def get_resource_config(mode: str = None) -> ResourceConfig:
+    if mode is None:
+        raise ValueError("Mode must be explicitly specified")
+    
+    return get_config(mode=mode).resource_management
 
 
-def get_scheduling_config() -> SchedulingConfig:
-    """Get scheduling configuration"""
-    return get_config().scheduling
+def get_scheduling_config(mode: str = None) -> SchedulingConfig:
+    if mode is None:
+        raise ValueError("Mode must be explicitly specified")
+    
+    return get_config(mode=mode).scheduling
 
-def update_thresholds_from_experiments(phase1_result: Dict, phase2_result: Dict):
-    """Update thresholds based on experimental results"""
-    config = get_config()
+
+def update_thresholds_from_experiments(phase1_result: Dict, phase2_result: Dict, mode: str = None):
+    if mode is None:
+        raise ValueError("Mode must be explicitly specified")
+    
+    config = get_config(mode=mode)
     config.apply_phase_results(phase1_result, phase2_result)
     config.save_config_with_backup()
     
-    logger.info("Thresholds updated from experimental results")
+    logger.info(f"Thresholds updated from experimental results for mode: {mode}")
 
-def get_experiment_config() -> Dict[str, Any]:
-    """Get experiment-specific configuration"""
-    config = get_config()
+
+def get_experiment_config(mode: str = None) -> Dict[str, Any]:
+    if mode is None:
+        raise ValueError("Mode must be explicitly specified")
+    
+    config = get_config(mode=mode)
     return {
+        'instance_info': {
+            'instance_id': config.instance_id,
+            'mode': config.mode,
+            'environment': config.environment
+        },
         'threshold_ranges': config.experiments.threshold_optimization,
         'validation_settings': config.experiments.validation,
         'ml_settings': config.ml_models.random_forest
     }
 
+
 if __name__ == "__main__":
-    # Test configuration loading
-    config = ConfigManager(environment="development")
+    print("Testing mode-specific ConfigManager...")
     
-    print("Configuration loaded successfully!")
-    print(f"Stage transitions: {config.stage_transitions}")
-    print(f"ML model config: {config.ml_models.random_forest}")
-    
-    # Validate configuration
-    warnings = config.validate_config()
-    if warnings:
-        print("\nConfiguration warnings:")
-        for warning in warnings:
-            print(f"  - {warning}")
-    else:
-        print("\nConfiguration validation passed!")
-    
-    # Test domain-specific thresholds
-    print(f"\nSmall model thresholds: {config.get_domain_thresholds('small_models')}")
-    print(f"Large model thresholds: {config.get_domain_thresholds('large_models')}")
+    try:
+        baseline_config = ConfigManager(environment="development", mode="baseline")
+        print(f"Baseline config: {baseline_config}")
+        
+        optimized_config = ConfigManager(environment="development", mode="optimized")
+        print(f"Optimized config: {optimized_config}")
+        
+        stage_thresholds_baseline = get_stage_thresholds(mode="baseline")
+        stage_thresholds_optimized = get_stage_thresholds(mode="optimized")
+        
+        print(f"Baseline thresholds: {stage_thresholds_baseline}")
+        print(f"Optimized thresholds: {stage_thresholds_optimized}")
+        
+        baseline_warnings = baseline_config.validate_config()
+        optimized_warnings = optimized_config.validate_config()
+        
+        if baseline_warnings:
+            print(f"Baseline warnings: {baseline_warnings}")
+        else:
+            print("Baseline configuration validation passed!")
+            
+        if optimized_warnings:
+            print(f"Optimized warnings: {optimized_warnings}")
+        else:
+            print("Optimized configuration validation passed!")
+            
+        print("Mode-specific configuration testing completed!")
+        
+    except ValueError as e:
+        print(f"Expected error caught: {e}")
+        print("This demonstrates proper mode enforcement.")
