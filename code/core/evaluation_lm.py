@@ -1,9 +1,13 @@
 """
 Complete Fixed evaluation_lm.py
 Dynamic model classification and enhanced thermal management
+WandB removed for stability
+Cooling logic removed for faster execution
 """
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["WANDB_MODE"] = "disabled"
+os.environ["WANDB_DISABLED"] = "true"
 
 import warnings
 warnings.filterwarnings("ignore", category=ResourceWarning)
@@ -19,13 +23,11 @@ from datetime import datetime
 from dotenv import load_dotenv
 from transformers import AutoConfig, AutoTokenizer
 from huggingface_hub import snapshot_download, HfApi
-from lm_eval.loggers import WandbLogger
 from lm_eval import evaluator
 from code.config.config_loader import load_models, load_tasks
 from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 import multiprocessing
 import gc
-import wandb
 import hashlib
 import os
 import signal
@@ -64,17 +66,13 @@ resource_monitor = None
 config_manager = None
 
 SCHEDULER_TIMEOUT = 30
-TASK_TIMEOUT = 7200
+TASK_TIMEOUT = 28800
 
 EXPERIMENT_DIR = None
 
 project_root = Path(__file__).parent.parent.parent
 BASE_DIR = Path(__file__).parent
 load_dotenv(project_root / ".env")
-
-WANDB_PROJECT = os.getenv("WANDB_PROJECT", "lm-eval-harness-integration")
-WANDB_JOB_TYPE = os.getenv("WANDB_JOB_TYPE", "eval")
-WANDB_ENTITY = os.getenv("WANDB_ENTITY")
 
 os.environ.setdefault("HF_HOME", str(project_root / "data" / "models"))
 os.environ.setdefault("HF_DATASETS_CACHE", str(project_root / "data" / "datasets"))
@@ -100,17 +98,15 @@ tasks = getattr(sys.modules[__name__], 'tasks', load_tasks().get("harness", []))
 
 class DynamicModelClassifier:
     def __init__(self):
-        # Regex patterns ordered from most specific to general
         self.size_patterns = [
             (r'(\d+\.\d+)\s*[-_]?\s*?b(?:illion)?(?:\b|[-_])', 'B'),
             (r'(\d+\.\d+)\s*m(?:illion)?(?:\b|[-_])', 'M'),
             (r'(\d+)\s*[-_]?\s*?b(?:illion)?(?:\b|[-_])', 'B'),
-            (r'(\d+)[-_](\d+)b', 'SPECIAL'),  # 21-4b -> 21.4b conversion
+            (r'(\d+)[-_](\d+)b', 'SPECIAL'),
             (r'(\d+(?:\.\d+)?)\s*billion', 'B'),
             (r'(\d+(?:\.\d+)?)\s*million', 'M'),
         ]
         
-        # Minimal special cases for patterns that regex cannot handle
         self.special_cases = {
             'seed-text': 1.5,
         }
@@ -131,7 +127,6 @@ class DynamicModelClassifier:
         self.hf_api = HfApi()
     
     def _fetch_model_info_from_api(self, model_id: str) -> Optional[float]:
-        """Fetch model info from Hugging Face API"""
         try:
             if model_id in self.model_config_cache:
                 return self.model_config_cache[model_id]
@@ -172,7 +167,6 @@ class DynamicModelClassifier:
             return None
     
     def _get_optimization_config(self, category: str, size_b: float) -> Dict:
-        """Get optimization configuration based on model category"""
         if category == 'large':
             return {
                 'use_hflm': True,
@@ -207,7 +201,6 @@ class DynamicModelClassifier:
             }
     
     def _extract_size_from_patterns(self, text: str) -> Optional[float]:
-        """Pattern matching for model size extraction"""
         text_clean = text.lower().replace('_', '-')
 
         logger.info(f"DEBUG: Trying to extract size from: '{text_clean}'") 
@@ -234,7 +227,6 @@ class DynamicModelClassifier:
         return None
     
     def extract_model_size(self, model_config: Dict) -> float:
-        """Extract model size with scalable approach"""
         model_id = model_config.get("id", "")
         model_name = model_config.get("name", "")
         
@@ -242,19 +234,16 @@ class DynamicModelClassifier:
         
         logger.info(f"Classifying model: {model_id}")
         
-        # Pattern matching FIRST (more reliable for size)
         pattern_size = self._extract_size_from_patterns(full_text)
         if pattern_size is not None:
             logger.info(f"Pattern match: {model_id} -> {pattern_size:.1f}B")
             return pattern_size
         
-        # API lookup as fallback
         api_size = self._fetch_model_info_from_api(model_id)
         if api_size is not None:
             logger.info(f"API match: {model_id} -> {api_size:.1f}B")
             return api_size
         
-        # Special cases
         for special_pattern, size in self.special_cases.items():
             if special_pattern in full_text:
                 logger.info(f"Special case: {model_id} -> {size:.1f}B")
@@ -264,12 +253,11 @@ class DynamicModelClassifier:
         return 7.0
     
     def classify_model(self, model_config: Dict) -> Tuple[str, float, Dict]:
-        """Model classification"""
         size_b = self.extract_model_size(model_config)
         
         if size_b < 3.0:
             category = 'small'
-        elif size_b < 15.0:
+        elif size_b < 10.0:
             category = 'medium'
         else:
             category = 'large'
@@ -316,44 +304,8 @@ def platform_independent_timeout(func, timeout_seconds, *args, **kwargs):
 
 
 def init_wandb_run(model_name, task_list, config_dict=None):
-    if not os.getenv("WANDB_API_KEY"):
-        logger.warning("WANDB_API_KEY not found. WandB logging will be disabled.")
-        return None
-    
-    run_id = hashlib.md5(f"{model_name}_{sorted(task_list)}".encode()).hexdigest()[:8]
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_name = f"{model_name}_{timestamp}"
-    
-    default_config = {
-        "model": model_name,
-        "tasks": task_list,
-        "num_tasks": len(task_list),
-        "full_run": FULL_RUN,
-        "num_gpus": num_gpus,
-        "timestamp": timestamp,
-    }
-    
-    if config_dict:
-        default_config.update(config_dict)
-    
-    try:
-        run = wandb.init(
-            project=WANDB_PROJECT,
-            entity=WANDB_ENTITY,
-            job_type=WANDB_JOB_TYPE,
-            name=run_name,
-            id=run_id,
-            config=default_config,
-            resume="allow",
-            reinit=True,
-        )
-        
-        logger.info(f"WandB run initialized: {run_name} (ID: {run_id})")
-        return run
-        
-    except Exception as e:
-        logger.error(f"Failed to initialize WandB: {e}")
-        return None
+    logger.info("WandB disabled - skipping initialization")
+    return None
 
 
 def ensure_model_local(repo_id: str) -> str:
@@ -447,20 +399,7 @@ def extract_metrics_from_result(subtask_result):
 
 
 def log_to_wandb(run, task_name, metrics, prefix="eval"):
-    if not run:
-        return
-    
-    try:
-        wandb_metrics = {}
-        for metric_name, metric_value in metrics.items():
-            if isinstance(metric_value, (int, float)):
-                wandb_metrics[f"{prefix}/{task_name}/{metric_name}"] = metric_value
-        
-        if wandb_metrics:
-            run.log(wandb_metrics)
-            
-    except Exception as e:
-        logger.warning(f"Failed to log metrics to WandB: {e}")
+    return
 
 
 def clean_gpu_memory():
@@ -478,11 +417,6 @@ def clean_gpu_memory():
         logger.warning(f"Error during GPU memory cleanup: {e}")
 
 
-def wait_for_gpu_cooling(wait_seconds: int = 60):
-    logger.info(f"Waiting {wait_seconds} seconds for GPU cooling...")
-    time.sleep(wait_seconds)
-
-
 def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, wandb_run=None, tracker_context=None):
     all_results = {"results": {}}
     failed_tasks = []
@@ -496,14 +430,6 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
         logger.info(f"{run_name}: Processing task {task_idx+1}/{len(task_list)}: {task}")
         
         clean_gpu_memory()
-        
-        if wandb_run:
-            wandb_run.log({
-                "progress/current_task": task,
-                "progress/task_index": task_idx + 1,
-                "progress/total_tasks": len(task_list),
-                "progress/percentage": (task_idx + 1) / len(task_list) * 100
-            })
         
         if any(zs_task in task.lower() for zs_task in zero_shot_tasks):
             num_fewshot = 0
@@ -589,19 +515,9 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
                                         logger.info(f"    - {metric_name}: {metric_value:.4f}")
                                     else:
                                         logger.info(f"    - {metric_name}: {metric_value}")
-                                
-                                log_to_wandb(wandb_run, subtask_name, metrics)
                             else:
                                 logger.info(f"  {subtask_name}: No standard metrics found")
                                 logger.debug(f"    Raw result: {subtask_result}")
-                        
-                        if main_task_metrics and wandb_run:
-                            summary_metrics = {}
-                            for metric_name, metric_value in main_task_metrics.items():
-                                if isinstance(metric_value, (int, float)):
-                                    summary_metrics[f"summary/{task}/{metric_name}"] = metric_value
-                            if summary_metrics:
-                                wandb_run.log(summary_metrics)
                         
                         logger.info(f"{'='*60}\n")
                     else:
@@ -693,14 +609,6 @@ def evaluate_with_retry(model, model_args, task_list, initial_fewshot, batch_siz
     if failed_tasks:
         logger.warning(f"{run_name}: Failed tasks: {failed_tasks}")
     
-    if wandb_run:
-        wandb_run.log({
-            "summary/total_subtasks": total_subtasks_count,
-            "summary/successful_tasks": len(task_list) - len(failed_tasks),
-            "summary/failed_tasks": len(failed_tasks),
-            "summary/failed_task_names": ", ".join(failed_tasks) if failed_tasks else "None"
-        })
-    
     return all_results
 
 
@@ -712,7 +620,9 @@ def setup_process_env():
         "HF_DATASETS_OFFLINE": "0",
         "HF_HOME": str(project_root / "data" / "models"),
         "HF_DATASETS_CACHE": str(project_root / "data" / "datasets"),
-        "TRANSFORMERS_VERBOSITY": "error"
+        "TRANSFORMERS_VERBOSITY": "error",
+        "WANDB_MODE": "disabled",
+        "WANDB_DISABLED": "true"
     }
     os.environ.update(env_vars)
     
@@ -832,7 +742,7 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
         "tracking_mode": TRACKING_MODE,
         "scheduler_optimized": scheduler_batch_size is not None,
     }
-    wandb_run = init_wandb_run(model_name, task_list, wandb_config)
+    wandb_run = None
 
     try:
         local_path = ensure_model_local(model_id)
@@ -903,7 +813,7 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
                 logger.info(f"{run_name}: Gemma model detected, will handle cache settings after loading")
             
             model = HFLM(**model_kwargs)
-            results = evaluate_with_retry(model, None, task_list, num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, wandb_run, tracker_context)
+            results = evaluate_with_retry(model, None, task_list, num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, None, tracker_context)
         else:
             hf_args = f"pretrained={local_path}"
             if is_exaone:
@@ -918,7 +828,7 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
             if "gemma" in model_name.lower():
                 logger.info(f"{run_name}: Gemma model detected, adjusting settings")
             
-            results = evaluate_with_retry("hf", hf_args, task_list, num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, wandb_run, tracker_context)
+            results = evaluate_with_retry("hf", hf_args, task_list, num_fewshot, batch_size, device, limit, gen_kwargs, extra_kwargs, run_name, None, tracker_context)
 
         if EXPERIMENT_DIR:
             model_results_dir = EXPERIMENT_DIR / "model_results" / model_name
@@ -944,55 +854,9 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
                 json.dump(results.get("results", {}), f, indent=2, default=str)
             logger.info(f"[Process {os.getpid()}] Results saved to {filename}")
 
-        if wandb_run:
-            try:
-                artifact = wandb.Artifact(
-                    name=f"{model_name}_results",
-                    type="evaluation_results",
-                    description=f"Evaluation results for {model_id}"
-                )
-                artifact.add_file(str(filename))
-                wandb_run.log_artifact(artifact)
-                logger.info(f"Results uploaded to WandB as artifact")
-            except Exception as e:
-                logger.warning(f"Failed to upload artifact to WandB: {e}")
-
-        if wandb_run:
-            try:
-                wandb_logger = WandbLogger()
-                
-                if hasattr(wandb_logger, '_run'):
-                    wandb_logger._run = wandb_run
-                elif hasattr(wandb_logger, 'run'):
-                    wandb_logger.run = wandb_run
-                
-                wandb_logger.post_init(results)
-                wandb_logger.log_eval_result()
-                
-                if "samples" in results:
-                    wandb_logger.log_eval_samples(results['samples'])
-                    
-                logger.info("Successfully logged to WandB using lm-eval WandbLogger")
-            except Exception as wandb_err:
-                logger.warning(f"lm-eval WandB logging failed, using direct logging: {wandb_err}")
-                
-                if "results" in results:
-                    final_metrics = {}
-                    for task_name, task_result in results["results"].items():
-                        metrics = extract_metrics_from_result(task_result)
-                        for metric_name, metric_value in metrics.items():
-                            if isinstance(metric_value, (int, float)):
-                                final_metrics[f"final/{task_name}/{metric_name}"] = metric_value
-                    
-                    if final_metrics:
-                        wandb_run.log(final_metrics)
-
         logger.info(f"[Process {os.getpid()}] Successfully completed {run_name}")
         
         clean_gpu_memory()
-        
-        if wandb_run:
-            wandb_run.finish()
         
         return run_name, None
 
@@ -1000,9 +864,6 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
         logger.error(f"[Process {os.getpid()}] Error in {run_name}: {e}", exc_info=True)
         
         clean_gpu_memory()
-        
-        if wandb_run:
-            wandb_run.finish(exit_code=1)
         
         return run_name, e
 
@@ -1098,9 +959,7 @@ def main():
         logger.error(f"Failed to initialize tracking components: {e}")
         tracking_initialized = False
     
-    if not os.getenv("WANDB_API_KEY"):
-        logger.warning("WANDB_API_KEY not set. WandB logging will be disabled.")
-        logger.info("To enable WandB logging, set WANDB_API_KEY environment variable.")
+    logger.info("WandB logging disabled")
     
     if TRACKING_MODE == "optimized" and scheduler_manager:
         logger.info("="*60)
@@ -1212,13 +1071,6 @@ def main():
                 os.environ["SCHEDULER_BATCH_SIZE"] = str(task_priority.suggested_batch_size)
                 os.environ["SCHEDULER_NUM_FEWSHOT"] = str(task_priority.suggested_num_fewshot)
                 
-                if task_priority.estimated_memory > 30:
-                    logger.info("Large model detected - applying enhanced cooling strategy")
-                    wait_for_gpu_cooling(120)
-                elif task_priority.estimated_memory > 15:
-                    logger.info("Medium model detected - applying standard cooling")
-                    wait_for_gpu_cooling(60)
-                
                 try:
                     run_name, error = evaluate_single(model_idx, model_config, [task_priority.task_name], FULL_RUN)
                     
@@ -1258,7 +1110,6 @@ def main():
                         del os.environ["SCHEDULER_NUM_FEWSHOT"]
                 
                 clean_gpu_memory()
-                wait_for_gpu_cooling(30)
             
             logger.info(f"\n{'='*60}")
             logger.info("Optimized Mode Execution Summary")

@@ -2,6 +2,8 @@
 Fixed Performance Tracker for LLM Evaluation
 Enhanced mode isolation, error handling, and stability improvements
 WITH GPU THERMAL TRACKING
+FIXED: Enhanced DB timeout and deadlock prevention for optimized mode
+FIXED: Float to integer conversion errors
 """
 import sqlite3
 import json
@@ -53,11 +55,10 @@ class ExecutionRecord:
     cpu_percent_avg: Optional[float] = None
     ram_usage_peak: Optional[float] = None
     
-    # NEW: GPU Thermal Fields
-    gpu_temperature_start: Optional[float] = None    # °C at task start
-    gpu_temperature_peak: Optional[float] = None     # °C peak during execution
-    gpu_temperature_avg: Optional[float] = None      # °C average during execution
-    gpu_temperature_end: Optional[float] = None      # °C at task end
+    gpu_temperature_start: Optional[float] = None
+    gpu_temperature_peak: Optional[float] = None
+    gpu_temperature_avg: Optional[float] = None
+    gpu_temperature_end: Optional[float] = None
     
     result_metrics: Optional[Dict] = None
     error_message: Optional[str] = None
@@ -84,25 +85,45 @@ class PerformanceTracker:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         
         try:
-            self.conn = sqlite3.connect(
-                str(self.db_path), 
-                check_same_thread=False,
-                timeout=30.0,
-                isolation_level='DEFERRED'
-            )
+            if self.mode == "optimized":
+                self.conn = sqlite3.connect(
+                    str(self.db_path), 
+                    check_same_thread=False,
+                    timeout=10,
+                    isolation_level='DEFERRED'
+                )
+                
+                enhanced_pragmas = {
+                    "busy_timeout": "5000",
+                    "journal_mode": "WAL",
+                    "synchronous": "NORMAL",    
+                    "foreign_keys": "ON",
+                    "cache_size": "10000",
+                    "temp_store": "memory",
+                    "mmap_size": "268435456",
+                    "wal_autocheckpoint": "100"
+                }
+            else:
+                self.conn = sqlite3.connect(
+                    str(self.db_path), 
+                    check_same_thread=False,
+                    timeout=30,
+                    isolation_level='DEFERRED'
+                )
+                
+                enhanced_pragmas = {
+                    "busy_timeout": "30000",
+                    "journal_mode": "WAL",
+                    "synchronous": "NORMAL",
+                    "foreign_keys": "ON"
+                }
+            
             self.conn.row_factory = sqlite3.Row
             
-            essential_pragmas = {
-                "busy_timeout": "30000",
-                "journal_mode": "WAL",
-                "synchronous": "NORMAL",
-                "foreign_keys": "ON"
-            }
-            
-            for pragma, value in essential_pragmas.items():
+            for pragma, value in enhanced_pragmas.items():
                 self.conn.execute(f"PRAGMA {pragma} = {value}")
                 
-            logger.info(f"Database configured with essential settings")
+            logger.info(f"Database configured for mode {self.mode} with enhanced settings")
             
         except Exception as e:
             logger.error(f"Database setup failed: {e}")
@@ -288,7 +309,7 @@ class PerformanceTracker:
         
         gpu_memory, gpu_util = self._get_gpu_memory()
         cpu_percent, ram_usage = self._get_cpu_ram_usage()
-        gpu_temperature = self._get_gpu_temperature()  # NEW: Get thermal data
+        gpu_temperature = self._get_gpu_temperature()
         
         record = ExecutionRecord(
             run_id=self.run_id,
@@ -306,7 +327,7 @@ class PerformanceTracker:
             device=config.get("device", "cuda"),
             start_time=time.time(),
             gpu_memory_start=gpu_memory,
-            gpu_temperature_start=gpu_temperature,  # NEW
+            gpu_temperature_start=gpu_temperature,
             cpu_percent_avg=cpu_percent,
             ram_usage_peak=ram_usage,
             metadata=config.get("metadata", {})
@@ -329,12 +350,11 @@ class PerformanceTracker:
         record.status = status
         
         gpu_memory, gpu_util = self._get_gpu_memory()
-        gpu_temperature_end = self._get_gpu_temperature()  # NEW: Get end temperature
+        gpu_temperature_end = self._get_gpu_temperature()
         
         record.gpu_memory_end = gpu_memory
         record.gpu_utilization_avg = gpu_util
         
-        # NEW: Update thermal data
         record.gpu_temperature_end = gpu_temperature_end
         record.gpu_temperature_peak = max(record.gpu_temperature_start or 0, gpu_temperature_end)
         record.gpu_temperature_avg = (record.gpu_temperature_start + gpu_temperature_end) / 2 if record.gpu_temperature_start else gpu_temperature_end
@@ -359,7 +379,9 @@ class PerformanceTracker:
                    f"- Status: {status}, Time: {record.execution_time:.2f}s, Temp: {gpu_temperature_end:.1f}°C")
     
     def _save_record(self, record: ExecutionRecord):
-        max_retries = 3
+        max_retries = 5 if self.mode == "optimized" else 3
+        base_retry_delay = 0.1 if self.mode == "optimized" else 0.5
+        
         for attempt in range(max_retries):
             try:
                 with self._db_lock:
@@ -379,12 +401,17 @@ class PerformanceTracker:
                     break
                     
             except sqlite3.OperationalError as e:
-                if attempt < max_retries - 1:
-                    logger.warning(f"Database locked, retrying... (attempt {attempt + 1}/{max_retries})")
-                    time.sleep(0.5 * (attempt + 1))
+                if "database is locked" in str(e).lower() and attempt < max_retries - 1:
+                    retry_delay = base_retry_delay * (2 ** attempt)
+                    logger.warning(f"Database locked, retrying in {retry_delay:.1f}s... (attempt {attempt + 1}/{max_retries}) - mode: {self.mode}")
+                    time.sleep(retry_delay)
                 else:
-                    logger.error(f"Failed to save record after {max_retries} attempts: {e}")
-                    raise
+                    logger.error(f"Failed to save record after {max_retries} attempts in {self.mode} mode: {e}")
+                    if self.mode == "optimized":
+                        logger.warning(f"Dropping record save for optimized mode to prevent blocking")
+                        break
+                    else:
+                        raise
     
     def _update_statistics_simplified(self, record: ExecutionRecord):
         if record.status not in ["completed", "failed", "oom"]:
@@ -392,12 +419,16 @@ class PerformanceTracker:
         
         run_id_pattern = f"{record.mode}_%"
         
-        max_retries = 3
+        max_retries = 3 if self.mode == "optimized" else 3
+        base_retry_delay = 0.1 if self.mode == "optimized" else 0.5
+        
         for attempt in range(max_retries):
             try:
                 with self._db_lock:
                     cursor = self.conn.cursor()
-                    cursor.execute("PRAGMA busy_timeout = 5000")
+                    
+                    timeout_ms = 2000 if self.mode == "optimized" else 5000
+                    cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
                     
                     cursor.execute("""
                         SELECT * FROM execution_stats 
@@ -415,12 +446,17 @@ class PerformanceTracker:
                     break
                     
             except sqlite3.OperationalError as e:
-                if attempt < max_retries - 1:
-                    logger.warning(f"Database locked during stats update, retrying... (attempt {attempt + 1}/{max_retries})")
-                    time.sleep(0.5 * (attempt + 1))
+                if "database is locked" in str(e).lower() and attempt < max_retries - 1:
+                    retry_delay = base_retry_delay * (2 ** attempt)
+                    logger.warning(f"Database locked during stats update, retrying in {retry_delay:.1f}s... (attempt {attempt + 1}/{max_retries}) - mode: {self.mode}")
+                    time.sleep(retry_delay)
                 else:
-                    logger.error(f"Failed to update statistics after {max_retries} attempts: {e}")
-                    raise
+                    logger.error(f"Failed to update statistics after {max_retries} attempts in {self.mode} mode: {e}")
+                    if self.mode == "optimized":
+                        logger.warning(f"Dropping stats update for optimized mode to prevent blocking")
+                        break
+                    else:
+                        raise
     
     def _update_existing_stats(self, cursor, record: ExecutionRecord, run_id_pattern: str):
         cursor.execute("""
@@ -513,54 +549,72 @@ class PerformanceTracker:
             
         except sqlite3.OperationalError as e:
             default_result['error'] = f"Database error: {str(e)[:100]}"
-            logger.warning(f"Database error in prediction: {e}")
+            logger.warning(f"Database error in prediction for {self.mode} mode: {e}")
             
         except Exception as e:
             default_result['error'] = f"Prediction error: {str(e)[:100]}"
-            logger.error(f"Unexpected error in prediction: {e}")
+            logger.error(f"Unexpected error in prediction for {self.mode} mode: {e}")
             
         return default_result
     
     def _predict_execution_internal(self, model_id: str, task_name: str) -> Dict[str, Any]:
         run_id_pattern = f"{self.mode}_%"
         
-        with self._db_lock:
-            cursor = self.conn.cursor()
-            
-            cursor.execute("""
-                SELECT * FROM execution_stats 
-                WHERE model_id = ? AND task_name = ? AND mode = ? AND run_id_pattern = ?
-            """, (model_id, task_name, self.mode, run_id_pattern))
-            
-            stats = cursor.fetchone()
-            
-            if not stats:
-                model_size = self._extract_model_size(model_id)
+        timeout_seconds = 2 if self.mode == "optimized" else 5
+        
+        try:
+            with self._db_lock:
+                cursor = self.conn.cursor()
+                timeout_ms = timeout_seconds * 1000
+                cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
+                
                 cursor.execute("""
                     SELECT * FROM execution_stats 
-                    WHERE model_size = ? AND task_name = ? AND mode = ? AND run_id_pattern = ?
-                    LIMIT 1
-                """, (model_size, task_name, self.mode, run_id_pattern))
+                    WHERE model_id = ? AND task_name = ? AND mode = ? AND run_id_pattern = ?
+                """, (model_id, task_name, self.mode, run_id_pattern))
+                
                 stats = cursor.fetchone()
-            
-            if stats:
+                
+                if not stats:
+                    model_size = self._extract_model_size(model_id)
+                    cursor.execute("""
+                        SELECT * FROM execution_stats 
+                        WHERE model_size = ? AND task_name = ? AND mode = ? AND run_id_pattern = ?
+                        LIMIT 1
+                    """, (model_size, task_name, self.mode, run_id_pattern))
+                    stats = cursor.fetchone()
+                
+                if stats:
+                    return {
+                        'predicted_time': stats['avg_execution_time'],
+                        'time_std': stats['std_execution_time'],
+                        'predicted_memory': stats['avg_memory_peak'],
+                        'memory_std': stats['std_memory_peak'],
+                        'success_rate': stats['num_successes'] / stats['num_executions'] if stats['num_executions'] > 0 else 0,
+                        'oom_rate': stats['num_ooms'] / stats['num_executions'] if stats['num_executions'] > 0 else 0,
+                        'num_samples': stats['num_executions']
+                    }
+                
                 return {
-                    'predicted_time': stats['avg_execution_time'],
-                    'time_std': stats['std_execution_time'],
-                    'predicted_memory': stats['avg_memory_peak'],
-                    'memory_std': stats['std_memory_peak'],
-                    'success_rate': stats['num_successes'] / stats['num_executions'] if stats['num_executions'] > 0 else 0,
-                    'oom_rate': stats['num_ooms'] / stats['num_executions'] if stats['num_executions'] > 0 else 0,
-                    'num_samples': stats['num_executions']
+                    'predicted_time': None,
+                    'predicted_memory': None,
+                    'success_rate': None,
+                    'oom_rate': None,
+                    'num_samples': 0
                 }
-            
-            return {
-                'predicted_time': None,
-                'predicted_memory': None,
-                'success_rate': None,
-                'oom_rate': None,
-                'num_samples': 0
-            }
+        
+        except sqlite3.OperationalError as e:
+            if "database is locked" in str(e).lower():
+                logger.warning(f"Database locked during prediction in {self.mode} mode, returning defaults")
+                return {
+                    'predicted_time': None,
+                    'predicted_memory': None,
+                    'success_rate': None,
+                    'oom_rate': None,
+                    'num_samples': 0
+                }
+            else:
+                raise
     
     def predict_execution(self, model_id: str, task_name: str) -> Dict[str, Any]:
         return self.predict_execution_safe(model_id, task_name)
@@ -568,9 +622,13 @@ class PerformanceTracker:
     def get_statistics_summary(self) -> Dict[str, Any]:
         run_id_pattern = f"{self.mode}_%"
         
+        timeout_seconds = 3 if self.mode == "optimized" else 10
+        
         try:
             with self._db_lock:
                 cursor = self.conn.cursor()
+                timeout_ms = timeout_seconds * 1000
+                cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
                 
                 cursor.execute("""
                     SELECT 
@@ -605,16 +663,29 @@ class PerformanceTracker:
                         'total_execution_time': overall_result['total_execution_time'] or 0.0
                     }
                 
-                cursor.execute("""
-                    SELECT 
-                        model_name, model_size,
-                        COUNT(*) as runs,
-                        AVG(execution_time) as avg_time,
-                        AVG(gpu_memory_peak) as avg_memory
-                    FROM execution_records
-                    WHERE mode = ? AND run_id LIKE ? AND status = 'completed'
-                    GROUP BY model_id
-                """, (self.mode, run_id_pattern))
+                if self.mode == "optimized":
+                    cursor.execute("""
+                        SELECT 
+                            model_name, model_size,
+                            COUNT(*) as runs,
+                            AVG(execution_time) as avg_time,
+                            AVG(gpu_memory_peak) as avg_memory
+                        FROM execution_records
+                        WHERE mode = ? AND run_id LIKE ? AND status = 'completed'
+                        GROUP BY model_id
+                        LIMIT 20
+                    """, (self.mode, run_id_pattern))
+                else:
+                    cursor.execute("""
+                        SELECT 
+                            model_name, model_size,
+                            COUNT(*) as runs,
+                            AVG(execution_time) as avg_time,
+                            AVG(gpu_memory_peak) as avg_memory
+                        FROM execution_records
+                        WHERE mode = ? AND run_id LIKE ? AND status = 'completed'
+                        GROUP BY model_id
+                    """, (self.mode, run_id_pattern))
                 
                 model_results = cursor.fetchall()
                 
@@ -632,11 +703,12 @@ class PerformanceTracker:
                     'mode': self.mode,
                     'run_id': self.run_id,
                     'overall': overall,
-                    'by_model': model_stats
+                    'by_model': model_stats,
+                    'deadlock_fixes_applied': self.mode == "optimized"
                 }
                 
         except Exception as e:
-            logger.error(f"Error in get_statistics_summary: {e}")
+            logger.error(f"Error in get_statistics_summary for {self.mode} mode: {e}")
             return {
                 'mode': self.mode,
                 'run_id': self.run_id,
@@ -648,14 +720,19 @@ class PerformanceTracker:
                     'avg_execution_time': 0.0,
                     'total_execution_time': 0.0
                 },
-                'by_model': []
+                'by_model': [],
+                'error': str(e)
             }
     
     def get_recent_executions(self, limit: int = 50) -> List[Dict]:
+        if self.mode == "optimized":
+            limit = min(limit, 20)
+        
         try:
             with self._db_lock:
                 cursor = self.conn.cursor()
-                cursor.execute("PRAGMA busy_timeout = 3000")
+                timeout_ms = 2000 if self.mode == "optimized" else 3000
+                cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
                 
                 cursor.execute("""
                     SELECT model_name, task_name, status, execution_time, 
@@ -675,21 +752,24 @@ class PerformanceTracker:
                         'status': r['status'],
                         'execution_time': r['execution_time'],
                         'gpu_memory_peak': r['gpu_memory_peak'],
-                        'gpu_temperature_peak': r['gpu_temperature_peak'],  # NEW
+                        'gpu_temperature_peak': r['gpu_temperature_peak'],
                         'timestamp': r['timestamp']
                     }
                     for r in records
                 ]
                 
         except Exception as e:
-            logger.error(f"Error getting recent executions: {e}")
+            logger.error(f"Error getting recent executions for {self.mode} mode: {e}")
             return []
     
     def get_model_performance_summary(self, model_id: str) -> Dict[str, Any]:
+        timeout_seconds = 2 if self.mode == "optimized" else 3
+        
         try:
             with self._db_lock:
                 cursor = self.conn.cursor()
-                cursor.execute("PRAGMA busy_timeout = 3000")
+                timeout_ms = timeout_seconds * 1000
+                cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
                 
                 cursor.execute("""
                     SELECT 
@@ -708,28 +788,31 @@ class PerformanceTracker:
                 if result and result['total_runs'] > 0:
                     return {
                         'model_id': model_id,
+                        'mode': self.mode,
                         'total_runs': result['total_runs'],
                         'success_rate': result['completed'] / result['total_runs'],
                         'oom_rate': result['oom_failures'] / result['total_runs'],
                         'avg_execution_time': result['avg_time'],
                         'avg_memory_usage': result['avg_memory'],
-                        'avg_temperature': result['avg_temperature']  # NEW
+                        'avg_temperature': result['avg_temperature']
                     }
                 else:
                     return {
                         'model_id': model_id,
+                        'mode': self.mode,
                         'total_runs': 0,
                         'success_rate': 0.0,
                         'oom_rate': 0.0,
                         'avg_execution_time': None,
                         'avg_memory_usage': None,
-                        'avg_temperature': None  # NEW
+                        'avg_temperature': None
                     }
                     
         except Exception as e:
-            logger.error(f"Error getting model performance summary: {e}")
+            logger.error(f"Error getting model performance summary for {self.mode} mode: {e}")
             return {
                 'model_id': model_id,
+                'mode': self.mode,
                 'error': str(e),
                 'total_runs': 0,
                 'success_rate': 0.0,
@@ -740,33 +823,46 @@ class PerformanceTracker:
             }
     
     def cleanup_old_records(self, retention_days: int = 90):
-        try:
-            with self._db_lock:
-                cursor = self.conn.cursor()
-                cursor.execute("PRAGMA busy_timeout = 10000")
-                
-                cursor.execute("""
-                    DELETE FROM execution_records
-                    WHERE created_at < datetime('now', '-{} days')
-                    AND mode = ?
-                """.format(retention_days), (self.mode,))
-                
-                deleted_count = cursor.rowcount
-                
-                cursor.execute("""
-                    DELETE FROM execution_stats
-                    WHERE last_updated < datetime('now', '-{} days')
-                    AND mode = ?
-                """.format(retention_days), (self.mode,))
-                
-                stats_deleted = cursor.rowcount
-                
-                self.conn.commit()
-                
-                logger.info(f"Cleaned up {deleted_count} old execution records and {stats_deleted} old stats for mode {self.mode}")
-                
-        except Exception as e:
-            logger.error(f"Error cleaning up old records: {e}")
+        max_retries = 3 if self.mode == "optimized" else 2
+        
+        for attempt in range(max_retries):
+            try:
+                with self._db_lock:
+                    cursor = self.conn.cursor()
+                    timeout_ms = 5000 if self.mode == "optimized" else 10000
+                    cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
+                    
+                    cursor.execute("""
+                        DELETE FROM execution_records
+                        WHERE created_at < datetime('now', '-{} days')
+                        AND mode = ?
+                    """.format(retention_days), (self.mode,))
+                    
+                    deleted_count = cursor.rowcount
+                    
+                    cursor.execute("""
+                        DELETE FROM execution_stats
+                        WHERE last_updated < datetime('now', '-{} days')
+                        AND mode = ?
+                    """.format(retention_days), (self.mode,))
+                    
+                    stats_deleted = cursor.rowcount
+                    
+                    self.conn.commit()
+                    
+                    logger.info(f"Cleaned up {deleted_count} old execution records and {stats_deleted} old stats for mode {self.mode}")
+                    break
+                    
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e).lower() and attempt < max_retries - 1:
+                    logger.warning(f"Database locked during cleanup, retrying... (attempt {attempt + 1}/{max_retries}) - mode: {self.mode}")
+                    time.sleep(1.0 * (attempt + 1))
+                else:
+                    logger.error(f"Error cleaning up old records for {self.mode} mode: {e}")
+                    break
+            except Exception as e:
+                logger.error(f"Error cleaning up old records for {self.mode} mode: {e}")
+                break
     
     def export_data(self, output_path: Path, include_raw_records: bool = True):
         try:
@@ -775,17 +871,24 @@ class PerformanceTracker:
                     'mode': self.mode,
                     'run_id': self.run_id,
                     'export_timestamp': datetime.now().isoformat(),
+                    'deadlock_fixes_applied': self.mode == "optimized"
                 },
                 'summary': self.get_statistics_summary()
             }
             
             if include_raw_records:
+                limit_clause = "LIMIT 1000" if self.mode == "optimized" else ""
+                
                 with self._db_lock:
                     cursor = self.conn.cursor()
-                    cursor.execute("""
+                    timeout_ms = 5000 if self.mode == "optimized" else 10000
+                    cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
+                    
+                    cursor.execute(f"""
                         SELECT * FROM execution_records
                         WHERE mode = ? AND run_id LIKE ?
                         ORDER BY timestamp DESC
+                        {limit_clause}
                     """, (self.mode, f"{self.mode}_%"))
                     
                     records = cursor.fetchall()
@@ -799,30 +902,49 @@ class PerformanceTracker:
             logger.info(f"Performance data exported to: {output_path}")
             
         except Exception as e:
-            logger.error(f"Error exporting data: {e}")
+            logger.error(f"Error exporting data for {self.mode} mode: {e}")
     
     def get_failure_analysis(self) -> Dict[str, Any]:
+        timeout_seconds = 3 if self.mode == "optimized" else 5
+        
         try:
             with self._db_lock:
                 cursor = self.conn.cursor()
-                cursor.execute("PRAGMA busy_timeout = 3000")
+                timeout_ms = timeout_seconds * 1000
+                cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
                 
-                cursor.execute("""
-                    SELECT 
-                        model_name,
-                        task_name,
-                        status,
-                        error_message,
-                        COUNT(*) as failure_count
-                    FROM execution_records
-                    WHERE mode = ? AND run_id LIKE ? AND status IN ('failed', 'oom')
-                    GROUP BY model_name, task_name, status, error_message
-                    ORDER BY failure_count DESC
-                """, (self.mode, f"{self.mode}_%"))
+                if self.mode == "optimized":
+                    cursor.execute("""
+                        SELECT 
+                            model_name,
+                            task_name,
+                            status,
+                            error_message,
+                            COUNT(*) as failure_count
+                        FROM execution_records
+                        WHERE mode = ? AND run_id LIKE ? AND status IN ('failed', 'oom')
+                        GROUP BY model_name, task_name, status, error_message
+                        ORDER BY failure_count DESC
+                        LIMIT 50
+                    """, (self.mode, f"{self.mode}_%"))
+                else:
+                    cursor.execute("""
+                        SELECT 
+                            model_name,
+                            task_name,
+                            status,
+                            error_message,
+                            COUNT(*) as failure_count
+                        FROM execution_records
+                        WHERE mode = ? AND run_id LIKE ? AND status IN ('failed', 'oom')
+                        GROUP BY model_name, task_name, status, error_message
+                        ORDER BY failure_count DESC
+                    """, (self.mode, f"{self.mode}_%"))
                 
                 failures = cursor.fetchall()
                 
                 analysis = {
+                    'mode': self.mode,
                     'total_failures': sum(f['failure_count'] for f in failures),
                     'failure_patterns': [],
                     'oom_models': [],
@@ -849,8 +971,9 @@ class PerformanceTracker:
                 return analysis
                 
         except Exception as e:
-            logger.error(f"Error in failure analysis: {e}")
+            logger.error(f"Error in failure analysis for {self.mode} mode: {e}")
             return {
+                'mode': self.mode,
                 'total_failures': 0,
                 'failure_patterns': [],
                 'oom_models': [],
@@ -865,9 +988,10 @@ class PerformanceTracker:
                     self.conn.close()
                 logger.info(f"Database connection closed for mode: {self.mode}")
         except Exception as e:
-            logger.error(f"Error closing database connection: {e}")
+            logger.error(f"Error closing database connection for mode {self.mode}: {e}")
     
     def __del__(self):
+        """Destructor to ensure cleanup"""
         try:
             self.close()
         except:
@@ -878,8 +1002,14 @@ class RecordBuffer:
     def __init__(self, performance_tracker: PerformanceTracker, max_size=1000, flush_interval=60):
         self.performance_tracker = performance_tracker
         self.buffer = []
-        self.max_size = max_size
-        self.flush_interval = flush_interval
+        
+        if performance_tracker.mode == "optimized":
+            self.max_size = min(max_size, 500)
+            self.flush_interval = min(flush_interval, 30)
+        else:
+            self.max_size = max_size
+            self.flush_interval = flush_interval
+            
         self.last_flush = time.time()
         self._buffer_lock = threading.Lock()
         
@@ -897,17 +1027,21 @@ class RecordBuffer:
             
         try:
             with self._buffer_lock:
+                batch_size = 50 if self.performance_tracker.mode == "optimized" else 100
+                
                 cursor = self.performance_tracker.conn.cursor()
                 
-                for record in self.buffer:
-                    self.performance_tracker._save_record(record)
+                for i in range(0, len(self.buffer), batch_size):
+                    batch = self.buffer[i:i + batch_size]
+                    for record in batch:
+                        self.performance_tracker._save_record(record)
                 
-                logger.debug(f"Flushed {len(self.buffer)} records to database")
+                logger.debug(f"Flushed {len(self.buffer)} records to database for mode: {self.performance_tracker.mode}")
                 self.buffer.clear()
                 self.last_flush = time.time()
                 
         except Exception as e:
-            logger.error(f"Batch flush failed: {e}")
+            logger.error(f"Batch flush failed for mode {self.performance_tracker.mode}: {e}")
             self._fallback_individual_insert()
     
     def _fallback_individual_insert(self):
@@ -916,12 +1050,12 @@ class RecordBuffer:
             try:
                 self.performance_tracker._save_record(record)
             except Exception as e:
-                logger.error(f"Failed to save individual record: {e}")
+                logger.error(f"Failed to save individual record for mode {self.performance_tracker.mode}: {e}")
                 failed_records.append(record)
         
         self.buffer = failed_records
         if failed_records:
-            logger.warning(f"{len(failed_records)} records could not be saved")
+            logger.warning(f"{len(failed_records)} records could not be saved for mode {self.performance_tracker.mode}")
 
 
 def create_performance_tracker(mode: str, db_path: Optional[Path] = None) -> PerformanceTracker:

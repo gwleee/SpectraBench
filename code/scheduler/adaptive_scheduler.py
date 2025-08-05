@@ -3,6 +3,9 @@ Adaptive Scheduler for LLM Evaluation
 Machine Learning-based scheduler using Random Forest for optimal resource allocation
 ENHANCED: Advanced confidence calculation, uncertainty quantification, and improved features
 FIXED: DB connection compatibility with new PerformanceTracker
+FIXED: Enhanced DB timeout and deadlock prevention for optimized mode
+FIXED: Float to integer conversion errors
+FIXED: Quantization-aware memory estimation (8bit/4bit support)
 """
 import numpy as np
 import pandas as pd
@@ -19,8 +22,10 @@ from sklearn.metrics import mean_absolute_error, accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from scipy import stats
 import joblib
+import sqlite3
+import threading
+import time
 
-# Import existing components
 try:
     from .performance_tracker import PerformanceTracker
     from .resource_monitor import ResourceMonitor
@@ -30,7 +35,6 @@ except ImportError:
     from resource_monitor import ResourceMonitor
     from intelligent_scheduler import TaskPriority
 
-# Logging setup
 logger = logging.getLogger(__name__)
 
 
@@ -47,8 +51,44 @@ class MLPrediction:
     feature_importance: Dict[str, float]
 
 
+class SafeDBOperation:
+    """Safe database operation context manager for optimized mode"""
+    
+    def __init__(self, performance_tracker: PerformanceTracker, timeout_seconds: float = 3.0):
+        self.performance_tracker = performance_tracker
+        self.timeout_seconds = int(timeout_seconds)
+        self.mode = performance_tracker.mode if performance_tracker else "baseline"
+    
+    def __enter__(self):
+        if self.mode == "optimized":
+            timeout_ms = self.timeout_seconds * 1000
+        else:
+            timeout_ms = 5000
+        
+        try:
+            self.cursor = self.performance_tracker.conn.cursor()
+            self.cursor.execute(f"PRAGMA busy_timeout = {timeout_ms}")
+            return self.cursor
+        except Exception as e:
+            logger.error(f"Error setting up safe DB operation: {e}")
+            raise
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            if hasattr(self, 'cursor'):
+                pass
+        except Exception as e:
+            logger.debug(f"Error cleaning up DB operation: {e}")
+        
+        if exc_type == sqlite3.OperationalError and "database is locked" in str(exc_val):
+            logger.warning(f"Database lock detected in {self.mode} mode, operation failed safely")
+            return True
+        
+        return False
+
+
 class AdaptiveScheduler:
-    """ML-based adaptive scheduler using Random Forest with improved features"""
+    """ML-based adaptive scheduler using Random Forest with improved features and enhanced DB safety"""
     
     def __init__(self, 
                  performance_tracker: PerformanceTracker,
@@ -66,14 +106,14 @@ class AdaptiveScheduler:
         self.resource_monitor = resource_monitor
         self.num_gpus = num_gpus
         
-        # Model save path
+        self.mode = performance_tracker.mode if performance_tracker else "baseline"
+        
         if model_save_path is None:
             project_root = Path(__file__).parent.parent.parent
             model_save_path = project_root / "data" / "ml_models"
         self.model_save_path = model_save_path
         self.model_save_path.mkdir(parents=True, exist_ok=True)
         
-        # ML Models
         self.time_predictor = None
         self.memory_predictor = None
         self.oom_classifier = None
@@ -81,75 +121,78 @@ class AdaptiveScheduler:
         self.batch_size_predictor = None
         self.fewshot_predictor = None
         
-        # Feature encoding
         self.label_encoders = {}
         self.feature_names = []
         
-        # Model metadata
         self.last_training_time = None
         self.training_data_size = 0
         self.model_performance = {}
         
-        # Thresholds
-        self.min_training_samples = 50
-        self.retrain_threshold = 100  # Retrain every 100 new samples
-        self.confidence_threshold = 0.7
+        # Quantization memory reduction factors
+        self.quantization_memory_factors = {
+            '4bit': 0.25,  # 4-bit quantization uses ~25% of original memory
+            '8bit': 0.5,   # 8-bit quantization uses ~50% of original memory
+            'fp16': 0.6,   # FP16 uses ~60% of original memory (some overhead)
+            'fp32': 1.0    # Full precision
+        }
         
-        logger.info(f"AdaptiveScheduler initialized with {num_gpus} GPUs")
+        if self.mode == "optimized":
+            self.min_training_samples = 30
+            self.retrain_threshold = 50
+            self.confidence_threshold = 0.6
+            self.db_timeout = 2
+        else:
+            self.min_training_samples = 50
+            self.retrain_threshold = 100
+            self.confidence_threshold = 0.7
+            self.db_timeout = 5
         
-        # Try to load existing models
+        self._db_lock = threading.Lock()
+        
+        logger.info(f"AdaptiveScheduler initialized with {num_gpus} GPUs for mode: {self.mode}")
+        logger.info(f"Quantization-aware memory estimation enabled")
+        
         self._load_models()
     
     def _extract_features(self, model_config: Dict, task_name: str, 
                          current_resources: Optional[Any] = None) -> Dict[str, Any]:
-        """Extract features for ML prediction - IMPROVED VERSION"""
+        """Extract features for ML prediction"""
         features = {}
         
-        # Model features
         model_id = model_config.get("id", "")
         model_name = model_config.get("name", model_id.split("/")[-1])
         
-        # Extract model features
         features['model_size_numeric'] = self._extract_model_size_numeric(model_id)
         features['model_size_category'] = self._extract_model_size_category(model_id)
         features['model_type'] = self._extract_model_type(model_id)
         
-        # NEW: Advanced model features
         features['quantization_type'] = self._extract_quantization_type(model_config)
         features['model_architecture'] = self._extract_model_architecture(model_id)
         
-        # Task features
         features['task_name'] = task_name
         features['task_type'] = self._extract_task_type(task_name)
         features['task_complexity'] = self._extract_task_complexity(task_name)
         
-        # NEW: Sequence length estimation (critical for memory usage)
         features['estimated_sequence_length'] = self._estimate_sequence_length(task_name)
         
-        # Resource features (FILTERED - removed less relevant ones)
         if current_resources:
             features['gpu_memory_available'] = current_resources.gpu_memory_total - current_resources.gpu_memory_used
             features['gpu_utilization'] = current_resources.gpu_utilization
             features['gpu_memory_utilization'] = current_resources.gpu_memory_percent
         else:
-            # Default values if no resource info
             features['gpu_memory_available'] = 40.0
             features['gpu_utilization'] = 0.0
             features['gpu_memory_utilization'] = 0.0
         
-        # NEW: Concurrent execution features
         features['concurrent_tasks'] = self._get_concurrent_task_count()
         features['system_load_factor'] = self._calculate_system_load_factor()
         
-        # Historical features (enhanced)
         historical = self._get_historical_features(model_id, task_name)
         features.update(historical)
         
-        # NEW: Context-aware features
         features['memory_pressure'] = self._calculate_memory_pressure(current_resources)
         features['batch_size_hint'] = self._get_optimal_batch_size_hint(model_id, task_name)
         
-        # System features
         features['num_gpus'] = self.num_gpus
         
         return features
@@ -159,7 +202,6 @@ class AdaptiveScheduler:
         model_id = model_config.get("id", "").lower()
         model_name = model_config.get("name", "").lower()
         
-        # Check for quantization indicators in model ID/name
         if any(q in model_id for q in ['4bit', '4-bit', 'bnb-4bit']):
             return '4bit'
         elif any(q in model_id for q in ['8bit', '8-bit', 'int8']):
@@ -169,69 +211,54 @@ class AdaptiveScheduler:
         elif any(q in model_id for q in ['fp32', 'float32']):
             return 'fp32'
         else:
-            # Default assumption based on model size
             model_size = self._extract_model_size_numeric(model_id)
-            if model_size >= 30:  # Large models likely quantized
-                return '4bit'
+            if model_size >= 30:
+                return '8bit'  # Large models likely use 8bit quantization
             elif model_size >= 10:
                 return 'fp16'
             else:
-                return 'fp16'  # Default
+                return 'fp16'
     
     def _extract_model_architecture(self, model_id: str) -> str:
         """Extract model architecture type"""
         model_id_lower = model_id.lower()
         
-        # Mixture of Experts models
         if any(moe in model_id_lower for moe in ['moe', 'mixtral']):
             return 'moe'
         
-        # Transformer variants
         if 'mamba' in model_id_lower:
             return 'mamba'
         elif 'rwkv' in model_id_lower:
             return 'rwkv'
         else:
-            return 'transformer'  # Default
+            return 'transformer'
     
     def _estimate_sequence_length(self, task_name: str) -> int:
         """Estimate sequence length based on task characteristics"""
         task_name_lower = task_name.lower()
         
-        # Task-specific sequence length patterns
         length_map = {
-            # Long context tasks
             'mmlu_pro': 2048,
             'bbh': 1536,
             'agieval': 1536,
-            
-            # Medium context tasks
             'mmlu': 1024,
             'gsm8k': 1024,
             'arc_challenge': 1024,
             'kmmlu': 1024,
-            
-            # Short context tasks
             'hellaswag': 512,
             'winogrande': 512,
             'piqa': 512,
             'arc_easy': 512,
-            
-            # Code tasks (variable length)
             'humaneval': 1024,
             'mbpp': 1024,
-            
-            # Korean tasks
             'haerae': 1024,
             'kobest': 1024,
         }
         
-        # Find matching task
         for task_pattern, length in length_map.items():
             if task_pattern in task_name_lower:
                 return length
         
-        # Default based on task complexity
         complexity = self._extract_task_complexity(task_name)
         if complexity >= 0.8:
             return 2048
@@ -241,17 +268,17 @@ class AdaptiveScheduler:
             return 512
     
     def _get_concurrent_task_count(self) -> int:
-        """Get number of currently running tasks - FIXED DB ACCESS"""
+        """Get number of currently running tasks with enhanced safety"""
         try:
-            with self.performance_tracker._db_lock:
-                conn = self.performance_tracker.conn  # FIXED: Use direct connection
-                cursor = conn.cursor()
+            with SafeDBOperation(self.performance_tracker, self.db_timeout):
+                cursor = self.performance_tracker.conn.cursor()
                 
                 cursor.execute("""
                     SELECT COUNT(*) as running_tasks
                     FROM execution_records 
                     WHERE status = 'running'
-                """)
+                    AND mode = ?
+                """, (self.mode,))
                 
                 result = cursor.fetchone()
                 return result['running_tasks'] if result else 0
@@ -267,11 +294,9 @@ class AdaptiveScheduler:
             if not current_resources:
                 return 0.0
             
-            # Weighted combination of resource utilizations
             gpu_load = current_resources.gpu_utilization / 100.0
             memory_load = current_resources.gpu_memory_percent / 100.0
             
-            # GPU utilization has higher weight than memory for load calculation
             system_load = (0.7 * gpu_load) + (0.3 * memory_load)
             
             return min(system_load, 1.0)
@@ -288,15 +313,14 @@ class AdaptiveScheduler:
         try:
             memory_usage_percent = current_resources.gpu_memory_percent
             
-            # Non-linear mapping: pressure increases rapidly above 70%
             if memory_usage_percent >= 90:
                 pressure = 1.0
             elif memory_usage_percent >= 80:
-                pressure = 0.7 + (memory_usage_percent - 80) * 0.03  # 0.7 to 1.0
+                pressure = 0.7 + (memory_usage_percent - 80) * 0.03
             elif memory_usage_percent >= 70:
-                pressure = 0.4 + (memory_usage_percent - 70) * 0.03  # 0.4 to 0.7
+                pressure = 0.4 + (memory_usage_percent - 70) * 0.03
             else:
-                pressure = memory_usage_percent / 175.0  # 0.0 to 0.4
+                pressure = memory_usage_percent / 175.0
             
             return min(pressure, 1.0)
             
@@ -307,30 +331,24 @@ class AdaptiveScheduler:
     def _get_optimal_batch_size_hint(self, model_id: str, task_name: str) -> int:
         """Get optimal batch size hint based on model and task characteristics"""
         try:
-            # Get model size
             model_size = self._extract_model_size_numeric(model_id)
-            
-            # Get estimated sequence length
             seq_length = self._estimate_sequence_length(task_name)
             
-            # Calculate hint based on memory requirements
-            # Rough estimation: memory ∝ model_size * seq_length * batch_size
-            
-            if model_size >= 30:  # Large models
+            if model_size >= 30:
                 if seq_length >= 2048:
                     return 1
                 elif seq_length >= 1024:
                     return 2
                 else:
                     return 4
-            elif model_size >= 10:  # Medium models
+            elif model_size >= 10:
                 if seq_length >= 2048:
                     return 2
                 elif seq_length >= 1024:
                     return 4
                 else:
                     return 8
-            else:  # Small models
+            else:
                 if seq_length >= 2048:
                     return 4
                 elif seq_length >= 1024:
@@ -359,7 +377,7 @@ class AdaptiveScheduler:
             if pattern in model_id_lower:
                 return size
         
-        return 7.0  # Default assumption
+        return 7.0
     
     def _extract_model_size_category(self, model_id: str) -> str:
         """Extract model size category"""
@@ -421,15 +439,10 @@ class AdaptiveScheduler:
         task_name_lower = task_name.lower()
         
         complexity_map = {
-            # High complexity
             'mmlu_pro': 0.9, 'bbh': 0.9, 'gpqa': 0.9, 'humaneval': 0.9,
-            # Medium-high complexity
             'mmlu': 0.7, 'gsm8k': 0.7, 'agieval': 0.7, 'mbpp': 0.7,
-            # Medium complexity
             'arc_challenge': 0.6, 'kmmlu': 0.6, 'haerae': 0.6,
-            # Lower complexity
             'arc_easy': 0.4, 'hellaswag': 0.4, 'winogrande': 0.4, 'piqa': 0.4,
-            # Simple tasks
             'openbookqa': 0.3, 'copa': 0.3
         }
         
@@ -437,13 +450,12 @@ class AdaptiveScheduler:
             if task in task_name_lower:
                 return complexity
         
-        return 0.5  # Default medium complexity
+        return 0.5
     
     def _get_historical_features(self, model_id: str, task_name: str) -> Dict[str, float]:
-        """Get historical performance features - FIXED DB ACCESS"""
+        """Get historical performance features with enhanced safety"""
         features = {}
         
-        # Get past performance for this model-task combination
         prediction = self.performance_tracker.predict_execution(model_id, task_name)
         
         features['historical_avg_time'] = prediction.get('predicted_time', 3600.0)
@@ -452,20 +464,16 @@ class AdaptiveScheduler:
         features['historical_oom_rate'] = prediction.get('oom_rate', 0.1)
         features['historical_sample_count'] = prediction.get('num_samples', 0)
         
-        # Get model-level statistics
         try:
-            with self.performance_tracker._db_lock:
-                conn = self.performance_tracker.conn  # FIXED: Use direct connection
-                cursor = conn.cursor()
-                
+            with SafeDBOperation(self.performance_tracker, self.db_timeout) as cursor:
                 cursor.execute("""
                     SELECT 
                         AVG(execution_time) as avg_time,
                         AVG(gpu_memory_peak) as avg_memory,
                         COUNT(*) as total_runs
                     FROM execution_records 
-                    WHERE model_id = ? AND status = 'completed'
-                """, (model_id,))
+                    WHERE model_id = ? AND status = 'completed' AND mode = ?
+                """, (model_id, self.mode))
                 
                 result = cursor.fetchone()
                 if result and result['total_runs'] > 0:
@@ -486,17 +494,23 @@ class AdaptiveScheduler:
         return features
     
     def _prepare_training_data(self) -> Optional[pd.DataFrame]:
-        """Prepare training data from performance tracker - FIXED DB ACCESS"""
+        """Prepare training data from performance tracker with enhanced safety"""
         try:
-            with self.performance_tracker._db_lock:
-                conn = self.performance_tracker.conn  # FIXED: Use direct connection
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    SELECT * FROM execution_records 
-                    WHERE status IN ('completed', 'failed', 'oom')
-                    ORDER BY timestamp DESC
-                """)
+            with SafeDBOperation(self.performance_tracker, self.db_timeout) as cursor:
+                if self.mode == "optimized":
+                    cursor.execute("""
+                        SELECT * FROM execution_records 
+                        WHERE status IN ('completed', 'failed', 'oom')
+                        AND mode = ?
+                        ORDER BY timestamp DESC
+                        LIMIT 1000
+                    """, (self.mode,))
+                else:
+                    cursor.execute("""
+                        SELECT * FROM execution_records 
+                        WHERE status IN ('completed', 'failed', 'oom')
+                        ORDER BY timestamp DESC
+                    """)
                 
                 records = cursor.fetchall()
                 
@@ -504,13 +518,10 @@ class AdaptiveScheduler:
                     logger.info(f"Insufficient training data: {len(records)} < {self.min_training_samples}")
                     return None
                 
-                # Convert to DataFrame
                 df = pd.DataFrame([dict(record) for record in records])
                 
-                # Add features for each record
                 feature_data = []
                 for _, row in df.iterrows():
-                    # Create mock model config
                     model_config = {
                         "id": row['model_id'],
                         "name": row['model_name']
@@ -518,7 +529,6 @@ class AdaptiveScheduler:
                     
                     features = self._extract_features(model_config, row['task_name'])
                     
-                    # Add target variables
                     features['target_execution_time'] = row['execution_time'] if row['execution_time'] else 3600.0
                     features['target_memory_usage'] = row['gpu_memory_peak'] if row['gpu_memory_peak'] else 20.0
                     features['target_oom'] = 1 if row['status'] == 'oom' else 0
@@ -529,7 +539,7 @@ class AdaptiveScheduler:
                     feature_data.append(features)
                 
                 training_df = pd.DataFrame(feature_data)
-                logger.info(f"Prepared training data with {len(training_df)} samples")
+                logger.info(f"Prepared training data with {len(training_df)} samples for mode: {self.mode}")
                 
                 return training_df
                 
@@ -541,7 +551,7 @@ class AdaptiveScheduler:
         """Encode categorical features with backward compatibility"""
         categorical_features = [
             'model_size_category', 'model_type', 'task_name', 'task_type',
-            'quantization_type', 'model_architecture'  # NEW features
+            'quantization_type', 'model_architecture'
         ]
         
         df_encoded = df.copy()
@@ -552,106 +562,110 @@ class AdaptiveScheduler:
                     if feature not in self.label_encoders:
                         self.label_encoders[feature] = LabelEncoder()
                     
-                    # Handle unseen categories
                     df_encoded[feature] = df_encoded[feature].astype(str)
                     self.label_encoders[feature].fit(df_encoded[feature])
                     df_encoded[feature] = self.label_encoders[feature].transform(df_encoded[feature])
                 else:
-                    # Transform with existing encoder
                     df_encoded[feature] = df_encoded[feature].astype(str)
-                    # Handle unseen categories
                     seen_categories = set(self.label_encoders[feature].classes_)
                     df_encoded[feature] = df_encoded[feature].apply(
                         lambda x: x if x in seen_categories else 'unknown'
                     )
                     
-                    # Add 'unknown' class if not exists
                     if 'unknown' not in seen_categories:
                         new_classes = np.append(self.label_encoders[feature].classes_, 'unknown')
                         self.label_encoders[feature].classes_ = new_classes
                     
                     df_encoded[feature] = self.label_encoders[feature].transform(df_encoded[feature])
             else:
-                # Handle missing features for backward compatibility
                 if not fit and feature not in df_encoded.columns:
                     logger.debug(f"Missing feature {feature}, using default value")
-                    df_encoded[feature] = 0  # Default encoded value
+                    df_encoded[feature] = 0
         
         return df_encoded
     
     def train_models(self) -> bool:
-        """Train all ML models"""
-        logger.info("Starting ML model training with improved features...")
+        """Train all ML models with enhanced safety for optimized mode"""
+        logger.info(f"Starting ML model training with improved features for mode: {self.mode}...")
         
-        # Prepare training data
-        training_df = self._prepare_training_data()
-        if training_df is None:
+        training_start_time = time.time()
+        max_training_time = 300 if self.mode == "optimized" else 600
+        
+        try:
+            training_df = self._prepare_training_data()
+            if training_df is None:
+                return False
+            
+            if time.time() - training_start_time > max_training_time:
+                logger.warning(f"Training preparation took too long for mode: {self.mode}")
+                return False
+            
+            training_df = self._encode_categorical_features(training_df, fit=True)
+            
+            target_columns = ['target_execution_time', 'target_memory_usage', 'target_oom', 
+                             'target_success', 'target_batch_size', 'target_num_fewshot']
+            feature_columns = [col for col in training_df.columns if col not in target_columns]
+            self.feature_names = feature_columns
+            
+            X = training_df[feature_columns]
+            
+            success_count = 0
+            
+            if time.time() - training_start_time < max_training_time:
+                if self._train_time_predictor(X, training_df['target_execution_time']):
+                    success_count += 1
+            
+            if time.time() - training_start_time < max_training_time:
+                if self._train_memory_predictor(X, training_df['target_memory_usage']):
+                    success_count += 1
+            
+            if time.time() - training_start_time < max_training_time:
+                if self._train_oom_classifier(X, training_df['target_oom']):
+                    success_count += 1
+            
+            if time.time() - training_start_time < max_training_time:
+                if self._train_success_classifier(X, training_df['target_success']):
+                    success_count += 1
+            
+            if time.time() - training_start_time < max_training_time:
+                if self._train_batch_size_predictor(X, training_df['target_batch_size']):
+                    success_count += 1
+            
+            if time.time() - training_start_time < max_training_time:
+                if self._train_fewshot_predictor(X, training_df['target_num_fewshot']):
+                    success_count += 1
+            
+            self.last_training_time = datetime.now()
+            self.training_data_size = len(training_df)
+            
+            self._save_models()
+            
+            total_time = time.time() - training_start_time
+            logger.info(f"Model training completed for mode {self.mode}: {success_count}/6 models trained successfully in {total_time:.1f}s")
+            return success_count >= 4
+        
+        except Exception as e:
+            logger.error(f"Error in model training for mode {self.mode}: {e}")
             return False
-        
-        # Encode categorical features
-        training_df = self._encode_categorical_features(training_df, fit=True)
-        
-        # Define feature columns (exclude target columns)
-        target_columns = ['target_execution_time', 'target_memory_usage', 'target_oom', 
-                         'target_success', 'target_batch_size', 'target_num_fewshot']
-        feature_columns = [col for col in training_df.columns if col not in target_columns]
-        self.feature_names = feature_columns
-        
-        X = training_df[feature_columns]
-        
-        # Train individual models
-        success_count = 0
-        
-        # 1. Execution time predictor
-        if self._train_time_predictor(X, training_df['target_execution_time']):
-            success_count += 1
-        
-        # 2. Memory usage predictor
-        if self._train_memory_predictor(X, training_df['target_memory_usage']):
-            success_count += 1
-        
-        # 3. OOM classifier
-        if self._train_oom_classifier(X, training_df['target_oom']):
-            success_count += 1
-        
-        # 4. Success classifier
-        if self._train_success_classifier(X, training_df['target_success']):
-            success_count += 1
-        
-        # 5. Batch size predictor
-        if self._train_batch_size_predictor(X, training_df['target_batch_size']):
-            success_count += 1
-        
-        # 6. Few-shot predictor
-        if self._train_fewshot_predictor(X, training_df['target_num_fewshot']):
-            success_count += 1
-        
-        # Update metadata
-        self.last_training_time = datetime.now()
-        self.training_data_size = len(training_df)
-        
-        # Save models
-        self._save_models()
-        
-        logger.info(f"Model training completed with improved features: {success_count}/6 models trained successfully")
-        return success_count >= 4  # At least 4 models should be trained
     
     def _train_time_predictor(self, X: pd.DataFrame, y: pd.Series) -> bool:
         """Train execution time predictor"""
         try:
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
             
+            n_estimators = 50 if self.mode == "optimized" else 100
+            max_depth = 8 if self.mode == "optimized" else 10
+            
             self.time_predictor = RandomForestRegressor(
-                n_estimators=100,
-                max_depth=10,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
                 random_state=42,
                 n_jobs=-1,
-                oob_score=True  # Enable OOB scoring for confidence calculation
+                oob_score=True
             )
             
             self.time_predictor.fit(X_train, y_train)
             
-            # Evaluate
             y_pred = self.time_predictor.predict(X_test)
             mae = mean_absolute_error(y_test, y_pred)
             
@@ -673,9 +687,12 @@ class AdaptiveScheduler:
         try:
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
             
+            n_estimators = 50 if self.mode == "optimized" else 100
+            max_depth = 8 if self.mode == "optimized" else 10
+            
             self.memory_predictor = RandomForestRegressor(
-                n_estimators=100,
-                max_depth=10,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
                 random_state=42,
                 n_jobs=-1,
                 oob_score=True
@@ -683,7 +700,6 @@ class AdaptiveScheduler:
             
             self.memory_predictor.fit(X_train, y_train)
             
-            # Evaluate
             y_pred = self.memory_predictor.predict(X_test)
             mae = mean_absolute_error(y_test, y_pred)
             
@@ -703,15 +719,18 @@ class AdaptiveScheduler:
     def _train_oom_classifier(self, X: pd.DataFrame, y: pd.Series) -> bool:
         """Train OOM classifier"""
         try:
-            if y.sum() < 5:  # Not enough positive samples
+            if y.sum() < 5:
                 logger.warning("Insufficient OOM samples for training classifier")
                 return False
             
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
             
+            n_estimators = 50 if self.mode == "optimized" else 100
+            max_depth = 8 if self.mode == "optimized" else 10
+            
             self.oom_classifier = RandomForestClassifier(
-                n_estimators=100,
-                max_depth=10,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
                 random_state=42,
                 n_jobs=-1,
                 class_weight='balanced',
@@ -720,7 +739,6 @@ class AdaptiveScheduler:
             
             self.oom_classifier.fit(X_train, y_train)
             
-            # Evaluate
             y_pred = self.oom_classifier.predict(X_test)
             accuracy = accuracy_score(y_test, y_pred)
             
@@ -741,9 +759,12 @@ class AdaptiveScheduler:
         try:
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
             
+            n_estimators = 50 if self.mode == "optimized" else 100
+            max_depth = 8 if self.mode == "optimized" else 10
+            
             self.success_classifier = RandomForestClassifier(
-                n_estimators=100,
-                max_depth=10,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
                 random_state=42,
                 n_jobs=-1,
                 class_weight='balanced',
@@ -752,7 +773,6 @@ class AdaptiveScheduler:
             
             self.success_classifier.fit(X_train, y_train)
             
-            # Evaluate
             y_pred = self.success_classifier.predict(X_test)
             accuracy = accuracy_score(y_test, y_pred)
             
@@ -773,9 +793,12 @@ class AdaptiveScheduler:
         try:
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
             
+            n_estimators = 50 if self.mode == "optimized" else 100
+            max_depth = 6 if self.mode == "optimized" else 8
+            
             self.batch_size_predictor = RandomForestRegressor(
-                n_estimators=100,
-                max_depth=8,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
                 random_state=42,
                 n_jobs=-1,
                 oob_score=True
@@ -783,7 +806,6 @@ class AdaptiveScheduler:
             
             self.batch_size_predictor.fit(X_train, y_train)
             
-            # Evaluate
             y_pred = self.batch_size_predictor.predict(X_test)
             mae = mean_absolute_error(y_test, y_pred)
             
@@ -804,9 +826,12 @@ class AdaptiveScheduler:
         try:
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
             
+            n_estimators = 50 if self.mode == "optimized" else 100
+            max_depth = 6 if self.mode == "optimized" else 8
+            
             self.fewshot_predictor = RandomForestRegressor(
-                n_estimators=100,
-                max_depth=8,
+                n_estimators=n_estimators,
+                max_depth=max_depth,
                 random_state=42,
                 n_jobs=-1,
                 oob_score=True
@@ -814,7 +839,6 @@ class AdaptiveScheduler:
             
             self.fewshot_predictor.fit(X_train, y_train)
             
-            # Evaluate
             y_pred = self.fewshot_predictor.predict(X_test)
             mae = mean_absolute_error(y_test, y_pred)
             
@@ -830,86 +854,110 @@ class AdaptiveScheduler:
             logger.error(f"Error training few-shot predictor: {e}")
             return False
     
+    def _apply_quantization_adjustment(self, raw_memory_prediction: float, quantization_type: str) -> float:
+        """Apply quantization adjustment to memory prediction"""
+        adjustment_factor = self.quantization_memory_factors.get(quantization_type, 1.0)
+        adjusted_memory = raw_memory_prediction * adjustment_factor
+        
+        # Add some safety margin for quantization overhead
+        if quantization_type in ['4bit', '8bit']:
+            overhead_factor = 1.1  # 10% overhead for quantization
+            adjusted_memory *= overhead_factor
+        
+        logger.debug(f"Memory adjustment: {raw_memory_prediction:.1f}GB -> {adjusted_memory:.1f}GB "
+                    f"(quantization: {quantization_type}, factor: {adjustment_factor:.2f})")
+        
+        return max(adjusted_memory, 1.0)  # Minimum 1GB
+    
     def predict(self, model_config: Dict, task_name: str) -> MLPrediction:
-        """Make ML prediction for model-task combination"""
+        """Make ML prediction for model-task combination with quantization-aware memory estimation"""
         try:
-            # Extract features
             current_resources = self.resource_monitor.get_current_snapshot()
             features = self._extract_features(model_config, task_name, current_resources)
             
-            # Convert to DataFrame
             feature_df = pd.DataFrame([features])
-            
-            # Encode categorical features
             feature_df = self._encode_categorical_features(feature_df, fit=False)
             
-            # Select feature columns
             X = feature_df[self.feature_names]
             
-            # Make predictions
             predictions = {}
             confidence_scores = {}
             
-            # Execution time
+            # Extract quantization type for memory adjustment
+            quantization_type = features.get('quantization_type', 'fp16')
+            
             if self.time_predictor:
                 pred_time = self.time_predictor.predict(X)[0]
-                predictions['execution_time'] = max(pred_time, 60.0)  # Minimum 1 minute
+                predictions['execution_time'] = max(pred_time, 60.0)
                 
-                # Calculate confidence based on feature importance
                 feature_importance = dict(zip(self.feature_names, self.time_predictor.feature_importances_))
                 confidence_scores['time'] = self._calculate_prediction_confidence(X, feature_importance)
             else:
-                predictions['execution_time'] = 3600.0  # Default 1 hour
+                predictions['execution_time'] = 3600.0
                 confidence_scores['time'] = 0.0
             
-            # Memory usage
             if self.memory_predictor:
-                pred_memory = self.memory_predictor.predict(X)[0]
-                predictions['memory_usage'] = max(pred_memory, 1.0)  # Minimum 1GB
+                raw_pred_memory = self.memory_predictor.predict(X)[0]
+                # Apply quantization-aware adjustment
+                adjusted_memory = self._apply_quantization_adjustment(raw_pred_memory, quantization_type)
+                predictions['memory_usage'] = max(adjusted_memory, 1.0)
                 
                 feature_importance = dict(zip(self.feature_names, self.memory_predictor.feature_importances_))
                 confidence_scores['memory'] = self._calculate_prediction_confidence(X, feature_importance)
+                
+                logger.debug(f"Memory prediction for {model_config.get('id', '')}: "
+                            f"raw={raw_pred_memory:.1f}GB, adjusted={adjusted_memory:.1f}GB, "
+                            f"quantization={quantization_type}")
             else:
-                predictions['memory_usage'] = 20.0  # Default 20GB
+                # Fallback: estimate based on model size and quantization
+                model_size_gb = self._extract_model_size_numeric(model_config.get('id', ''))
+                base_memory = model_size_gb * 2.5  # Rough estimation
+                predictions['memory_usage'] = self._apply_quantization_adjustment(base_memory, quantization_type)
                 confidence_scores['memory'] = 0.0
             
-            # OOM probability
             if self.oom_classifier:
                 oom_proba = self.oom_classifier.predict_proba(X)[0]
-                predictions['oom_probability'] = oom_proba[1] if len(oom_proba) > 1 else 0.1
+                raw_oom_prob = oom_proba[1] if len(oom_proba) > 1 else 0.1
+                
+                # Adjust OOM probability based on quantization (lower risk with quantization)
+                if quantization_type in ['4bit', '8bit']:
+                    oom_adjustment = 0.7 if quantization_type == '4bit' else 0.8
+                    predictions['oom_probability'] = raw_oom_prob * oom_adjustment
+                else:
+                    predictions['oom_probability'] = raw_oom_prob
+                
                 confidence_scores['oom'] = max(oom_proba)
             else:
-                predictions['oom_probability'] = 0.1  # Default 10%
+                # Lower default OOM risk for quantized models
+                if quantization_type in ['4bit', '8bit']:
+                    predictions['oom_probability'] = 0.05
+                else:
+                    predictions['oom_probability'] = 0.1
                 confidence_scores['oom'] = 0.0
             
-            # Success probability
             if self.success_classifier:
                 success_proba = self.success_classifier.predict_proba(X)[0]
                 predictions['success_probability'] = success_proba[1] if len(success_proba) > 1 else 0.8
                 confidence_scores['success'] = max(success_proba)
             else:
-                predictions['success_probability'] = 0.8  # Default 80%
+                predictions['success_probability'] = 0.8
                 confidence_scores['success'] = 0.0
             
-            # Batch size
             if self.batch_size_predictor:
                 pred_batch = self.batch_size_predictor.predict(X)[0]
                 predictions['suggested_batch_size'] = max(1, min(int(round(pred_batch)), 16))
             else:
                 predictions['suggested_batch_size'] = 1
             
-            # Few-shot
             if self.fewshot_predictor:
                 pred_fewshot = self.fewshot_predictor.predict(X)[0]
                 predictions['suggested_num_fewshot'] = max(0, min(int(round(pred_fewshot)), 10))
             else:
                 predictions['suggested_num_fewshot'] = 5
             
-            # Overall confidence using enhanced calculation
             overall_confidence = self._calculate_prediction_confidence(X, 
                 dict(zip(self.feature_names, self.time_predictor.feature_importances_)) if self.time_predictor else {})
             
-            # Feature importance (from time predictor as main model)
             if self.time_predictor:
                 feature_importance = dict(zip(self.feature_names, self.time_predictor.feature_importances_))
             else:
@@ -928,11 +976,18 @@ class AdaptiveScheduler:
             
         except Exception as e:
             logger.error(f"Error making ML prediction: {e}")
-            # Return fallback prediction
+            # Fallback with quantization awareness
+            model_id = model_config.get('id', '')
+            quantization_type = self._extract_quantization_type(model_config)
+            model_size = self._extract_model_size_numeric(model_id)
+            
+            base_memory = model_size * 2.5
+            adjusted_memory = self._apply_quantization_adjustment(base_memory, quantization_type)
+            
             return MLPrediction(
                 execution_time=3600.0,
-                memory_usage=20.0,
-                oom_probability=0.1,
+                memory_usage=adjusted_memory,
+                oom_probability=0.05 if quantization_type in ['4bit', '8bit'] else 0.1,
                 success_probability=0.8,
                 suggested_batch_size=1,
                 suggested_num_fewshot=5,
@@ -945,7 +1000,6 @@ class AdaptiveScheduler:
         try:
             confidence_scores = []
             
-            # 1. Feature importance entropy
             if feature_importance:
                 importance_values = np.array(list(feature_importance.values()))
                 importance_values = importance_values / importance_values.sum()
@@ -955,28 +1009,23 @@ class AdaptiveScheduler:
                 entropy_confidence = 1.0 - (entropy / max_entropy) if max_entropy > 0 else 0.5
                 confidence_scores.append(entropy_confidence)
             
-            # 2. Ensemble agreement confidence
             if hasattr(self, 'time_predictor') and self.time_predictor:
                 ensemble_confidence = self._calculate_ensemble_confidence(X)
                 if ensemble_confidence is not None:
                     confidence_scores.append(ensemble_confidence)
             
-            # 3. Prediction stability confidence
             stability_confidence = self._calculate_prediction_stability(X)
             if stability_confidence is not None:
                 confidence_scores.append(stability_confidence)
             
-            # 4. Historical accuracy confidence
             historical_confidence = self._get_historical_accuracy_confidence()
             if historical_confidence is not None:
                 confidence_scores.append(historical_confidence)
             
-            # 5. Out-of-bag confidence
             oob_confidence = self._calculate_oob_confidence()
             if oob_confidence is not None:
                 confidence_scores.append(oob_confidence)
             
-            # Combine all confidence scores with weights
             if confidence_scores:
                 weights = [0.25, 0.25, 0.2, 0.15, 0.15][:len(confidence_scores)]
                 weights = np.array(weights) / sum(weights)
@@ -1117,11 +1166,9 @@ class AdaptiveScheduler:
         
         confidence_metrics = {}
         
-        # 1. Training data size confidence
         data_confidence = min(self.training_data_size / 200.0, 1.0)
         confidence_metrics['training_data_confidence'] = data_confidence
         
-        # 2. Model performance confidence
         if self.model_performance:
             performance_scores = []
             for model_name, perf in self.model_performance.items():
@@ -1141,7 +1188,6 @@ class AdaptiveScheduler:
         
         confidence_metrics['model_performance_confidence'] = perf_confidence
         
-        # 3. Prediction stability confidence
         try:
             sample_features = pd.DataFrame({
                 'model_size_numeric': [7.0],
@@ -1188,7 +1234,6 @@ class AdaptiveScheduler:
         
         confidence_metrics['prediction_stability_confidence'] = stability_confidence
         
-        # 4. Ensemble agreement confidence
         try:
             ensemble_confidence = self._calculate_ensemble_confidence(sample_features)
             if ensemble_confidence is None:
@@ -1199,7 +1244,6 @@ class AdaptiveScheduler:
         
         confidence_metrics['ensemble_agreement_confidence'] = ensemble_confidence
         
-        # 5. Temporal stability confidence
         if self.last_training_time:
             time_since_training = datetime.now() - self.last_training_time
             hours_since_training = time_since_training.total_seconds() / 3600
@@ -1213,7 +1257,6 @@ class AdaptiveScheduler:
         
         confidence_metrics['temporal_stability_confidence'] = temporal_confidence
         
-        # 6. Overall confidence
         weights = {
             'training_data_confidence': 0.3,
             'model_performance_confidence': 0.25,
@@ -1240,19 +1283,15 @@ class AdaptiveScheduler:
         """Create optimal schedule using ML predictions"""
         schedule = []
         
-        # Generate ML predictions for all model-task combinations
         for model in models:
             for task in tasks:
                 ml_pred = self.predict(model, task)
                 
-                # Create TaskPriority with ML predictions
                 priority = self._create_task_priority_from_ml(model, task, ml_pred)
                 schedule.append(priority)
         
-        # Sort by priority score
         schedule.sort(key=lambda x: x.priority_score, reverse=True)
         
-        # Optimize GPU assignment
         self._optimize_gpu_assignment(schedule)
         
         logger.info(f"Created ML-based optimal schedule with {len(schedule)} tasks")
@@ -1263,10 +1302,8 @@ class AdaptiveScheduler:
         model_id = model.get("id", "")
         model_name = model.get("name", model_id.split("/")[-1])
         
-        # Calculate priority score using ML predictions
         priority_score = self._compute_ml_priority_score(ml_pred)
         
-        # Generate rationale
         rationale = self._generate_ml_rationale(ml_pred, model_name, task)
         
         return TaskPriority(
@@ -1276,7 +1313,7 @@ class AdaptiveScheduler:
             estimated_time=ml_pred.execution_time,
             estimated_memory=ml_pred.memory_usage,
             success_probability=ml_pred.success_probability,
-            suggested_gpu=0,  # Will be optimized later
+            suggested_gpu=0,
             suggested_batch_size=ml_pred.suggested_batch_size,
             suggested_num_fewshot=ml_pred.suggested_num_fewshot,
             rationale=rationale
@@ -1284,21 +1321,16 @@ class AdaptiveScheduler:
     
     def _compute_ml_priority_score(self, ml_pred: MLPrediction) -> float:
         """Compute priority score from ML prediction"""
-        # Base score from success probability
         score = ml_pred.success_probability * 100
         
-        # Time efficiency
         time_efficiency = 1 / (1 + np.log1p(ml_pred.execution_time / 3600))
         score *= time_efficiency
         
-        # Memory efficiency
         memory_efficiency = 1 / (1 + np.log1p(ml_pred.memory_usage / 40))
         score *= memory_efficiency
         
-        # OOM risk penalty
         score *= (1 - ml_pred.oom_probability)
         
-        # Confidence bonus
         confidence_bonus = 1 + (ml_pred.confidence_score * 0.2)
         score *= confidence_bonus
         
@@ -1340,26 +1372,24 @@ class AdaptiveScheduler:
         logger.info(f"ML-based GPU load distribution: {gpu_loads}")
     
     def should_retrain(self) -> bool:
-        """Check if models should be retrained - FIXED: DB 연결 오류 수정"""
+        """Check if models should be retrained with enhanced safety"""
         try:
-            cursor = self.performance_tracker.conn.cursor()  # FIXED: Direct access
-            cursor.execute("PRAGMA busy_timeout = 5000")  # 5초 타임아웃
-            cursor.execute("""
-                SELECT COUNT(*) as total_records
-                FROM execution_records 
-                WHERE status IN ('completed', 'failed', 'oom')
-                AND mode = ?
-            """, (self.performance_tracker.mode,))
-            
-            result = cursor.fetchone()
-            current_data_size = result['total_records'] if result else 0
-            
-            # Check if we have enough new data
-            new_data = current_data_size - self.training_data_size
-            
-            return (new_data >= self.retrain_threshold or 
-                    current_data_size >= self.min_training_samples and self.last_training_time is None)
-                    
+            with SafeDBOperation(self.performance_tracker, self.db_timeout) as cursor:
+                cursor.execute("""
+                    SELECT COUNT(*) as total_records
+                    FROM execution_records 
+                    WHERE status IN ('completed', 'failed', 'oom')
+                    AND mode = ?
+                """, (self.mode,))
+                
+                result = cursor.fetchone()
+                current_data_size = result['total_records'] if result else 0
+                
+                new_data = current_data_size - self.training_data_size
+                
+                return (new_data >= self.retrain_threshold or 
+                        current_data_size >= self.min_training_samples and self.last_training_time is None)
+                        
         except Exception as e:
             logger.error(f"Error checking retrain status: {e}")
             return False
@@ -1386,47 +1416,49 @@ class AdaptiveScheduler:
             
             for name, model in models_to_save.items():
                 if model is not None:
-                    model_path = self.model_save_path / f"{name}_{timestamp}.pkl"
+                    model_path = self.model_save_path / f"{name}_{self.mode}_{timestamp}.pkl"
                     joblib.dump(model, model_path)
             
-            # Save metadata
             metadata = {
+                'mode': self.mode,
                 'last_training_time': self.last_training_time.isoformat() if self.last_training_time else None,
                 'training_data_size': self.training_data_size,
                 'model_performance': self.model_performance,
                 'feature_names': self.feature_names,
-                'label_encoders': {k: {'classes_': v.classes_.tolist()} for k, v in self.label_encoders.items()}
+                'label_encoders': {k: {'classes_': v.classes_.tolist()} for k, v in self.label_encoders.items()},
+                'quantization_memory_factors': self.quantization_memory_factors
             }
             
-            metadata_path = self.model_save_path / f"metadata_{timestamp}.json"
+            metadata_path = self.model_save_path / f"metadata_{self.mode}_{timestamp}.json"
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
             
-            logger.info(f"Models saved to {self.model_save_path}")
+            logger.info(f"Models saved to {self.model_save_path} for mode: {self.mode}")
             
         except Exception as e:
             logger.error(f"Error saving models: {e}")
     
     def _load_models(self):
-        """Load most recent trained models from disk"""
+        """Load most recent trained models from disk for current mode"""
         try:
-            model_files = list(self.model_save_path.glob("time_predictor_*.pkl"))
+            model_files = list(self.model_save_path.glob(f"time_predictor_{self.mode}_*.pkl"))
             if not model_files:
-                logger.info("No pre-trained models found")
+                logger.info(f"No pre-trained models found for mode: {self.mode}")
                 return
             
-            latest_timestamp = max(f.stem.split('_')[-1] for f in model_files)
+            timestamps = [f.stem.split('_')[-1] for f in model_files]
+            latest_timestamp = max(timestamps)
             
             model_names = ['time_predictor', 'memory_predictor', 'oom_classifier', 
                           'success_classifier', 'batch_size_predictor', 'fewshot_predictor']
             
             for name in model_names:
-                model_path = self.model_save_path / f"{name}_{latest_timestamp}.pkl"
+                model_path = self.model_save_path / f"{name}_{self.mode}_{latest_timestamp}.pkl"
                 if model_path.exists():
                     setattr(self, name, joblib.load(model_path))
-                    logger.debug(f"Loaded {name}")
+                    logger.debug(f"Loaded {name} for mode {self.mode}")
             
-            metadata_path = self.model_save_path / f"metadata_{latest_timestamp}.json"
+            metadata_path = self.model_save_path / f"metadata_{self.mode}_{latest_timestamp}.json"
             if metadata_path.exists():
                 with open(metadata_path, 'r') as f:
                     metadata = json.load(f)
@@ -1436,16 +1468,19 @@ class AdaptiveScheduler:
                 self.model_performance = metadata.get('model_performance', {})
                 self.feature_names = metadata.get('feature_names', [])
                 
-                # Restore label encoders
+                # Load quantization factors if available
+                if 'quantization_memory_factors' in metadata:
+                    self.quantization_memory_factors.update(metadata['quantization_memory_factors'])
+                
                 for name, encoder_data in metadata.get('label_encoders', {}).items():
                     encoder = LabelEncoder()
                     encoder.classes_ = np.array(encoder_data['classes_'])
                     self.label_encoders[name] = encoder
             
-            logger.info(f"Pre-trained models loaded from {latest_timestamp}")
+            logger.info(f"Pre-trained models loaded for mode {self.mode} from {latest_timestamp}")
             
         except Exception as e:
-            logger.error(f"Error loading models: {e}")
+            logger.error(f"Error loading models for mode {self.mode}: {e}")
     
     def get_feature_importance_analysis(self) -> Dict[str, Any]:
         """Get detailed feature importance analysis"""
@@ -1490,15 +1525,18 @@ class AdaptiveScheduler:
         analysis = {
             'metadata': {
                 'created_at': datetime.now().isoformat(),
+                'mode': self.mode,
                 'is_trained': self.is_trained(),
                 'training_data_size': self.training_data_size,
                 'last_training_time': self.last_training_time.isoformat() if self.last_training_time else None,
                 'num_features': len(self.feature_names),
+                'quantization_aware': True,
+                'quantization_memory_factors': self.quantization_memory_factors,
                 'feature_improvements': {
                     'removed_features': ['gpu_temperature', 'hour', 'day_of_week', 'cpu_percent', 'ram_available'],
                     'added_features': ['quantization_type', 'model_architecture', 'estimated_sequence_length', 
                                      'concurrent_tasks', 'system_load_factor', 'memory_pressure', 'batch_size_hint'],
-                    'enhancement_focus': 'Memory usage prediction and context awareness'
+                    'enhancement_focus': 'Quantization-aware memory prediction and context awareness'
                 }
             },
             'model_performance': self.model_performance,
@@ -1520,11 +1558,14 @@ class AdaptiveScheduler:
             return {'error': 'Models not trained'}
         
         predictions = []
+        quantization_stats = {'4bit': 0, '8bit': 0, 'fp16': 0, 'fp32': 0}
         
         for model in models:
             for task in tasks:
                 try:
                     ml_pred = self.predict(model, task)
+                    quantization_type = self._extract_quantization_type(model)
+                    quantization_stats[quantization_type] = quantization_stats.get(quantization_type, 0) + 1
                     
                     predictions.append({
                         'model_id': model.get('id', ''),
@@ -1536,13 +1577,13 @@ class AdaptiveScheduler:
                         'oom_probability': ml_pred.oom_probability,
                         'confidence_score': ml_pred.confidence_score,
                         'suggested_batch_size': ml_pred.suggested_batch_size,
-                        'suggested_num_fewshot': ml_pred.suggested_num_fewshot
+                        'suggested_num_fewshot': ml_pred.suggested_num_fewshot,
+                        'quantization_type': quantization_type
                     })
                     
                 except Exception as e:
                     logger.error(f"Error predicting for {model.get('id', '')} on {task}: {e}")
         
-        # Calculate summary statistics
         if predictions:
             summary = {
                 'total_predictions': len(predictions),
@@ -1552,9 +1593,74 @@ class AdaptiveScheduler:
                 'avg_confidence_score': np.mean([p['confidence_score'] for p in predictions]),
                 'high_confidence_predictions': len([p for p in predictions if p['confidence_score'] > 0.7]),
                 'high_risk_predictions': len([p for p in predictions if p['oom_probability'] > 0.3]),
+                'quantization_distribution': quantization_stats,
+                'memory_savings_estimate': {
+                    '8bit_vs_fp16': f"{((1-0.5)/1*100):.1f}% memory reduction",
+                    '4bit_vs_fp16': f"{((1-0.25)/1*100):.1f}% memory reduction"
+                },
                 'predictions': predictions
             }
         else:
             summary = {'total_predictions': 0, 'predictions': []}
         
         return summary
+    
+    def get_quantization_impact_analysis(self, models: List[Dict], tasks: List[str]) -> Dict[str, Any]:
+        """Analyze the impact of quantization on memory usage predictions"""
+        if not self.is_trained():
+            return {'error': 'Models not trained'}
+        
+        analysis = {
+            'quantization_factors': self.quantization_memory_factors,
+            'model_analysis': [],
+            'summary': {
+                'total_models': len(models),
+                'quantization_distribution': {},
+                'memory_impact': {}
+            }
+        }
+        
+        quantization_counts = {}
+        memory_by_quantization = {}
+        
+        for model in models:
+            model_id = model.get('id', '')
+            quantization_type = self._extract_quantization_type(model)
+            model_size = self._extract_model_size_numeric(model_id)
+            
+            # Count quantization types
+            quantization_counts[quantization_type] = quantization_counts.get(quantization_type, 0) + 1
+            
+            # Estimate memory usage for a sample task
+            sample_task = tasks[0] if tasks else 'mmlu'
+            try:
+                ml_pred = self.predict(model, sample_task)
+                memory_usage = ml_pred.memory_usage
+            except:
+                # Fallback estimation
+                base_memory = model_size * 2.5
+                memory_usage = self._apply_quantization_adjustment(base_memory, quantization_type)
+            
+            if quantization_type not in memory_by_quantization:
+                memory_by_quantization[quantization_type] = []
+            memory_by_quantization[quantization_type].append(memory_usage)
+            
+            analysis['model_analysis'].append({
+                'model_id': model_id,
+                'model_size_b': model_size,
+                'quantization_type': quantization_type,
+                'estimated_memory_gb': memory_usage,
+                'memory_reduction_factor': self.quantization_memory_factors.get(quantization_type, 1.0)
+            })
+        
+        analysis['summary']['quantization_distribution'] = quantization_counts
+        
+        # Calculate average memory usage by quantization type
+        for quant_type, memory_list in memory_by_quantization.items():
+            if memory_list:
+                analysis['summary']['memory_impact'][quant_type] = {
+                    'avg_memory_gb': np.mean(memory_list),
+                    'count': len(memory_list)
+                }
+        
+        return analysis
