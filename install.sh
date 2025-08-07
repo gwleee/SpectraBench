@@ -82,3 +82,6 @@ install_dependencies() {
         
         log_success "Essential packages installed successfully"
     fi
+}
+
+install_dependencies
