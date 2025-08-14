@@ -426,7 +426,7 @@ Apache License 2.0 - see [LICENSE](license.md) for details.
   title={SpectraBench:  A Three-Stage Evolution Framework for Intelligent Large Language Model Evaluation},
   author={KISTI Large-scale AI Research Center},
   year={2025},
-  doi={10.5281/zenodo.16741725},
+  doi={10.5281/zenodo.16865650},
   url={https://github.com/gwleee/SpectraBench},
   license={Apache-2.0},
   note={Supports 22+ models and 21+ benchmarks with intelligent scheduling}
