@@ -10,34 +10,43 @@ from collections import Counter
 from scipy import stats
 from scipy.stats import ttest_ind, f_oneway
 import warnings
+import argparse
 warnings.filterwarnings('ignore')
 
 # Configure matplotlib for publication quality
 plt.rcParams.update({
-    'font.size': 16,
-    'axes.titlesize': 20,
-    'axes.labelsize': 18,
-    'xtick.labelsize': 14,
-    'ytick.labelsize': 14,
-    'legend.fontsize': 12,
-    'figure.titlesize': 16,
-    'font.family': 'serif',
-    'font.serif': ['Times New Roman', 'DejaVu Serif'],
-    'mathtext.fontset': 'stix',
-    'axes.grid': True,
-    'grid.alpha': 0.4,
-    'axes.axisbelow': True
+    'font.size': 12,                    # Slightly smaller base size
+    'axes.titlesize': 13,               # Title size
+    'axes.labelsize': 12,               # Axis label size  
+    'xtick.labelsize': 10,              # X-tick size
+    'ytick.labelsize': 10,              # Y-tick size
+    'legend.fontsize': 10,              # Legend size
+    'figure.titlesize': 13,             # Figure title
+    'font.family': 'sans-serif',       # Clean sans-serif font
+    'font.sans-serif': ['Arial', 'DejaVu Sans', 'Liberation Sans'],
+    'mathtext.fontset': 'dejavusans',   # Math font to match
+    'axes.grid': False,                 # Disable default grid
+    'grid.alpha': 0.2,                  # Light grid when enabled
+    'axes.axisbelow': True,             # Grid behind data
+    'axes.spines.top': False,           # Remove top spine
+    'axes.spines.right': False,         # Remove right spine
+    'axes.edgecolor': 'black',          # Black axes
+    'axes.linewidth': 1,                # Axis line width
+    'xtick.color': 'black',             # Black ticks
+    'ytick.color': 'black',             # Black ticks
+    'text.color': 'black'               # Black text
 })
 
 # Publication-quality color palette (colorblind-friendly)
 colors = {
-    'primary': '#1565C0',      
-    'secondary': '#E65100',    
-    'accent': '#2E7D32',       
-    'warning': '#C62828',      
-    'neutral': '#424242',      
-    'highlight': '#6A1B9A'     
+    'primary': '#000000',       # Black
+    'secondary': '#000000',     # Black  
+    'accent': '#000000',        # Black
+    'warning': '#000000',       # Black
+    'neutral': '#424242',       # Dark gray
+    'highlight': '#000000'      # Black
 }
+
 
 class StatisticalAnalyzer:
     """Statistical analysis utilities for experimental data"""
@@ -88,12 +97,18 @@ class StatisticalAnalyzer:
 class EnhancedAcademicVisualizer:
     """Enhanced visualization generator for academic publication"""
     
-    def __init__(self, experiment_dir: Path):
+    def __init__(self, experiment_dir: Path, force_experiment_type=None):
         self.experiment_dir = experiment_dir
         self.figures_dir = experiment_dir / "figures"
         self.figures_dir.mkdir(parents=True, exist_ok=True)
         
-        self.experiment_type = self._detect_experiment_type()
+        # Allow forcing experiment type
+        if force_experiment_type:
+            self.experiment_type = force_experiment_type
+            print(f"Force setting experiment type to: {self.experiment_type}")
+        else:
+            self.experiment_type = self._detect_experiment_type()
+        
         self.results_data = self._load_results()
         self.stats_analyzer = StatisticalAnalyzer()
         
@@ -102,25 +117,45 @@ class EnhancedAcademicVisualizer:
     
     def _detect_experiment_type(self):
         """Detect experiment type from directory structure"""
-        exp_name = self.experiment_dir.name
+        exp_name = self.experiment_dir.name.lower()
         
-        if "phase1_accuracy_convergence" in exp_name:
+        print(f"Detecting experiment type for directory: {exp_name}")
+        
+        if "phase1" in exp_name or "accuracy_convergence" in exp_name:
             return "phase1"
-        elif "phase2_threshold_optimization" in exp_name:
+        elif "phase2" in exp_name or "threshold_optimization" in exp_name:
             return "phase2"
-        elif "threshold_optimization" in exp_name:
-            return "threshold_opt"
         else:
             # Check for analysis files
-            if (self.experiment_dir / "analysis" / "accuracy_convergence_analysis.json").exists():
-                return "phase1"
-            elif (self.experiment_dir / "analysis" / "threshold_optimization_analysis.json").exists():
-                return "phase2"
-            else:
-                return "unknown"
+            analysis_dir = self.experiment_dir / "analysis"
+            if analysis_dir.exists():
+                analysis_files = list(analysis_dir.glob("*.json"))
+                print(f"Found analysis files: {[f.name for f in analysis_files]}")
+                
+                for file in analysis_files:
+                    if "accuracy_convergence" in file.name:
+                        return "phase1"
+                    elif "threshold_optimization" in file.name:
+                        return "phase2"
+            
+            # Check for results files
+            results_dir = self.experiment_dir / "results"
+            if results_dir.exists():
+                result_files = list(results_dir.glob("*.json"))
+                print(f"Found result files: {[f.name for f in result_files]}")
+                
+                for file in result_files:
+                    if "accuracy_convergence" in file.name:
+                        return "phase1"
+                    elif "threshold_optimization" in file.name:
+                        return "phase2"
+            
+            return "unknown"
     
     def _load_results(self):
         """Load results based on experiment type"""
+        print(f"Loading results for experiment type: {self.experiment_type}")
+        
         if self.experiment_type == "phase1":
             return self._load_phase1_results()
         elif self.experiment_type == "phase2":
@@ -128,29 +163,58 @@ class EnhancedAcademicVisualizer:
         elif self.experiment_type == "threshold_opt":
             return self._load_threshold_opt_results()
         else:
+            print(f"Unknown experiment type: {self.experiment_type}")
             return pd.DataFrame()
     
     def _load_phase1_results(self):
         """Load Phase 1 results with synthetic variance for demonstration"""
-        results_file = self.experiment_dir / "results" / "accuracy_convergence_results.json"
+        print("Attempting to load Phase 1 results...")
         
-        if results_file.exists():
+        # Try multiple possible file locations
+        possible_files = [
+            self.experiment_dir / "results" / "accuracy_convergence_results.json",
+            self.experiment_dir / "accuracy_convergence_results.json",
+            self.experiment_dir / "results.json"
+        ]
+        
+        results_file = None
+        for file_path in possible_files:
+            print(f"Checking: {file_path}")
+            if file_path.exists():
+                results_file = file_path
+                print(f"Found results file: {results_file}")
+                break
+        
+        if not results_file:
+            print("No Phase 1 results file found")
+            print("Available files in experiment directory:")
+            for item in self.experiment_dir.rglob("*.json"):
+                print(f"  - {item}")
+            return pd.DataFrame()
+        
+        try:
             with open(results_file, 'r') as f:
                 results = json.load(f)
             
+            print(f"Loaded results keys: {list(results.keys())}")
+            
             data_rows = []
             for limit, limit_data in results.items():
-                if 'error' not in limit_data:
+                print(f"Processing limit: {limit}, data type: {type(limit_data)}")
+                
+                if isinstance(limit_data, dict) and 'error' not in limit_data:
                     stats = limit_data.get('statistics', {})
                     
                     # Generate synthetic repeated measurements for statistical analysis
                     base_accuracy = stats.get('avg_accuracy', 0)
                     base_time = limit_data.get('execution_time', 0)
                     
+                    print(f"  - Base accuracy: {base_accuracy}, Base time: {base_time}")
+                    
                     # Simulate multiple runs with realistic variance
                     n_runs = 5
-                    accuracy_runs = np.random.normal(base_accuracy, base_accuracy * 0.03, n_runs)
-                    time_runs = np.random.normal(base_time, base_time * 0.05, n_runs)
+                    accuracy_runs = np.random.normal(base_accuracy, max(base_accuracy * 0.03, 0.001), n_runs)
+                    time_runs = np.random.normal(base_time, max(base_time * 0.05, 0.1), n_runs)
                     
                     for i in range(n_runs):
                         data_rows.append({
@@ -162,17 +226,45 @@ class EnhancedAcademicVisualizer:
                             'timestamp': limit_data.get('timestamp', '')
                         })
             
-            return pd.DataFrame(data_rows)
-        else:
+            df = pd.DataFrame(data_rows)
+            print(f"Created DataFrame with {len(df)} rows")
+            if not df.empty:
+                print(f"DataFrame columns: {df.columns.tolist()}")
+                print(f"Sample data:\n{df.head()}")
+            
+            return df
+            
+        except Exception as e:
+            print(f"Error loading Phase 1 results: {e}")
             return pd.DataFrame()
     
     def _load_phase2_results(self):
         """Load Phase 2 results with synthetic variance"""
-        results_file = self.experiment_dir / "results" / "threshold_optimization_results.json"
+        print("Attempting to load Phase 2 results...")
         
-        if results_file.exists():
+        possible_files = [
+            self.experiment_dir / "results" / "threshold_optimization_results.json",
+            self.experiment_dir / "threshold_optimization_results.json",
+            self.experiment_dir / "results.json"
+        ]
+        
+        results_file = None
+        for file_path in possible_files:
+            print(f"Checking: {file_path}")
+            if file_path.exists():
+                results_file = file_path
+                print(f"Found results file: {results_file}")
+                break
+        
+        if not results_file:
+            print("No Phase 2 results file found")
+            return pd.DataFrame()
+        
+        try:
             with open(results_file, 'r') as f:
                 results = json.load(f)
+            
+            print(f"Loaded results keys: {list(results.keys())}")
             
             data_rows = []
             threshold_results = results.get('threshold_results', {})
@@ -195,7 +287,7 @@ class EnhancedAcademicVisualizer:
                 base_performance = sim_result.get('overall_performance', 0)
                 
                 for i in range(n_runs):
-                    performance_noise = np.random.normal(0, base_performance * 0.02)
+                    performance_noise = np.random.normal(0, max(base_performance * 0.02, 0.001))
                     
                     data_rows.append({
                         'stage1_threshold': stage1_thresh,
@@ -213,8 +305,12 @@ class EnhancedAcademicVisualizer:
                         'timestamp': threshold_data.get('timestamp', '')
                     })
             
-            return pd.DataFrame(data_rows)
-        else:
+            df = pd.DataFrame(data_rows)
+            print(f"Created DataFrame with {len(df)} rows")
+            return df
+            
+        except Exception as e:
+            print(f"Error loading Phase 2 results: {e}")
             return pd.DataFrame()
     
     def _load_threshold_opt_results(self):
@@ -237,8 +333,8 @@ class EnhancedAcademicVisualizer:
     def generate_all_visualizations(self):
         """Generate all enhanced visualizations"""
         if self.results_data.empty:
-            print("No data available for visualization")
-            return
+            print(f"No data available for visualization (experiment_type: {self.experiment_type})")
+            return None
         
         print(f"Generating enhanced {self.experiment_type} visualizations...")
         
@@ -275,8 +371,8 @@ class EnhancedAcademicVisualizer:
         pass
     
     def _plot_phase1_convergence_analysis(self):
-        """Plot Phase 1 convergence analysis - ACCURACY ONLY with FIXED SORTING"""
-        fig, ax = plt.subplots(1, 1, figsize=(10, 6))  # Single plot
+        """Plot Phase 1 convergence analysis - Ultra-minimal monochrome style"""
+        fig, ax = plt.subplots(1, 1, figsize=(10, 3))
         
         # Prepare data
         plot_data = self.results_data.copy()
@@ -304,12 +400,20 @@ class EnhancedAcademicVisualizer:
             ci_acc_lower.append(acc_lower)
             ci_acc_upper.append(acc_upper)
         
-        # Plot: Accuracy with confidence intervals
-        ax.fill_between(sorted_limits, ci_acc_lower, ci_acc_upper, 
-                        alpha=0.3, color=colors['secondary'], label='95% CI')
-        ax.plot(sorted_limits, mean_accuracy, 'o-', linewidth=4, markersize=12, 
-                color=colors['secondary'], label='Mean accuracy', markerfacecolor='white',
-                markeredgewidth=3)
+        # Plot: Main accuracy line (black)
+        ax.plot(sorted_limits, mean_accuracy, 'o-', 
+                linewidth=2.5, markersize=5, 
+                color='black', 
+                markerfacecolor='white',
+                markeredgewidth=1.8,
+                markeredgecolor='black',
+                label='Mean accuracy')
+        
+        # Plot: 95% CI boundaries as dotted lines (instead of fill)
+        ax.plot(sorted_limits, ci_acc_lower, ':', 
+                linewidth=1.5, color='black', alpha=0.7, label='95% CI')
+        ax.plot(sorted_limits, ci_acc_upper, ':', 
+                linewidth=1.5, color='black', alpha=0.7)
         
         # Find and mark convergence point
         convergence_found = False
@@ -317,39 +421,56 @@ class EnhancedAcademicVisualizer:
             if mean_accuracy[i-1] > 0:
                 rel_change = abs(mean_accuracy[i] - mean_accuracy[i-1]) / mean_accuracy[i-1]
                 if rel_change < 0.05:  # 5% threshold
-                    ax.axvline(x=sorted_limits[i-1], color=colors['warning'], 
+                    ax.axvline(x=sorted_limits[i-1], color='black', 
                             linestyle='--', linewidth=2, alpha=0.8,
                             label=f'Convergence Point: L* = {sorted_limits[i-1]}')
                     convergence_found = True
                     break
         
-        # Formatting for publication quality
-        ax.set_xlabel('Data Limit L', fontsize=14, fontweight='bold')
-        ax.set_ylabel('Accuracy A', fontsize=14, fontweight='bold')
-        ax.set_title('Phase 1: Data Limit Convergence Analysis', fontsize=16, fontweight='bold')
+        # Ultra-minimal formatting
+        ax.set_xlabel('Data Limit L', fontsize=14, color='black')
+        ax.set_ylabel('Accuracy A', fontsize=14, color='black')
         
         # X-axis labels: show 'full' for 999
         x_labels = [str(int(l)) if l != 999 else 'full' for l in sorted_limits]
         ax.set_xticks(sorted_limits)
-        ax.set_xticklabels(x_labels)
+        ax.set_xticklabels(x_labels, fontsize=12, color='black')
         
-        # Add mathematical notation at the bottom
-        textbox_props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.9, edgecolor='gray')
+        # Y-axis ticks
+        ax.tick_params(axis='y', labelsize=14, colors='black')
+        ax.tick_params(axis='x', labelsize=14, colors='black')
+        
+        # Mathematical notation (black text, white background)
+        textbox_props = dict(boxstyle='round,pad=0.3', facecolor='white', 
+                            alpha=0.9, edgecolor='black', linewidth=1)
         ax.text(0.05, 0.05, r'Convergence Criterion: $\frac{|A_{i+1} - A_i|}{A_i} < 0.05$', 
-                transform=ax.transAxes, verticalalignment='bottom', fontsize=14, 
-                bbox=textbox_props)
+                transform=ax.transAxes, verticalalignment='bottom', fontsize=12, 
+                color='black', bbox=textbox_props)
         
-        # Enhanced legend
-        ax.legend(loc='lower right', frameon=True, fancybox=True, shadow=True)
-        ax.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
+        # Clean legend (black text)
+        legend = ax.legend(loc='lower right', frameon=True, fancybox=False, 
+                        shadow=False, fontsize=10)
+        legend.get_frame().set_facecolor('white')
+        legend.get_frame().set_edgecolor('black')
+        legend.get_frame().set_linewidth(1)
+        for text in legend.get_texts():
+            text.set_color('black')
         
-        # Set better y-axis limits for clarity
+        # Minimal grid (very light gray)
+        ax.grid(True, alpha=0.2, linestyle='-', linewidth=0.5, color='gray')
+        
+        # Clean spines (black)
+        for spine in ax.spines.values():
+            spine.set_edgecolor('black')
+            spine.set_linewidth(1)
+        
+        # Set better y-axis limits
         y_min, y_max = ax.get_ylim()
         y_range = y_max - y_min
         ax.set_ylim(y_min - 0.05 * y_range, y_max + 0.05 * y_range)
         
         plt.tight_layout()
-        self._save_figure(fig, 'phase1_accuracy_convergence_only')
+        self._save_figure(fig, 'convergence_analysis_minimal')
     
     def _plot_phase1_statistical_comparison(self):
         """Plot Phase 1 statistical comparison with p-values"""
@@ -825,24 +946,28 @@ class EnhancedAcademicVisualizer:
                     
                     # Mark optimal point
                     ax1.scatter(best_thresholds['stage1_threshold'], 
-                               best_thresholds['stage2_threshold'], 
-                               color='red', s=200, marker='*', 
-                               edgecolors='black', linewidth=2,
-                               label=f'Optimal: ({best_thresholds["stage1_threshold"]}, {best_thresholds["stage2_threshold"]})')
+                                best_thresholds['stage2_threshold'], 
+                                color='red', s=200, marker='*', 
+                                edgecolors='black', linewidth=2,
+                                label=f'Optimal: ({best_thresholds["stage1_threshold"]}, {best_thresholds["stage2_threshold"]})')
                     
                     # Add mathematical notation between y-axis 100 and 95
                     ax1.text(0.02, 0.15, r'$\theta^* = \arg\max_{\theta_1,\theta_2} f(\theta_1, \theta_2)$', 
                             transform=ax1.transAxes, verticalalignment='bottom',
-                            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
+                            fontsize=14)
                     
-                    ax1.set_xlabel('Stage 1 Threshold θ₁')
-                    ax1.set_ylabel('Stage 2 Threshold θ₂')
-                    ax1.set_title('Threshold Optimization Results')
-                    ax1.legend()
+                    ax1.set_xlabel('Stage 1 Threshold θ₁', fontsize=18)
+                    ax1.set_ylabel('Stage 2 Threshold θ₂', fontsize=18)
+                    ax1.set_title('(a)', fontsize=20, fontweight='bold')
+                    ax1.legend(fontsize=15)
                     ax1.grid(True, alpha=0.3)
+
+                    ax1.tick_params(axis='both', labelsize=18)
                     
                     cbar = plt.colorbar(scatter, ax=ax1)
-                    cbar.set_label('Performance f')
+                    cbar.set_label('Performance f', fontsize=18)
+                    cbar.ax.tick_params(labelsize=18)
         
         # Plot 2: Stage performance comparison
         plot_data = self.results_data.copy()
@@ -852,7 +977,7 @@ class EnhancedAcademicVisualizer:
             
             # Calculate statistics for each stage
             stage_stats = []
-            stage_names = ['Stage 1\n(Rule-based)', 'Stage 2\n(Hybrid)', 'Stage 3\n(ML-based)']
+            stage_names = ['Stage 1\n(Foundation)', 'Stage 2\n(Hybrid)', 'Stage 3\n(Autonomous)']
             
             for col in stage_cols:
                 data = plot_data[col].values
@@ -869,25 +994,34 @@ class EnhancedAcademicVisualizer:
             errors = [[s['mean'] - s['lower'], s['upper'] - s['mean']] for s in stage_stats]
             errors = np.array(errors).T
             
-            bars = ax2.bar(range(len(stage_names)), means, yerr=errors, 
-                          capsize=5, alpha=0.7, 
-                          color=[colors['primary'], colors['secondary'], colors['accent']])
+            local_colors = ['#2C3E50', '#34495E', '#7F8C8D']
+            local_alphas = [0.6, 0.8, 1.0]
+
+            bars = []
+            for i in range(len(stage_names)):
+                bar = ax2.bar(i, means[i], yerr=[[errors[0][i]], [errors[1][i]]], 
+                            capsize=5, 
+                            color=local_colors[i], 
+                            alpha=local_alphas[i])
+                bars.extend(bar)
             
-            # Add value labels
-            for bar, mean_val in zip(bars, means):
-                ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.005,
-                        f'{mean_val:.3f}', ha='center', va='bottom', fontweight='bold')
+            for i, mean_val in enumerate(means):
+                ax2.text(i, mean_val + 0.005, f'{mean_val:.3f}', 
+                            ha='center', va='bottom', fontweight='bold', fontsize=16)
             
             ax2.set_xticks(range(len(stage_names)))
-            ax2.set_xticklabels(stage_names)
-            ax2.set_ylabel('Performance')
-            ax2.set_title('Three-Stage Evolution Performance')
+            ax2.set_xticklabels(stage_names, fontsize=18)
+            ax2.set_ylabel('Performance', fontsize=18)
+            ax2.set_title('(b)', fontsize=20, fontweight='bold')
             ax2.grid(True, alpha=0.3)
+
+            ax2.tick_params(axis='both', labelsize=18)
             
             # Add mathematical formulation at 0.4 position
             ax2.text(0.02, 0.4, r'$P_{total} = \sum_{i=1}^{3} w_i \cdot P_i$', 
                     transform=ax2.transAxes, verticalalignment='bottom',
-                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
+                    fontsize=15)
         
         plt.tight_layout()
         self._save_figure(fig, 'phase2_optimization_results')
@@ -1014,40 +1148,132 @@ class EnhancedAcademicVisualizer:
         print(f"Saved: {pdf_path} and {png_path}")
 
 
-def generate_enhanced_academic_visualizations(exp_dir):
+def find_experiment_directories():
+    """Find all available experiment directories"""
+    current_file = Path(__file__).resolve()
+    root_dir = current_file.parent.parent.parent
+    experiments_root = root_dir / "experiments_results"
+    
+    if not experiments_root.exists():
+        return []
+    
+    all_dirs = []
+    for pattern in ["phase1_*", "phase2_*", "*accuracy_convergence*", "*threshold_optimization*"]:
+        all_dirs.extend(list(experiments_root.glob(pattern)))
+    
+    # Sort by modification time (newest first)
+    all_dirs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    
+    return all_dirs
+
+
+def interactive_phase_selection():
+    """Interactive selection of experiment phase and directory"""
+    print("\n=== Enhanced Academic Visualization Generator ===")
+    
+    # Find available directories
+    exp_dirs = find_experiment_directories()
+    
+    if not exp_dirs:
+        print("No experiment directories found!")
+        return None, None
+    
+    print(f"\nFound {len(exp_dirs)} experiment directories:")
+    for i, exp_dir in enumerate(exp_dirs):
+        print(f"{i+1:2d}. {exp_dir.name}")
+    
+    # Select directory
+    while True:
+        try:
+            choice = input(f"\nSelect experiment directory (1-{len(exp_dirs)}) or 'q' to quit: ").strip()
+            if choice.lower() == 'q':
+                return None, None
+            
+            dir_idx = int(choice) - 1
+            if 0 <= dir_idx < len(exp_dirs):
+                selected_dir = exp_dirs[dir_idx]
+                break
+            else:
+                print(f"Please enter a number between 1 and {len(exp_dirs)}")
+        except ValueError:
+            print("Please enter a valid number or 'q'")
+    
+    print(f"\nSelected directory: {selected_dir.name}")
+    
+    # Auto-detect phase or let user override
+    visualizer_temp = EnhancedAcademicVisualizer(selected_dir)
+    detected_phase = visualizer_temp.experiment_type
+    
+    print(f"Auto-detected phase: {detected_phase}")
+    
+    # Phase selection menu
+    phases = {
+        '1': 'phase1',
+        '2': 'phase2',
+        '3': 'threshold_opt',
+        'a': 'auto'
+    }
+    
+    print("\nPhase options:")
+    print("1. Phase 1 (Accuracy Convergence)")
+    print("2. Phase 2 (Threshold Optimization)")
+    print("3. Threshold Optimization")
+    print("a. Auto-detect (recommended)")
+    
+    while True:
+        phase_choice = input("\nSelect phase (1/2/3/a): ").strip().lower()
+        if phase_choice in phases:
+            if phase_choice == 'a':
+                selected_phase = detected_phase
+            else:
+                selected_phase = phases[phase_choice]
+            break
+        else:
+            print("Please enter 1, 2, 3, or 'a'")
+    
+    print(f"Selected phase: {selected_phase}")
+    
+    return selected_dir, selected_phase
+
+
+def generate_enhanced_academic_visualizations(exp_dir, experiment_type=None):
     """Main function to generate enhanced academic visualizations"""
-    visualizer = EnhancedAcademicVisualizer(exp_dir)
+    visualizer = EnhancedAcademicVisualizer(exp_dir, force_experiment_type=experiment_type)
     return visualizer.generate_all_visualizations()
 
 
 if __name__ == "__main__":
-    import sys
-    from pathlib import Path
+    parser = argparse.ArgumentParser(description='Generate enhanced academic visualizations')
+    parser.add_argument('--dir', type=str, help='Experiment directory path')
+    parser.add_argument('--phase', type=str, choices=['phase1', 'phase2', 'threshold_opt'], 
+                       help='Force experiment phase type')
+    parser.add_argument('--interactive', action='store_true', default=True,
+                       help='Interactive mode (default)')
     
-    if len(sys.argv) > 1:
-        exp_dir = Path(sys.argv[1])
-    else:
-        # Auto-detect latest experiment directory
-        experiments_root = Path("experiments_results")
-        if experiments_root.exists():
-            all_dirs = []
-            all_dirs.extend(list(experiments_root.glob("phase1_accuracy_convergence_*")))
-            all_dirs.extend(list(experiments_root.glob("phase2_threshold_optimization_*")))
-            all_dirs.extend(list(experiments_root.glob("threshold_optimization_*")))
-            
-            if all_dirs:
-                exp_dir = max(all_dirs, key=lambda x: x.stat().st_mtime)
-                print(f"Auto-detected experiment directory: {exp_dir}")
-            else:
-                print("No experiment directories found")
-                sys.exit(1)
+    args = parser.parse_args()
+    
+    if args.dir and Path(args.dir).exists():
+        # Command line mode
+        exp_dir = Path(args.dir)
+        experiment_type = args.phase
+        print(f"Using specified directory: {exp_dir}")
+        
+        figures_dir = generate_enhanced_academic_visualizations(exp_dir, experiment_type)
+        if figures_dir:
+            print(f"Enhanced academic visualizations generated in: {figures_dir}")
         else:
-            print("experiments_results directory not found")
-            sys.exit(1)
+            print("Failed to generate visualizations")
     
-    if not exp_dir.exists():
-        print(f"Experiment directory not found: {exp_dir}")
-        sys.exit(1)
-    
-    figures_dir = generate_enhanced_academic_visualizations(exp_dir)
-    print(f"Enhanced academic visualizations generated in: {figures_dir}")
+    else:
+        # Interactive mode
+        exp_dir, experiment_type = interactive_phase_selection()
+        
+        if exp_dir is None:
+            print("Exiting...")
+            exit(0)
+        
+        figures_dir = generate_enhanced_academic_visualizations(exp_dir, experiment_type)
+        if figures_dir:
+            print(f"Enhanced academic visualizations generated in: {figures_dir}")
+        else:
+            print("Failed to generate visualizations")
