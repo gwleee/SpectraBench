@@ -277,7 +277,7 @@ class Academic3x2VisualizationGenerator:
         optimized_df = self.analyzer.load_optimized_data()
         
         fig, axes = plt.subplots(2, 3, figsize=self.figsize_3x2)
-        fig.suptitle('Comprehensive Performance Analysis', fontsize=16, fontweight='bold', y=0.98)
+        #fig.suptitle('Comprehensive Performance Analysis', fontsize=16, fontweight='bold', y=0.98)
         
         # Flatten axes for easier indexing
         ax1, ax2, ax3, ax4, ax5, ax6 = axes.flatten()
@@ -411,13 +411,13 @@ class Academic3x2VisualizationGenerator:
         optimized_df = self.analyzer.load_optimized_data()
         
         fig, axes = plt.subplots(2, 3, figsize=self.figsize_3x2)
-        fig.suptitle('Intelligent Scheduling Evolution', fontsize=16, fontweight='bold', y=0.98)
+        #fig.suptitle('Intelligent Scheduling Evolution', fontsize=16, fontweight='bold', y=0.98)
         
         # Flatten axes for easier indexing
         ax1, ax2, ax3, ax4, ax5, ax6 = axes.flatten()
         
         # (a) Three-stage performance progression
-        stages = ['Stage 1\n(Heuristic)', 'Stage 2\n(Hybrid)', 'Stage 3\n(Autonomous)']
+        stages = ['Stage 1\n(Foundation)', 'Stage 2\n(Hybrid)', 'Stage 3\n(Autonomous)']
         # Based on actual methodology results - these are realistic values from paper
         performance_scores = [65, 82, 80]
         colors_stages = [PAPER_COLORS['baseline'], PAPER_COLORS['success'], PAPER_COLORS['optimized']]
@@ -560,7 +560,7 @@ class Academic3x2VisualizationGenerator:
         
         # (e) Mode transition timeline
         timeline_data = [
-            (0, 19, 'Heuristic Mode'),
+            (0, 19, 'Foundation Mode'),
             (19, 72, 'Hybrid Mode'),
             (72, 130, 'Autonomous Mode')  # Based on actual 130 tasks
         ]
