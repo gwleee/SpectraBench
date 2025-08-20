@@ -440,12 +440,14 @@ class EnhancedAcademicVisualizer:
         ax.tick_params(axis='y', labelsize=14, colors='black')
         ax.tick_params(axis='x', labelsize=14, colors='black')
         
+        '''
         # Mathematical notation (black text, white background)
         textbox_props = dict(boxstyle='round,pad=0.3', facecolor='white', 
                             alpha=0.9, edgecolor='black', linewidth=1)
         ax.text(0.05, 0.05, r'Convergence Criterion: $\frac{|A_{i+1} - A_i|}{A_i} < 0.05$', 
                 transform=ax.transAxes, verticalalignment='bottom', fontsize=12, 
                 color='black', bbox=textbox_props)
+        '''
         
         # Clean legend (black text)
         legend = ax.legend(loc='lower right', frameon=True, fancybox=False, 
