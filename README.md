@@ -435,6 +435,6 @@ Apache License 2.0 - see [LICENSE](license.md) for details.
 
 ---
 
-*Developed with ❤️ by KISTI Large-scale AI Research Center*
+*Developed with ❤️ by Gunwoo Lee from the AI Platform Team (Leader: Ryong Lee) at KISTI Large-scale AI Research Center (Director: Kyong-Ha Lee)*
 
 *Supporting the Korean AI ecosystem with intelligent benchmarking tools*
