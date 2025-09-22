@@ -9,6 +9,8 @@ SpectraBench optimizes LLM evaluation through smart scheduling, using machine le
 🔗 **Related Projects**: 
 - [KISTI-KONI Models](https://huggingface.co/KISTI-KONI) - KISTI Large Language Models
 - [KISTI-MCP](https://github.com/ansua79/kisti-mcp) - KISTI Model Context Protocol server
+- 
+![fig](https://github.com/user-attachments/assets/9e5e2a0f-8add-44ab-a1f1-4dd41acbbc24)
 
 ## ✨ Why SpectraBench?
 
