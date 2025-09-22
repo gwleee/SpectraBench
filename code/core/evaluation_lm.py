@@ -701,7 +701,9 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
     
     model_id = mconf.get("id")
     model_name = mconf.get("name", model_id.split("/")[-1])
-    run_name = f"{model_name}_harness_{idx+1}"
+    # Include task information in run_name to avoid overwriting results
+    task_suffix = "_".join(task_list) if len(task_list) <= 3 else f"{len(task_list)}tasks"
+    run_name = f"{model_name}_harness_{idx+1}_{task_suffix}"
     gpu_id = gpu_list[idx % num_gpus]
     device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
     
@@ -834,25 +836,55 @@ def evaluate_single(idx, mconf, task_list, full_run=False):
             model_results_dir = EXPERIMENT_DIR / "model_results" / model_name
             model_results_dir.mkdir(parents=True, exist_ok=True)
             
-            filename = model_results_dir / f"{run_name}.json"
-            with open(filename, 'w') as f:
-                json.dump(results.get("results", {}), f, indent=2, default=str)
-            logger.info(f"[Process {os.getpid()}] Results saved to {filename}")
+            # Use a consistent filename for the model (without task suffix)
+            base_filename = model_results_dir / f"{model_name}_harness_{idx+1}.json"
+            
+            # Load existing results if file exists
+            existing_results = {}
+            if base_filename.exists():
+                try:
+                    with open(base_filename, 'r') as f:
+                        existing_results = json.load(f)
+                except Exception as e:
+                    logger.warning(f"Could not load existing results from {base_filename}: {e}")
+            
+            # Merge new results with existing ones
+            merged_results = {**existing_results, **results.get("results", {})}
+            
+            # Save merged results
+            with open(base_filename, 'w') as f:
+                json.dump(merged_results, f, indent=2, default=str)
+            logger.info(f"[Process {os.getpid()}] Results saved to {base_filename}")
             
             legacy_results_dir = project_root / "results" / model_name
             legacy_results_dir.mkdir(parents=True, exist_ok=True)
-            legacy_filename = legacy_results_dir / f"{run_name}.json"
+            legacy_filename = legacy_results_dir / f"{model_name}_harness_{idx+1}.json"
             with open(legacy_filename, 'w') as f:
-                json.dump(results.get("results", {}), f, indent=2, default=str)
+                json.dump(merged_results, f, indent=2, default=str)
             logger.info(f"[Process {os.getpid()}] Legacy results saved to {legacy_filename}")
         else:
             results_dir = project_root / "results" / model_name
             results_dir.mkdir(parents=True, exist_ok=True)
             
-            filename = results_dir / f"{run_name}.json"
-            with open(filename, 'w') as f:
-                json.dump(results.get("results", {}), f, indent=2, default=str)
-            logger.info(f"[Process {os.getpid()}] Results saved to {filename}")
+            # Use a consistent filename for the model (without task suffix)
+            base_filename = results_dir / f"{model_name}_harness_{idx+1}.json"
+            
+            # Load existing results if file exists
+            existing_results = {}
+            if base_filename.exists():
+                try:
+                    with open(base_filename, 'r') as f:
+                        existing_results = json.load(f)
+                except Exception as e:
+                    logger.warning(f"Could not load existing results from {base_filename}: {e}")
+            
+            # Merge new results with existing ones
+            merged_results = {**existing_results, **results.get("results", {})}
+            
+            # Save merged results
+            with open(base_filename, 'w') as f:
+                json.dump(merged_results, f, indent=2, default=str)
+            logger.info(f"[Process {os.getpid()}] Results saved to {base_filename}")
 
         logger.info(f"[Process {os.getpid()}] Successfully completed {run_name}")
         
