@@ -435,43 +435,6 @@ Apache License 2.0 - see [LICENSE](license.md) for details.
 
 *Developed with ❤️ by Gunwoo Lee from the AI Platform Team (Leader: Ryong Lee) at KISTI Large-scale AI Research Center (Director: Kyong-Ha Lee)*
 
-*Supporting the Korean AI ecosystem with intelligent benchmarking tools*
-f…]()
-
-
-
-## ✨ Why SpectraBench?
-
-- **🚀 Intelligent scheduling** - Optimal execution order through machine learning
-- **💾 Smart resource management** - Prevents memory errors with adaptive allocation
-- **📊 Maximized efficiency** - Better hardware utilization than sequential evaluation
-- **🤖 Adaptive learning** - Continuously improves with usage
-- **🔧 Flexible configuration** - Easy switching between test and production setups
-- **📈 3-stage evolution** - Intelligent → Hybrid → Adaptive progression
-
-## 🎯 Supported Models (22+ Models)
-
-### Korean Language Models
-- **EXAONE 3.5** (2.4B, 7.8B, 32B Instruct)
-- **HyperCLOVA-X SEED** (0.5B, 1.5B Text Instruct)
-- **Korean Bllossom** (3B, 8B)
-- **Kanana 1.5** (2.1B base/instruct, 8B base)
-- **KISTI-KONI** (8B Instruct)
-- **KULLM3**
-- **ETRI Eagle** (3B preview)
-- **SaltLux Luxia** (21.4B alignment v1.0/v1.2, Ko-Llama3-8B)
-
-### International Models
-- **LLaMA 3.1** (8B)
-- **LLaMA-DNA** (8B Instruct)
-- **Gemma 3** (4B, 12B Instruct)
-- **Mistral 7B** (v0.3)
-- **Qwen 3** (8B)
-
-*All models from 0.5B to 32B parameters are fully supported with automatic size detection and resource optimization.*
-
-## 📊 Supported Benchmarks (21+ Tasks)
-
 ### Korean Tasks
 - **KMMLU** / **KMMLU Hard** - Korean language understanding
 - **Haerae** - Korean cultural knowledge
@@ -865,4 +828,4 @@ Apache License 2.0 - see [LICENSE](license.md) for details.
 
 *Developed with ❤️ by Gunwoo Lee from the AI Platform Team (Leader: Ryong Lee) at KISTI Large-scale AI Research Center (Director: Kyong-Ha Lee)*
 
-*Supporting the Korean AI ecosystem with intelligent benchmarking tools*
+*Supporting the Korean AI ecosystem with intelligent benchmarking tools through automated Docker multi-version evaluation*
